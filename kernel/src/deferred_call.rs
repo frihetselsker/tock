@@ -66,7 +66,7 @@
 //!     }
 //! }
 //! impl DeferredCallClient for SomeCapsule {
-//!     fn handle_deferred_call(&self) {
+//!     fn handle_deferred_call(&'static self) {
 //!         // Your action here
 //!     }
 //!
@@ -95,7 +95,7 @@ use core::marker::PhantomData;
 pub trait DeferredCallClient: Sized {
     /// Software interrupt function that is called when the deferred call is
     /// triggered.
-    fn handle_deferred_call(&self);
+    fn handle_deferred_call(&'static self);
 
     // This function should be implemented as
     // `self.deferred_call.register(&self);`.
@@ -113,7 +113,7 @@ struct DynDefCallRef<'a> {
     _lifetime: PhantomData<&'a ()>,
 }
 
-impl<'a> DynDefCallRef<'a> {
+impl DynDefCallRef<'static> {
     // SAFETY: We define the callback function as being a closure which casts
     // the passed pointer to be the appropriate type (a pointer to `T`) and then
     // calls `T::handle_deferred_call()`. In practice, the closure is optimized
@@ -121,7 +121,7 @@ impl<'a> DynDefCallRef<'a> {
     // identical, making this zero-cost, but saving us from having to trust that
     // `fn(*const ())` and `fn handle_deferred_call(&self)` will always have the
     // same calling convention for any type.
-    fn new<T: DeferredCallClient>(x: &'a T) -> Self {
+    fn new<T: DeferredCallClient>(x: &'static T) -> Self {
         let data: *const () = core::ptr::from_ref(x).cast();
         Self {
             data,
