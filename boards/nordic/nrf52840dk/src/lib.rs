@@ -438,15 +438,12 @@ pub unsafe fn start_no_pconsole() -> (
         [0; nrf52840::ieee802154_radio::ACK_BUF_SIZE]
     );
     let aes_ecb_buf = static_init!([u8; 48], [0; 48]);
+    let ccm_data = static_init!(nrf52840::ccm::CcmData, nrf52840::ccm::CcmData::new());
     // Initialize chip peripheral drivers
-    //
-    // SAFETY: We believe this is unique and uniquely controls DMA.
-    let nrf52840_peripherals = unsafe {
-        static_init!(
-            Nrf52840DefaultPeripherals,
-            Nrf52840DefaultPeripherals::new(ieee802154_ack_buf, aes_ecb_buf)
-        )
-    };
+    let nrf52840_peripherals = static_init!(
+        Nrf52840DefaultPeripherals,
+        Nrf52840DefaultPeripherals::new(ieee802154_ack_buf, aes_ecb_buf, ccm_data)
+    );
 
     // Set up circular peripheral dependencies.
     nrf52840_peripherals.init();
