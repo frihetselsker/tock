@@ -4,8 +4,8 @@
 
 #![no_std]
 
-pub mod aes;
 pub mod constants;
+pub mod ecb;
 pub mod gpio;
 pub mod peripheral_interrupts;
 pub mod pinmux;

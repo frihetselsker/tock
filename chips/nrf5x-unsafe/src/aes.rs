@@ -7,7 +7,7 @@
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::MapCell;
 use kernel::utilities::dma_slice::DmaSliceMut;
-use kernel::utilities::registers::interfaces::Writeable;
+use kernel::utilities::registers::interfaces::{Readable, Writeable};
 use kernel::utilities::registers::{ReadWrite, WriteOnly, register_bitfields};
 
 #[repr(C)]
@@ -102,11 +102,11 @@ impl AesEcbRegistersManager {
     ///
     /// # Return
     ///
-    /// `Ok(())` on successfully starting the DMA operation. `Err(())` if DMA
-    /// is already busy.
-    pub fn start_ecb_dma(&self, buf: &'static mut [u8]) -> Result<(), ()> {
+    /// `Ok(())` on successfully starting the DMA operation. Returns the buffer
+    /// if DMA is already busy.
+    pub fn start_ecb_dma(&self, buf: &'static mut [u8]) -> Result<(), &'static mut [u8]> {
         if self.dma_pending() {
-            return Err(());
+            return Err(buf);
         }
 
         // To create a DmaFence we must trust the implementation.
@@ -139,8 +139,15 @@ impl AesEcbRegistersManager {
     }
 
     pub fn finish_ecb_dma(&self) -> Option<&'static mut [u8]> {
-        // Clear the end event before releasing the buffer.
+        if !self.registers.event_endecb.is_set(Event::READY)
+            && !self.registers.event_errorecb.is_set(Event::READY)
+        {
+            return None;
+        }
+
+        // Clear the completion events before releasing the buffer.
         self.registers.event_endecb.write(Event::READY::CLEAR);
+        self.registers.event_errorecb.write(Event::READY::CLEAR);
 
         self.dma_buf.take().map(|dma_slice| {
             // To create a DmaFence we must trust the implementation.
@@ -153,8 +160,9 @@ impl AesEcbRegistersManager {
             // # Safety
             //
             // We must ensure that the DMA hardware no longer has any access to
-            // this buffer. We ensure that by clearing `event_endecb` above;
-            // the hardware sets this event only after completing the operation.
+            // this buffer. We ensure that by observing either `event_endecb`
+            // or `event_errorecb` above; the hardware sets these events only
+            // after completing or aborting the operation.
             unsafe { dma_slice.take(fence) }
         })
     }
