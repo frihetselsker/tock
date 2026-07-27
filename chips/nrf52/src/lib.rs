@@ -24,5 +24,5 @@ pub mod uicr;
 pub mod usbd;
 
 pub use nrf5x::{
-    aes, constants, gpio, peripheral_interrupts, pinmux, rtc, temperature, timer, trng,
+    constants, ecb, gpio, peripheral_interrupts, pinmux, rtc, temperature, timer, trng,
 };

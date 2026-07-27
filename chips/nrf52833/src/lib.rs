@@ -7,7 +7,7 @@
 // FIXME: Move ieee802154_radio to an nrf528xx crate so this can access it.
 
 pub use nrf52::{
-    acomp, adc, aes, ble_radio, chip, clock, constants, crt1, ficr, i2c, ieee802154_radio, nvmc,
+    acomp, adc, ble_radio, chip, clock, constants, crt1, ecb, ficr, i2c, ieee802154_radio, nvmc,
     peripheral_interrupts as base_interrupts, pinmux, power, ppi, pwm, rtc, spi, temperature,
     timer, trng, uart, uicr,
 };
