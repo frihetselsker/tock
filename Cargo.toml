@@ -76,6 +76,7 @@ members = [
     "boards/lora_e5_mini",
     "boards/tutorials/qemu_rv32_virt-tutorial",
     "capsules/aes_gcm",
+    "capsules/crypto",
     "capsules/ecdsa_sw",
     "capsules/core",
     "capsules/extra",
