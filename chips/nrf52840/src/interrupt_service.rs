@@ -5,7 +5,14 @@
 //! Handle interrupts for nRF52840-specific peripherals
 
 use kernel::hil::time::Alarm;
+use kernel::utilities::StaticRef;
 use nrf52::chip::Nrf52DefaultPeripherals;
+
+// ### Safety
+//
+// This address is the CCM peripheral base on the nRF52840.
+const CCM_BASE: StaticRef<crate::ccm::CcmRegisters> =
+    unsafe { StaticRef::new(0x4000F000 as *const crate::ccm::CcmRegisters) };
 
 /// This struct, when initialized, instantiates all peripheral drivers for the nrf52840.
 ///
@@ -15,6 +22,7 @@ use nrf52::chip::Nrf52DefaultPeripherals;
 //create all base nrf52 peripherals
 pub struct Nrf52840DefaultPeripherals<'a> {
     pub nrf52: Nrf52DefaultPeripherals<'a>,
+    pub ccm: crate::ccm::Ccm,
     pub ieee802154_radio: crate::ieee802154_radio::Radio<'a>,
     pub usbd: crate::usbd::Usbd<'a>,
     pub gpio_port: crate::gpio::Port<'a, { crate::gpio::NUM_PINS }>,
@@ -36,12 +44,19 @@ impl Nrf52840DefaultPeripherals<'_> {
     pub unsafe fn new(
         ieee802154_radio_ack_buf: &'static mut [u8; crate::ieee802154_radio::ACK_BUF_SIZE],
         aes_ecb_buf: &'static mut [u8; 48],
+        ccm_data: &'static mut crate::ccm::CcmData,
     ) -> Self {
         // SAFETY: See function-level doc.
         let nrf52_peripherals = unsafe { Nrf52DefaultPeripherals::new(aes_ecb_buf) };
 
+        // ### Safety
+        //
+        // This default peripheral collection is constructed only once and is
+        // the only owner of the nRF52840 CCM peripheral and its DMA registers.
+        let ccm_registers = unsafe { crate::ccm::CcmRegistersManager::new(CCM_BASE) };
         Self {
             nrf52: nrf52_peripherals,
+            ccm: crate::ccm::Ccm::new(ccm_registers, ccm_data),
             ieee802154_radio: crate::ieee802154_radio::Radio::new(ieee802154_radio_ack_buf),
             usbd: crate::usbd::Usbd::new(),
             gpio_port: crate::gpio::nrf52840_gpio_create(),
@@ -49,6 +64,7 @@ impl Nrf52840DefaultPeripherals<'_> {
     }
     // Necessary for setting up circular dependencies
     pub fn init(&'static self) {
+        kernel::deferred_call::DeferredCallClient::register(&self.ccm);
         self.ieee802154_radio.set_timer_ref(&self.nrf52.timer0);
         self.nrf52.timer0.set_alarm_client(&self.ieee802154_radio);
         self.nrf52.pwr_clk.set_usb_client(&self.usbd);
@@ -61,6 +77,7 @@ impl kernel::platform::chip::InterruptService for Nrf52840DefaultPeripherals<'_>
     fn service_interrupt(&self, interrupt: u32) -> bool {
         match interrupt {
             crate::peripheral_interrupts::USBD => self.usbd.handle_interrupt(),
+            nrf52::peripheral_interrupts::CCM_AAR => self.ccm.handle_interrupt(),
             nrf52::peripheral_interrupts::GPIOTE => self.gpio_port.handle_interrupt(),
             nrf52::peripheral_interrupts::RADIO => {
                 match (

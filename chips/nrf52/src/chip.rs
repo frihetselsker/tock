@@ -13,8 +13,8 @@ use kernel::utilities::StaticRef;
 // Peripheral Registers Instantiations
 //
 
-const AESECB_BASE: StaticRef<crate::aes::AesEcbRegisters> =
-    unsafe { StaticRef::new(0x4000E000 as *const crate::aes::AesEcbRegisters) };
+const AESECB_BASE: StaticRef<crate::ecb::AesEcbRegisters> =
+    unsafe { StaticRef::new(0x4000E000 as *const crate::ecb::AesEcbRegisters) };
 
 const RTC1_BASE: StaticRef<crate::rtc::RtcRegisters> =
     unsafe { StaticRef::new(0x40011000 as *const crate::rtc::RtcRegisters) };
@@ -57,7 +57,7 @@ impl<'a, I: InterruptService + 'a> NRF52<'a, I> {
 /// constructed manually in main.rs.
 pub struct Nrf52DefaultPeripherals<'a> {
     pub acomp: crate::acomp::Comparator<'a>,
-    pub ecb: crate::aes::AesECB<'a>,
+    pub ecb: crate::ecb::Ecb,
     pub pwr_clk: crate::power::Power<'a>,
     pub ble_radio: crate::ble_radio::Radio<'a>,
     pub trng: crate::trng::Trng<'a>,
@@ -98,7 +98,7 @@ impl Nrf52DefaultPeripherals<'_> {
 
         Self {
             acomp: crate::acomp::Comparator::new(),
-            ecb: crate::aes::AesECB::new(aes_registers, aes_ecb_buffer),
+            ecb: crate::ecb::Ecb::new(aes_registers, aes_ecb_buffer),
             pwr_clk: crate::power::Power::new(),
             ble_radio: crate::ble_radio::Radio::new(),
             trng: crate::trng::Trng::new(RNG_BASE),
@@ -120,6 +120,7 @@ impl Nrf52DefaultPeripherals<'_> {
     }
     // Necessary for setting up circular dependencies
     pub fn init(&'static self) {
+        kernel::deferred_call::DeferredCallClient::register(&self.ecb);
         kernel::deferred_call::DeferredCallClient::register(&self.nvmc);
     }
 }
