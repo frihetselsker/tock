@@ -842,6 +842,7 @@ dependencies = [
  "cortexm4f",
  "kernel",
  "nrf52",
+ "nrf5x-unsafe",
 ]
 
 [[package]]
