@@ -79,6 +79,7 @@ members = [
     "boards/tutorials/qemu_rv32_virt-tutorial",
     "boards/configurations/qemu_rv32_virt/qemu_rv32_virt-syscall-return-test",
     "capsules/aes_gcm",
+    "capsules/crypto",
     "capsules/ecdsa_sw",
     "capsules/core",
     "capsules/extra",
