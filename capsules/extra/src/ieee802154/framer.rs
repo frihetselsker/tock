@@ -84,11 +84,14 @@ use crate::net::ieee802154::{
 use crate::net::stream::SResult;
 use crate::net::stream::{encode_bytes, encode_u8, encode_u32};
 
+use capsules_core::driver_mutex::{
+    DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
+};
 use core::cell::Cell;
 
 use kernel::ErrorCode;
+use kernel::hil::crypto::cipher::{self, Aes128, Ccm, CcmTagLength, Operation};
 use kernel::hil::radio::{self, LQI_SIZE};
-use kernel::hil::symmetric_encryption::{AES128, AESCCM, CCMClient};
 use kernel::processbuffer::ReadableProcessSlice;
 use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::utilities::leasable_buffer::SubSliceMut;
@@ -318,6 +321,20 @@ enum RxState {
     ReadyToYield(FrameInfo, &'static mut [u8], u8),
 }
 
+#[derive(Clone, Copy)]
+struct CcmRequest {
+    key: [u8; 16],
+    nonce: [u8; 13],
+    associated_data_offset: usize,
+    associated_data_len: usize,
+    input_offset: usize,
+    input_len: usize,
+    output_len: usize,
+    payload_len: usize,
+    tag_len: CcmTagLength,
+    operation: Operation,
+}
+
 /// Wraps an IEEE 802.15.4 [kernel::hil::radio::Radio]
 /// and exposes [`capsules_extra::ieee802154::mac::Mac`](crate::ieee802154::mac::Mac) functionality.
 ///
@@ -326,9 +343,16 @@ enum RxState {
 /// corresponding to the transmission, reception and
 /// encryption/decryption pipelines. See the documentation in
 /// `capsules/extra/src/ieee802154/mac.rs` for more details.
-pub struct Framer<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> {
+pub struct Framer<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> {
     mac: &'a M,
-    aes_ccm: &'a A,
+    ccm_mutex: &'static DriverMutex<C>,
+    ccm_handle: OptionalCell<DriverMutexHandle>,
+    ccm: MapCell<DriverMutexRef<C>>,
+    ccm_request: Cell<CcmRequest>,
+    ccm_buffer: MapCell<&'static mut [u8]>,
+    ccm_associated_data_offset: Cell<usize>,
+    ccm_input_offset: Cell<usize>,
+    ccm_output_offset: Cell<usize>,
     data_sequence: Cell<u8>,
 
     /// KeyDescriptor lookup procedure
@@ -350,15 +374,33 @@ pub struct Framer<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> {
     crypt_buf: MapCell<SubSliceMut<'static, u8>>,
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> Framer<'a, M, A> {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> Framer<'a, M, C> {
     pub fn new(
         mac: &'a M,
-        aes_ccm: &'a A,
+        ccm_mutex: &'static DriverMutex<C>,
         crypt_buf: SubSliceMut<'static, u8>,
-    ) -> Framer<'a, M, A> {
+    ) -> Framer<'a, M, C> {
         Framer {
             mac,
-            aes_ccm,
+            ccm_mutex,
+            ccm_handle: OptionalCell::empty(),
+            ccm: MapCell::empty(),
+            ccm_request: Cell::new(CcmRequest {
+                key: [0; 16],
+                nonce: [0; 13],
+                associated_data_offset: 0,
+                associated_data_len: 0,
+                input_offset: 0,
+                input_len: 0,
+                output_len: 0,
+                payload_len: 0,
+                tag_len: CcmTagLength::Tag32,
+                operation: Operation::Encrypt,
+            }),
+            ccm_buffer: MapCell::empty(),
+            ccm_associated_data_offset: Cell::new(0),
+            ccm_input_offset: Cell::new(0),
+            ccm_output_offset: Cell::new(0),
             data_sequence: Cell::new(0),
             key_procedure: OptionalCell::empty(),
             device_procedure: OptionalCell::empty(),
@@ -368,6 +410,101 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> Framer<'a, M, A> {
             rx_client: OptionalCell::empty(),
             crypt_buf: MapCell::new(crypt_buf),
         }
+    }
+
+    pub fn register(&'static self) -> Result<(), ErrorCode> {
+        if self.ccm_handle.is_some() {
+            return Err(ErrorCode::ALREADY);
+        }
+
+        let handle = self.ccm_mutex.add_client(self).ok_or(ErrorCode::NOMEM)?;
+        self.ccm_handle.set(handle);
+        Ok(())
+    }
+
+    fn ccm_tag_len(tag_len: usize) -> Result<CcmTagLength, ErrorCode> {
+        match tag_len {
+            4 => Ok(CcmTagLength::Tag32),
+            8 => Ok(CcmTagLength::Tag64),
+            16 => Ok(CcmTagLength::Tag128),
+            _ => Err(ErrorCode::INVAL),
+        }
+    }
+
+    fn start_ccm(
+        &self,
+        buffer: &'static mut [u8],
+        key: [u8; 16],
+        nonce: [u8; 13],
+        associated_data_offset: usize,
+        input_offset: usize,
+        payload_len: usize,
+        tag_len: usize,
+        operation: Operation,
+    ) -> Result<(), (ErrorCode, &'static mut [u8])> {
+        if self.ccm_buffer.is_some() {
+            return Err((ErrorCode::BUSY, buffer));
+        }
+
+        let tag_len = match Self::ccm_tag_len(tag_len) {
+            Ok(tag_len) => tag_len,
+            Err(error) => return Err((error, buffer)),
+        };
+        let Some(associated_data_len) = input_offset.checked_sub(associated_data_offset) else {
+            return Err((ErrorCode::INVAL, buffer));
+        };
+        let input_len = match operation {
+            Operation::Encrypt => payload_len,
+            Operation::Decrypt => match payload_len.checked_add(tag_len.bytes()) {
+                Some(input_len) => input_len,
+                None => return Err((ErrorCode::SIZE, buffer)),
+            },
+        };
+        let output_len = match operation {
+            Operation::Encrypt => match payload_len.checked_add(tag_len.bytes()) {
+                Some(output_len) => output_len,
+                None => return Err((ErrorCode::SIZE, buffer)),
+            },
+            Operation::Decrypt => payload_len,
+        };
+        if associated_data_offset
+            .checked_add(associated_data_len)
+            .is_none_or(|end| end > buffer.len())
+            || input_offset
+                .checked_add(input_len)
+                .is_none_or(|end| end > buffer.len())
+            || input_offset
+                .checked_add(output_len)
+                .is_none_or(|end| end > buffer.len())
+        {
+            return Err((ErrorCode::SIZE, buffer));
+        }
+
+        self.ccm_request.set(CcmRequest {
+            key,
+            nonce,
+            associated_data_offset,
+            associated_data_len,
+            input_offset,
+            input_len,
+            output_len,
+            payload_len,
+            tag_len,
+            operation,
+        });
+        self.ccm_associated_data_offset.set(0);
+        self.ccm_input_offset.set(0);
+        self.ccm_output_offset.set(0);
+
+        let result = self
+            .ccm_handle
+            .map_or(Err(ErrorCode::OFF), |handle| self.ccm_mutex.request(handle));
+        if let Err(error) = result {
+            return Err((error, buffer));
+        }
+
+        self.ccm_buffer.put(buffer);
+        Ok(())
     }
 
     /// Sets the IEEE 802.15.4 key lookup procedure to be used.
@@ -542,33 +679,26 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> Framer<'a, M, A> {
                                 // `security_params` is not `None`.
                                 (TxState::Idle, Err((ErrorCode::FAIL, buf)))
                             }
-                            Some((level, key, nonce)) => {
+                            Some((_level, key, nonce)) => {
                                 let (m_off, m_len) = info.ccm_encrypt_ranges();
                                 let (a_off, m_off) =
                                     (radio::PSDU_OFFSET, radio::PSDU_OFFSET + m_off);
 
-                                // Crypto setup failed; fail sending packet and return to idle
-                                if self.aes_ccm.set_key(&key) != Ok(())
-                                    || self.aes_ccm.set_nonce(&nonce) != Ok(())
-                                {
-                                    (TxState::Idle, Err((ErrorCode::FAIL, buf)))
-                                } else {
-                                    let res = self.aes_ccm.crypt(
-                                        buf,
-                                        a_off,
-                                        m_off,
-                                        m_len,
-                                        info.mic_len,
-                                        level.encryption_needed(),
-                                        true,
-                                    );
-                                    match res {
-                                        Ok(()) => (TxState::Encrypting(info), Ok(())),
-                                        Err((ErrorCode::BUSY, buf)) => {
-                                            (TxState::ReadyToEncrypt(info, buf), Ok(()))
-                                        }
-                                        Err((ecode, buf)) => (TxState::Idle, Err((ecode, buf))),
+                                match self.start_ccm(
+                                    buf,
+                                    key,
+                                    nonce,
+                                    a_off,
+                                    m_off,
+                                    m_len,
+                                    info.mic_len,
+                                    Operation::Encrypt,
+                                ) {
+                                    Ok(()) => (TxState::Encrypting(info), Ok(())),
+                                    Err((ErrorCode::BUSY, buf)) => {
+                                        (TxState::ReadyToEncrypt(info, buf), Ok(()))
                                     }
+                                    Err((ecode, buf)) => (TxState::Idle, Err((ecode, buf))),
                                 }
                             }
                         }
@@ -610,76 +740,45 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> Framer<'a, M, A> {
                             // `security_params` is not `None`.
                             RxState::Idle
                         }
-                        Some((level, key, nonce)) => {
+                        Some((_level, key, nonce)) => {
                             let (m_off, m_len) = info.ccm_encrypt_ranges();
                             let (a_off, m_off) = (radio::PSDU_OFFSET, radio::PSDU_OFFSET + m_off);
 
-                            // Crypto setup failed; fail receiving packet and return to idle
-                            if self.aes_ccm.set_key(&key) != Ok(())
-                                || self.aes_ccm.set_nonce(&nonce) != Ok(())
-                            {
-                                // No error is returned for the receive function because recv occurs implicitly
-                                // Log debug statement here so that this error does not occur silently
-                                kernel::debug!(
-                                    "[15.4 RECV FAIL] - Failed setting crypto key/nonce."
-                                );
-                                self.mac.set_receive_buffer(buf);
-                                RxState::Idle
-                            } else {
-                                // The crypto operation requires multiple steps through the receiving pipeline and
-                                // an unknown quanitity of time to perform decryption. Holding the 15.4 radio's
-                                // receive buffer for this period of time is suboptimal as packets will be dropped.
-                                // The radio driver assumes the mac.set_receive_buffer(...) function is called prior
-                                // to returning from the framer. These constraints necessitate the creation of a seperate
-                                // crypto buffer for the radio framer so that the framer can return the radio driver's
-                                // receive buffer and then perform decryption using the copied packet in the crypto buffer.
-                                let res = self.crypt_buf.take().map(|mut crypt_buf| {
-                                    crypt_buf[0..buf.len()].copy_from_slice(buf);
-                                    crypt_buf.slice(0..buf.len());
+                            // Holding the radio receive buffer for the duration of
+                            // decryption would cause packet loss, so decrypt a copy.
+                            let result = self.crypt_buf.take().map(|mut crypt_buf| {
+                                crypt_buf[0..buf.len()].copy_from_slice(buf);
+                                crypt_buf.slice(0..buf.len());
 
-                                    self.aes_ccm.crypt(
-                                        crypt_buf.take(),
-                                        a_off,
-                                        m_off,
-                                        m_len,
-                                        info.mic_len,
-                                        level.encryption_needed(),
-                                        true,
-                                    )
-                                });
+                                self.start_ccm(
+                                    crypt_buf.take(),
+                                    key,
+                                    nonce,
+                                    a_off,
+                                    m_off,
+                                    m_len,
+                                    info.mic_len,
+                                    Operation::Decrypt,
+                                )
+                            });
 
-                                // The potential scenarios include:
-                                // - (1) Successfully transfer packet to crypto buffer and succesfully begin crypto operation
-                                // - (2) Succesfully transfer packet to crypto buffer, but the crypto operation aes_ccm.crypt(...)
-                                //   is busy so we do not advance the reception pipeline and retry on the next iteration
-                                // - (3) Succesfully transfer packet to crypto buffer, but the crypto operation fails for some
-                                //   unknown reason (likely due to the crypto buffer's configuration or the offset/len parameters
-                                //   passed to the function. It is not possible to decrypt the packet so we drop the packet, return
-                                //   the radio drivers recv buffer and return the framer recv state machine to idle
-                                // - (4) The crypto buffer is empty (in use elsewhere) and we are unable to copy the received
-                                //   packet. This packet is dropped and we must return the buffer to the radio driver. This
-                                //   scenario is handled in the None case
-                                match res {
-                                    // Scenario 1
-                                    Some(Ok(())) => {
-                                        self.mac.set_receive_buffer(buf);
-                                        RxState::Decrypting(info, lqi)
-                                    }
-                                    // Scenario 2
-                                    Some(Err((ErrorCode::BUSY, buf))) => {
-                                        RxState::ReadyToDecrypt(info, buf, lqi)
-                                    }
-                                    // Scenario 3
-                                    Some(Err((_, fail_crypt_buf))) => {
-                                        self.mac.set_receive_buffer(buf);
-                                        self.crypt_buf.replace(SubSliceMut::new(fail_crypt_buf));
-                                        RxState::Idle
-                                    }
-                                    // Scenario 4
-                                    None => {
-                                        self.mac.set_receive_buffer(buf);
-                                        RxState::Idle
-                                    }
+                            match result {
+                                Some(Ok(())) => {
+                                    self.mac.set_receive_buffer(buf);
+                                    RxState::Decrypting(info, lqi)
+                                }
+                                Some(Err((ErrorCode::BUSY, crypt_buf))) => {
+                                    self.crypt_buf.replace(SubSliceMut::new(crypt_buf));
+                                    RxState::ReadyToDecrypt(info, buf, lqi)
+                                }
+                                Some(Err((_, crypt_buf))) => {
+                                    self.mac.set_receive_buffer(buf);
+                                    self.crypt_buf.replace(SubSliceMut::new(crypt_buf));
+                                    RxState::Idle
+                                }
+                                None => {
+                                    self.mac.set_receive_buffer(buf);
+                                    RxState::Idle
                                 }
                             }
                         }
@@ -734,7 +833,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> Framer<'a, M, A> {
     }
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> MacDevice<'a> for Framer<'a, M, A> {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> MacDevice<'a> for Framer<'a, M, C> {
     fn set_transmit_client(&self, client: &'a dyn TxClient) {
         self.tx_client.set(client);
     }
@@ -886,7 +985,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> MacDevice<'a> for Framer<'a, M, A> {
     }
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::TxClient for Framer<'a, M, A> {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> radio::TxClient for Framer<'a, M, C> {
     fn send_done(&self, buf: &'static mut [u8], acked: bool, result: Result<(), ErrorCode>) {
         self.data_sequence.set(self.data_sequence.get() + 1);
         self.tx_client.map(move |client| {
@@ -895,7 +994,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::TxClient for Framer<'a, M, A>
     }
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::RxClient for Framer<'a, M, A> {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> radio::RxClient for Framer<'a, M, C> {
     fn receive(
         &self,
         buf: &'static mut [u8],
@@ -932,7 +1031,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::RxClient for Framer<'a, M, A>
     }
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::ConfigClient for Framer<'a, M, A> {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> radio::ConfigClient for Framer<'a, M, C> {
     fn config_done(&self, _: Result<(), ErrorCode>) {
         // The transmission pipeline is the only state machine that
         // waits for the configuration procedure to complete before
@@ -946,8 +1045,12 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> radio::ConfigClient for Framer<'a, M
     }
 }
 
-impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> CCMClient for Framer<'a, M, A> {
-    fn crypt_done(&self, buf: &'static mut [u8], res: Result<(), ErrorCode>, tag_is_valid: bool) {
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> Framer<'a, M, C> {
+    fn ccm_done(&self, res: Result<(), ErrorCode>) {
+        self.ccm.take();
+        let Some(buf) = self.ccm_buffer.take() else {
+            return;
+        };
         let mut tx_waiting = false;
         let mut rx_waiting = false;
 
@@ -975,10 +1078,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> CCMClient for Framer<'a, M, A> {
                     None
                 }
                 other_state => {
-                    tx_waiting = match other_state {
-                        TxState::ReadyToEncrypt(_, _) => true,
-                        _ => false,
-                    };
+                    tx_waiting = matches!(other_state, TxState::ReadyToEncrypt(_, _));
                     self.tx_state.replace(other_state);
                     Some(buf)
                 }
@@ -992,7 +1092,7 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> CCMClient for Framer<'a, M, A> {
             self.rx_state.take().map(|state| {
                 match state {
                     RxState::Decrypting(info, lqi) => {
-                        let next_state = if tag_is_valid {
+                        let next_state = if res.is_ok() {
                             RxState::ReadyToYield(info, buf, lqi)
                         } else {
                             // The CRC tag is invalid, meaning the packet was corrupted. Drop this packet
@@ -1004,13 +1104,21 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> CCMClient for Framer<'a, M, A> {
                         self.step_receive_state()
                     }
                     other_state => {
-                        rx_waiting = match other_state {
-                            RxState::ReadyToDecrypt(_, _, _) => true,
-                            _ => false,
-                        };
+                        rx_waiting = matches!(other_state, RxState::ReadyToDecrypt(_, _, _));
                         self.rx_state.replace(other_state);
                     }
                 }
+            });
+        }
+
+        if !tx_waiting {
+            tx_waiting = self.tx_state.map_or(false, |state| {
+                matches!(state, TxState::ReadyToEncrypt(_, _))
+            });
+        }
+        if !rx_waiting {
+            rx_waiting = self.rx_state.map_or(false, |state| {
+                matches!(state, RxState::ReadyToDecrypt(_, _, _))
             });
         }
 
@@ -1025,5 +1133,117 @@ impl<'a, M: Mac<'a>, A: AESCCM<'a, AES128>> CCMClient for Framer<'a, M, A> {
         } else if rx_waiting {
             self.step_receive_state()
         }
+    }
+}
+
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> DriverMutexClient for Framer<'a, M, C> {
+    fn ready(&'static self, resource: DriverMutexAny) {
+        let ccm = match resource.downcast::<C>() {
+            Ok(ccm) => ccm,
+            Err(_) => {
+                self.ccm_done(Err(ErrorCode::INVAL));
+                return;
+            }
+        };
+        ccm.set_client(self);
+        self.ccm.put(ccm);
+
+        let request = self.ccm_request.get();
+        if let Err(error) = self.ccm.map_or(Err(ErrorCode::FAIL), |ccm| {
+            ccm.crypt(
+                request.payload_len,
+                request.associated_data_len,
+                request.tag_len,
+                request.operation,
+            )
+        }) {
+            self.ccm_done(Err(error));
+        }
+    }
+}
+
+impl<'a, M: Mac<'a>, C: Ccm<Aes128> + 'static> cipher::CcmClient<Aes128> for Framer<'a, M, C> {
+    fn read_key(&self, key: &mut [u8]) -> Result<(), ErrorCode> {
+        if key.len() != 16 {
+            return Err(ErrorCode::SIZE);
+        }
+        key.copy_from_slice(&self.ccm_request.get().key);
+        Ok(())
+    }
+
+    fn read_nonce(&self, nonce: &mut [u8]) -> Result<usize, ErrorCode> {
+        if nonce.len() < 13 {
+            return Err(ErrorCode::SIZE);
+        }
+        nonce[..13].copy_from_slice(&self.ccm_request.get().nonce);
+        Ok(13)
+    }
+
+    fn read_associated_data(&self, associated_data: &mut [u8]) -> Result<usize, ErrorCode> {
+        let request = self.ccm_request.get();
+        let offset = self.ccm_associated_data_offset.get();
+        let remaining = request
+            .associated_data_len
+            .checked_sub(offset)
+            .ok_or(ErrorCode::INVAL)?;
+        let read_len = associated_data.len().min(remaining);
+        let result = self.ccm_buffer.map_or(Err(ErrorCode::FAIL), |buffer| {
+            let start = request.associated_data_offset + offset;
+            associated_data[..read_len].copy_from_slice(&buffer[start..start + read_len]);
+            Ok(read_len)
+        })?;
+        self.ccm_associated_data_offset.set(offset + result);
+        Ok(result)
+    }
+
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
+        let request = self.ccm_request.get();
+        let offset = self.ccm_input_offset.get();
+        let remaining = request
+            .input_len
+            .checked_sub(offset)
+            .ok_or(ErrorCode::INVAL)?;
+        let read_len = input.len().min(remaining);
+        let result = self.ccm_buffer.map_or(Err(ErrorCode::FAIL), |buffer| {
+            let start = request.input_offset + offset;
+            input[..read_len].copy_from_slice(&buffer[start..start + read_len]);
+            Ok(read_len)
+        })?;
+        self.ccm_input_offset.set(offset + result);
+        Ok(result)
+    }
+
+    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
+        let request = self.ccm_request.get();
+        let offset = self.ccm_output_offset.get();
+        let remaining = request
+            .output_len
+            .checked_sub(offset)
+            .ok_or(ErrorCode::INVAL)?;
+        if output.len() > remaining {
+            return Err(ErrorCode::SIZE);
+        }
+        self.ccm_buffer.map_or(Err(ErrorCode::FAIL), |buffer| {
+            let start = request.input_offset + offset;
+            buffer[start..start + output.len()].copy_from_slice(output);
+            Ok(())
+        })?;
+        self.ccm_output_offset.set(offset + output.len());
+        Ok(())
+    }
+
+    fn crypt_done(&self, result: Result<(), ErrorCode>) {
+        let request = self.ccm_request.get();
+        let result = result.and_then(|()| {
+            if self.ccm_associated_data_offset.get() == request.associated_data_len
+                && self.ccm_input_offset.get() == request.input_len
+                && self.ccm_output_offset.get() == request.output_len
+            {
+                Ok(())
+            } else {
+                Err(ErrorCode::FAIL)
+            }
+        });
+        self.ccm_done(result);
     }
 }
