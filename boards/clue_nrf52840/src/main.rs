@@ -140,10 +140,11 @@ type SHT3xSensor = components::sht3x::SHT3xComponentType<
 type TemperatureDriver = components::temperature::TemperatureComponentType<SHT3xSensor>;
 type HumidityDriver = components::humidity::HumidityComponentType<SHT3xSensor>;
 type RngDriver = components::rng::RngComponentType<nrf52840::trng::Trng<'static>>;
+type CcmHw = components::software_ccm::SoftwareCcmType<nrf52840::ecb::Ecb>;
 
 type Ieee802154Driver = components::ieee802154::Ieee802154ComponentType<
     nrf52840::ieee802154_radio::Radio<'static>,
-    nrf52840::aes::AesECB<'static>,
+    CcmHw,
 >;
 
 type SchedulerInUse = components::sched::round_robin::RoundRobinComponentType;
@@ -693,8 +694,12 @@ unsafe fn start() -> (
     )
     .finalize(components::ble_component_static!(AlarmHw, BleHw));
 
-    let aes_mux = components::aes::AesMuxComponent::new(&base_peripherals.ecb)
-        .finalize(components::aes_mux_component_static!(nrf52840::aes::AesECB));
+    let ccm_mutex = components::software_ccm::SoftwareCcmComponent::new(&base_peripherals.ecb)
+        .finalize(components::software_ccm_component_static!(
+            nrf52840::ecb::Ecb,
+            1,
+            components::ieee802154::CCM_WORKSPACE_SIZE,
+        ));
 
     let device_id = ficr.id();
 
@@ -704,7 +709,7 @@ unsafe fn start() -> (
         board_kernel,
         capsules_extra::ieee802154::DRIVER_NUM,
         &nrf52840_peripherals.ieee802154_radio,
-        aes_mux,
+        ccm_mutex,
         PAN_ID,
         device_id_bottom_16,
         device_id,
@@ -712,7 +717,7 @@ unsafe fn start() -> (
     )
     .finalize(components::ieee802154_component_static!(
         nrf52840::ieee802154_radio::Radio,
-        nrf52840::aes::AesECB<'static>
+        CcmHw
     ));
 
     let process_printer = components::process_printer::ProcessPrinterTextComponent::new()
