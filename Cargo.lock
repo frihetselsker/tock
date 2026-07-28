@@ -122,6 +122,7 @@ name = "components"
 version = "0.2.3-dev"
 dependencies = [
  "capsules-core",
+ "capsules-crypto",
  "capsules-extra",
  "capsules-system",
  "kernel",
