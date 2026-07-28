@@ -7,6 +7,7 @@
 pub mod adc;
 pub mod adc_microphone;
 pub mod aes;
+pub mod aes128_cipher;
 pub mod air_quality;
 pub mod alarm;
 pub mod analog_comparator;
@@ -97,6 +98,7 @@ pub mod si7021;
 pub mod signature_verify_in_memory_keys;
 pub mod siphash;
 pub mod sk68xx;
+pub mod software_aes128;
 pub mod software_ccm;
 pub mod sound_pressure;
 pub mod spi;
