@@ -74,10 +74,11 @@ type Bmp280Sensor = components::bmp280::Bmp280ComponentType<
 >;
 type TemperatureDriver = components::temperature::TemperatureComponentType<Bmp280Sensor>;
 type RngDriver = components::rng::RngComponentType<nrf52840::trng::Trng<'static>>;
+type CcmHw = components::software_ccm::SoftwareCcmType<nrf52840::ecb::Ecb>;
 
 type Ieee802154Driver = components::ieee802154::Ieee802154ComponentType<
     nrf52840::ieee802154_radio::Radio<'static>,
-    nrf52840::aes::AesECB<'static>,
+    CcmHw,
 >;
 
 type SchedulerInUse = components::sched::round_robin::RoundRobinComponentType;
@@ -366,21 +367,25 @@ pub unsafe fn start() -> (
     )
     .finalize(components::ble_component_static!(AlarmHw, BleHw));
 
-    let aes_mux = components::aes::AesMuxComponent::new(&base_peripherals.ecb)
-        .finalize(components::aes_mux_component_static!(nrf52840::aes::AesECB));
+    let ccm_mutex = components::software_ccm::SoftwareCcmComponent::new(&base_peripherals.ecb)
+        .finalize(components::software_ccm_component_static!(
+            nrf52840::ecb::Ecb,
+            1,
+            components::ieee802154::CCM_WORKSPACE_SIZE,
+        ));
 
     let (ieee802154_radio, _mux_mac) = components::ieee802154::Ieee802154Component::new(
         board_kernel,
         capsules_extra::ieee802154::DRIVER_NUM,
         &nrf52840_peripherals.ieee802154_radio,
-        aes_mux,
+        ccm_mutex,
         PAN_ID,
         SRC_MAC,
         DEFAULT_EXT_SRC_MAC,
     )
     .finalize(components::ieee802154_component_static!(
         nrf52840::ieee802154_radio::Radio,
-        nrf52840::aes::AesECB<'static>
+        CcmHw
     ));
 
     // Not exposed in favor of the BMP280, but present.

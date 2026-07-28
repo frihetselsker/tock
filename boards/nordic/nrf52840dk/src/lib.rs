@@ -170,7 +170,8 @@ type AnalogComparatorHw = nrf52840::acomp::Comparator<'static>;
 type I2cHw = nrf52840::i2c::TWI<'static>;
 type SpiHw = nrf52840::spi::SPIM<'static>;
 type TemperatureHw = nrf52840::temperature::Temp<'static>;
-type AesHw = nrf52840::aes::AesECB<'static>;
+type EcbHw = nrf52840::ecb::Ecb;
+type CcmHw = components::software_ccm::SoftwareCcmType<EcbHw>;
 type RadioHw = nrf52840::ieee802154_radio::Radio<'static>;
 type SystickHw = cortexm4::systick::SysTick;
 
@@ -205,9 +206,9 @@ type VirtualKVPermissions = components::kv::VirtualKVPermissionsComponentType<KV
 type KVDriver = components::kv::KVDriverComponentType<VirtualKVPermissions>;
 
 // IEEE 802.15.4
-type Ieee802154MacDevice = components::ieee802154::Ieee802154ComponentMacDeviceType<RadioHw, AesHw>;
+type Ieee802154MacDevice = components::ieee802154::Ieee802154ComponentMacDeviceType<RadioHw, CcmHw>;
 /// Userspace 802.15.4 driver with in-kernel packet framing and MAC layer.
-pub type Ieee802154Driver = components::ieee802154::Ieee802154ComponentType<RadioHw, AesHw>;
+pub type Ieee802154Driver = components::ieee802154::Ieee802154ComponentType<RadioHw, CcmHw>;
 
 /// Userspace EUI64 driver.
 pub type Eui64Driver = components::eui64::Eui64ComponentType;
@@ -310,9 +311,13 @@ pub unsafe fn ieee802154_udp(
     // AES
     //--------------------------------------------------------------------------
 
-    let aes_mux =
-        components::ieee802154::MuxAes128ccmComponent::new(&nrf52840_peripherals.nrf52.ecb)
-            .finalize(components::mux_aes128ccm_component_static!(AesHw));
+    let ccm_mutex =
+        components::software_ccm::SoftwareCcmComponent::new(&nrf52840_peripherals.nrf52.ecb)
+            .finalize(components::software_ccm_component_static!(
+                EcbHw,
+                1,
+                components::ieee802154::CCM_WORKSPACE_SIZE,
+            ));
 
     //--------------------------------------------------------------------------
     // 802.15.4
@@ -330,12 +335,12 @@ pub unsafe fn ieee802154_udp(
         board_kernel,
         capsules_extra::ieee802154::DRIVER_NUM,
         &nrf52840_peripherals.ieee802154_radio,
-        aes_mux,
+        ccm_mutex,
         PAN_ID,
         device_id_bottom_16,
         device_id,
     )
-    .finalize(components::ieee802154_component_static!(RadioHw, AesHw));
+    .finalize(components::ieee802154_component_static!(RadioHw, CcmHw));
 
     //--------------------------------------------------------------------------
     // UDP

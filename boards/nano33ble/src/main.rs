@@ -118,13 +118,14 @@ type HTS221Sensor = components::hts221::Hts221ComponentType<
 >;
 type TemperatureDriver = components::temperature::TemperatureComponentType<HTS221Sensor>;
 type HumidityDriver = components::humidity::HumidityComponentType<HTS221Sensor>;
+type CcmHw = components::software_ccm::SoftwareCcmType<nrf52840::ecb::Ecb>;
 type Ieee802154MacDevice = components::ieee802154::Ieee802154ComponentMacDeviceType<
     nrf52840::ieee802154_radio::Radio<'static>,
-    nrf52840::aes::AesECB<'static>,
+    CcmHw,
 >;
 type Ieee802154Driver = components::ieee802154::Ieee802154ComponentType<
     nrf52840::ieee802154_radio::Radio<'static>,
-    nrf52840::aes::AesECB<'static>,
+    CcmHw,
 >;
 type RngDriver = components::rng::RngComponentType<nrf52840::trng::Trng<'static>>;
 
@@ -562,9 +563,11 @@ pub unsafe fn start() -> (
 
     use capsules_extra::net::ieee802154::MacAddress;
 
-    let aes_mux = components::ieee802154::MuxAes128ccmComponent::new(&base_peripherals.ecb)
-        .finalize(components::mux_aes128ccm_component_static!(
-            nrf52840::aes::AesECB
+    let ccm_mutex = components::software_ccm::SoftwareCcmComponent::new(&base_peripherals.ecb)
+        .finalize(components::software_ccm_component_static!(
+            nrf52840::ecb::Ecb,
+            1,
+            components::ieee802154::CCM_WORKSPACE_SIZE,
         ));
 
     let device_id = ficr.id();
@@ -573,14 +576,14 @@ pub unsafe fn start() -> (
         board_kernel,
         capsules_extra::ieee802154::DRIVER_NUM,
         &nrf52840_peripherals.ieee802154_radio,
-        aes_mux,
+        ccm_mutex,
         PAN_ID,
         device_id_bottom_16,
         device_id,
     )
     .finalize(components::ieee802154_component_static!(
         nrf52840::ieee802154_radio::Radio,
-        nrf52840::aes::AesECB<'static>
+        CcmHw
     ));
     use capsules_extra::net::ipv6::ip_utils::IPAddr;
 
