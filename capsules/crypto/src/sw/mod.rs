@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-#![forbid(unsafe_code)]
-#![no_std]
+//! Software implementations of cryptographic operations.
 
-pub mod aes;
-pub mod sw;
+pub mod sw_ccm;
