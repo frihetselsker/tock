@@ -6,4 +6,6 @@
 #![no_std]
 
 pub mod aes;
+pub mod hash;
+pub mod hmac;
 pub mod sw;

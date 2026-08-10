@@ -78,3 +78,4 @@
 //! ```
 
 pub mod cipher;
+pub mod digest;
