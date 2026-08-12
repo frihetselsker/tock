@@ -2,404 +2,390 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-//! SHA Userspace Driver
+//! Hash Userspace Driver
+
+use core::cell::Cell;
 
 use capsules_core::driver;
+use capsules_core::driver_mutex::{DriverMutex, DriverMutexHandle, DriverMutexRef};
 use kernel::errorcode::into_statuscode;
-use kernel::grant::{AllowRoCount, AllowRwCount, Grant, UpcallCount};
+use kernel::grant::{AllowRoCount, AllowRwCount, Grant, GrantKernelData, UpcallCount};
 use kernel::hil::crypto;
-use kernel::hil::crypto::digest::Digest;
-use kernel::hil::crypto::digest::utilities::DigestMode;
+use kernel::hil::crypto::digest::{Client, Mode};
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
-use kernel::utilities::cells::{OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::SubSlice;
-use kernel::utilities::leasable_buffer::SubSliceMut;
+use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
-pub const DRIVER_NUM: usize = driver::NUM::Sha as usize;
-
-/// Maximum digest length.
-pub const MAX_DIGEST_LEN: usize = 64;
+pub const DRIVER_NUM: usize = driver::NUM::Hash as usize;
 
 /// Upcalls for SHA operations completing.
 mod upcall {
-    pub const HASH: usize = 0;
+    pub const DONE: usize = 0;
     pub const COUNT: u8 = 1;
 }
 
 /// Ids for read-only allow buffers
 mod ro_allow {
-    pub const DATA: usize = 0;
+    pub const INPUT: usize = 0;
     /// The number of allow buffers the kernel stores for this grant
     pub const COUNT: u8 = 1;
 }
 
 /// Ids for read-write allow buffers
 mod rw_allow {
-    pub const DEST: usize = 0;
+    pub const OUTPUT: usize = 0;
     /// The number of allow buffers the kernel stores for this grant
     pub const COUNT: u8 = 1;
 }
 
-#[derive(Copy, Clone, PartialEq)]
-enum AppOp {
-    Hash,
-    // Verify,
+#[derive(Clone, Copy)]
+enum State {
+    Idle,
+    Waiting { processid: ProcessId, mode: Mode },
+    Active { processid: ProcessId },
 }
 
-#[derive(Default)]
-pub struct App {
-    algorithm: DigestMode,
-    operation: OptionalCell<AppOp>,
-    data_offset: usize,
-}
-
-// #[derive(Default)]
-// enum ShaAlgorithm {
-//     #[default]
-//     Sha256,
-//     // Sha384,
-//     // Sha512,
-// }
-//
-fn parse_mode(value: usize) -> Result<DigestMode, ErrorCode> {
+fn parse_mode(value: usize) -> Result<Mode, ErrorCode> {
     match value {
-        0 => Ok(DigestMode::Md5(None)),
-        1 => Ok(DigestMode::Sha1(None)),
-        2 => Ok(DigestMode::Sha224(None)),
-        3 => Ok(DigestMode::Sha256(None)),
-        4 => Ok(DigestMode::Sha384(None)),
-        5 => Ok(DigestMode::Sha512(None)),
-        6 => Ok(DigestMode::Sha512_224(None)),
-        7 => Ok(DigestMode::Sha512_256(None)),
+        0 => Ok(Mode::Md5),
+        1 => Ok(Mode::Sha1),
+        2 => Ok(Mode::Sha224),
+        3 => Ok(Mode::Sha256),
+        4 => Ok(Mode::Sha384),
+        5 => Ok(Mode::Sha512),
+        6 => Ok(Mode::Sha512_224),
+        7 => Ok(Mode::Sha512_256),
         _ => Err(ErrorCode::INVAL),
     }
 }
 
-pub struct ShaDriver<'a, H: crypto::digest::DigestAny> {
-    /// Underlying hasher to use for the SHA operations.
-    hash: &'a H,
+fn readonly_buffer_len(
+    kernel_data: &GrantKernelData<'_>,
+    number: usize,
+) -> Result<usize, ErrorCode> {
+    kernel_data
+        .get_readonly_processbuffer(number)
+        .map(|buffer| buffer.len())
+        .map_err(|error| error.into())
+}
 
+fn readwrite_buffer_len(
+    kernel_data: &GrantKernelData<'_>,
+    number: usize,
+) -> Result<usize, ErrorCode> {
+    kernel_data
+        .get_readwrite_processbuffer(number)
+        .map(|buffer| buffer.len())
+        .map_err(|error| error.into())
+}
+
+pub struct Hash<H: crypto::digest::Digest + 'static> {
+    /// Underlying hasher to use for the SHA operations.
+    hash_mutex: &'static DriverMutex<H>,
+    hash_handle: OptionalCell<DriverMutexHandle>,
+    hash: MapCell<DriverMutexRef<H>>,
     /// Virtualized capsule that supports a single operation per app.
     apps: Grant<
-        App,
+        (),
         UpcallCount<{ upcall::COUNT }>,
         AllowRoCount<{ ro_allow::COUNT }>,
         AllowRwCount<{ rw_allow::COUNT }>,
     >,
-
-    /// The process currently using the SHA hasher.
-    processid: OptionalCell<ProcessId>,
-
-    /// Buffer to hold the data we are copying to the SHA hasher.
-    data_buffer: TakeCell<'static, [u8]>,
-
-    /// Buffer to hold the output of the SHA hasher.
-    dest_buffer: TakeCell<'static, SubSliceMut<'static, u8>>,
+    state: Cell<State>,
+    input_len: Cell<usize>,
+    input_offset: Cell<usize>,
+    // don't know if I need this
+    output_offset: Cell<usize>,
 }
 
-impl<'a, H: crypto::digest::DigestAny> ShaDriver<'a, H> {
+impl<H: crypto::digest::Digest> Hash<H> {
     pub fn new(
-        hash: &'a H,
-        data_buffer: &'static mut [u8],
-        dest_buffer: &'static mut [u8; MAX_DIGEST_LEN],
-        grant: Grant<
-            App,
+        hash_mutex: &'static DriverMutex<H>,
+        apps: Grant<
+            (),
             UpcallCount<{ upcall::COUNT }>,
             AllowRoCount<{ ro_allow::COUNT }>,
             AllowRwCount<{ rw_allow::COUNT }>,
         >,
-    ) -> ShaDriver<'a, H> {
-        ShaDriver {
-            hash,
-            apps: grant,
-            processid: OptionalCell::empty(),
-            data_buffer: TakeCell::new(data_buffer),
-            dest_buffer: TakeCell::new(SubSliceMut::new(dest_buffer)),
+    ) -> Hash<H> {
+        Hash {
+            hash_mutex,
+            hash_handle: OptionalCell::empty(),
+            hash: MapCell::empty(),
+            apps,
+            state: Cell::new(State::Idle),
+            input_len: Cell::new(0),
+            input_offset: Cell::new(0),
+            output_offset: Cell::new(0),
         }
     }
 
-    fn run(&self, processid: ProcessId) -> Result<(), ErrorCode> {
-        // Save this process as the active process.
-        self.processid.set(processid);
+    pub fn register(&'static self) -> Result<(), ErrorCode> {
+        if self.hash_handle.is_some() {
+            return Err(ErrorCode::ALREADY);
+        }
 
+        let hash_handle = self.hash_mutex.add_client(self).ok_or(ErrorCode::NOMEM)?;
+        self.hash_handle.set(hash_handle);
+        Ok(())
+    }
+
+    fn active_processid(&self) -> Result<ProcessId, ErrorCode> {
+        match self.state.get() {
+            State::Active { processid, .. } => Ok(processid),
+            State::Idle | State::Waiting { .. } => Err(ErrorCode::RESERVE),
+        }
+    }
+
+    fn read_exact(&self, allow_number: usize, destination: &mut [u8]) -> Result<(), ErrorCode> {
+        let processid = self.active_processid()?;
         self.apps
-            .enter(processid, |app, kernel_data| {
-                // Now, start copying data from the allowed buffer into our `data_buffer`
-                // and then share that data with the underlying hasher.
+            .enter(processid, |_, kernel_data| {
                 kernel_data
-                    .get_readonly_processbuffer(ro_allow::DATA)
-                    .and_then(|data| {
-                        data.enter(|data| {
-                            self.data_buffer.take().map_or(Err(ErrorCode::FAIL), |buf| {
-                                // Copy as much data as we have or as much as we can fit in our
-                                // kernel buffer.
-                                self.hash.set_mode(&app.algorithm, Some(buf.len()))?;
-                                let copy_len = core::cmp::min(data.len(), buf.len());
-                                let _ =
-                                    data[0..copy_len].copy_to_slice_or_err(&mut buf[0..copy_len]);
-
-                                // Save how far into the buffer we are.
-                                app.data_offset = copy_len;
-
-                                // Add data to the hasher.
-                                let mut lease_buf = SubSliceMut::new(buf);
-                                lease_buf.slice(0..copy_len);
-
-                                if let Err((e, buf)) = match app.algorithm {
-                                    DigestMode::Md5(Some(token)) => {
-                                        let md5 = self.hash.operate_algorithm(token);
-                                        md5.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha1(Some(token)) => {
-                                        let sha1 = self.hash.operate_algorithm(token);
-                                        sha1.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha224(Some(token)) => {
-                                        let sha224 = self.hash.operate_algorithm(token);
-                                        sha224.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha256(Some(token)) => {
-                                        let sha256 = self.hash.operate_algorithm(token);
-                                        sha256.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha384(Some(token)) => {
-                                        let sha384 = self.hash.operate_algorithm(token);
-                                        sha384.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha512_224(Some(token)) => {
-                                        let sha512_224 = self.hash.operate_algorithm(token);
-                                        sha512_224.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha512_256(Some(token)) => {
-                                        let sha512_256 = self.hash.operate_algorithm(token);
-                                        sha512_256.add_mut_data(lease_buf)
-                                    }
-                                    DigestMode::Sha512(Some(token)) => {
-                                        let sha512 = self.hash.operate_algorithm(token);
-                                        sha512.add_mut_data(lease_buf)
-                                    }
-                                    _ => Err((ErrorCode::FAIL, lease_buf)),
-                                } {
-                                    self.data_buffer.replace(buf.take());
-                                    Err(e)
-                                } else {
-                                    Ok(())
-                                }
-                            })
+                    .get_readonly_processbuffer(allow_number)
+                    .and_then(|buffer| {
+                        buffer.enter(|source| {
+                            if source.len() != destination.len() {
+                                return Err(ErrorCode::SIZE);
+                            }
+                            source.copy_to_slice(destination);
+                            Ok(())
                         })
                     })
                     .unwrap_or(Err(ErrorCode::RESERVE))
             })
-            .unwrap_or_else(|err| Err(err.into()))
+            .unwrap_or_else(|error| Err(error.into()))
     }
 
-    fn check_queue(&self) -> Result<(), ErrorCode> {
-        // Check if there is already something using the SHA hasher.
-        if self.processid.is_some() {
-            // Something is using the hasher. That is fine, we have nothing to do,
-            // pending operations will run later.
-            Ok(())
-        } else {
-            let ready_app = self.apps.iter().find_map(|appiter| {
-                let possible_process = appiter.processid();
-                let ready = appiter.enter(|app, _| app.operation.is_some());
-                if ready { Some(possible_process) } else { None }
-            });
-
-            if let Some(ready_app) = ready_app {
-                self.run(ready_app)
-            } else {
-                // Nothing to do
-                Ok(())
-            }
-        }
-    }
-
-    // Check queue, but instead of returning an error, trigger an upcall.
-    fn check_queue_async(&self) {
-        if let Err(e) = self.check_queue() {
-            self.processid.take().map(|processid| {
-                let _ = self.apps.enter(processid, |app, kernel_data| {
-                    let upcall_num = match app.operation.get() {
-                        Some(AppOp::Hash) | None => upcall::HASH,
-                    };
-                    app.operation.clear();
-
-                    let _ =
-                        kernel_data.schedule_upcall(upcall_num, (into_statuscode(e.into()), 0, 0));
-                });
-            });
-        }
-    }
-}
-
-impl<'a, H: crypto::digest::DigestAny> crypto::digest::ClientDigestAny for ShaDriver<'a, H> {
-    // Because data needs to be copied from a userspace buffer into a kernel (RAM) one,
-    // we always pass mut data; this callback should never be invoked.
-    fn add_data_done(&self, _result: Result<(), ErrorCode>, _data: SubSlice<'static, u8>) {}
-
-    fn add_mut_data_done(&self, _result: Result<(), ErrorCode>, data: SubSliceMut<'static, u8>) {
-        // Unconditionally return our kernel buffer.
-        self.data_buffer.replace(data.take());
-
-        // Continue with the active process. If there is more data to add, do that.
-        // If all data has been added, then do the requested operation.
-        self.processid.map(|processid| {
-            self.apps
-                .enter(processid, |app, kernel_data| {
-                    // Check if we have more data to copy.
-                    let res = kernel_data
-                        .get_readonly_processbuffer(ro_allow::DATA)
-                        .and_then(|data| {
-                            data.enter(|data| {
-                                let remaining = data.len() - app.data_offset;
-
-                                if remaining > 0 {
-                                    // More data to add.
-                                    self.data_buffer.take().map_or(Err(ErrorCode::FAIL), |buf| {
-                                        let copy_len = core::cmp::min(remaining, buf.len());
-                                        let src_start = app.data_offset;
-                                        let src_end = src_start + copy_len;
-
-                                        let _ = data[src_start..src_end]
-                                            .copy_to_slice_or_err(&mut buf[0..copy_len]);
-
-                                        // Save how far into the buffer we are.
-                                        app.data_offset = src_end;
-
-                                        // Add data to the hasher.
-                                        let mut lease_buf = SubSliceMut::new(buf);
-                                        lease_buf.slice(0..copy_len);
-                                        self.sha.add_mut_data(lease_buf).and(Ok(true)).map_err(
-                                            |(e, buf)| {
-                                                self.sha.clear_data();
-                                                self.processid.clear();
-                                                self.data_buffer.replace(buf.take());
-                                                e
-                                            },
-                                        )
-                                    })
-                                } else {
-                                    Ok(false)
-                                }
-                            })
-                        })
-                        .unwrap_or_else(|err| err.into());
-
-                    // If we did have more data to copy, we will get `Ok(true)` and we
-                    // have nothing more to do. If we did not have more data to copy, we
-                    // will get `Ok(false)` and can move to the hash operation. If we
-                    // got an error, we do an upcall to the app.
-                    let _ = match res {
-                        Ok(false) => {
-                            match app.operation.get() {
-                                Some(AppOp::Hash) => {
-                                    // No more data to copy. Run the hash.
-                                    self.dest_buffer.take().map_or(Err(ErrorCode::FAIL), |buf| {
-                                        self.sha.run(buf).map_err(|(e, buf)| {
-                                            // Error, clear the processid and data
-                                            self.sha.clear_data();
-                                            self.processid.clear();
-                                            self.dest_buffer.replace(buf);
-                                            e
-                                        })
-                                    })
-                                }
-
-                                _ => Ok(()),
+    fn read_buffer(&self, allow_number: usize, destination: &mut [u8]) -> Result<usize, ErrorCode> {
+        let processid = self.active_processid()?;
+        self.apps
+            .enter(processid, |_, kernel_data| {
+                kernel_data
+                    .get_readonly_processbuffer(allow_number)
+                    .and_then(|buffer| {
+                        buffer.enter(|source| {
+                            if source.len() > destination.len() {
+                                return Err(ErrorCode::SIZE);
                             }
-                        }
-                        Ok(true) => Ok(()),
-                        Err(e) => Err(e),
-                    };
-                    if let Err(e) = res {
-                        // Notify the process.
-                        let upcall_num = match app.operation.get() {
-                            Some(AppOp::Hash) | None => upcall::HASH,
-                        };
-                        let _ = kernel_data
-                            .schedule_upcall(upcall_num, (into_statuscode(e.into()), 0, 0));
-                    }
-                })
-                .map_err(|err| {
-                    if err == kernel::process::Error::NoSuchApp
-                        || err == kernel::process::Error::InactiveApp
-                    {
-                        self.sha.clear_data();
-                        self.processid.clear();
-                    }
-                })
-        });
-
-        // Check for more work to do.
-        self.check_queue_async();
-    }
-
-    fn hash_done(
-        &self,
-        result: Result<(), ErrorCode>,
-        digest: &'static mut crypto::digest::utilities::DigestSlice,
-    ) {
-        // Clear the underlying hasher.
-        self.hash.clear_data();
-
-        // Do our best to copy the digest to the app.
-        //
-        // If the app is gone, or didn't give us a `DIGEST_LEN` buffer, we won't
-        // be able to copy the buffer. If the app still exists it will get an
-        // upcall either way.
-        self.processid.map(|processid| {
-            let _ = self.apps.enter(processid, |app, kernel_data| {
-                // Mark app operation as completed.
-                app.operation.clear();
-
-                let res = result.and_then(|()| {
-                    // Do our best to copy to the app's buffer. The app MUST have given
-                    // us a `DIGEST_LEN` length buffer to copy to. If not, the app won't
-                    // get the digest.
-                    kernel_data
-                        .get_readwrite_processbuffer(rw_allow::DEST)
-                        .and_then(|dest| {
-                            dest.mut_enter(|dest| {
-                                if dest.len() == DIGEST_LEN {
-                                    let _ = dest.copy_from_slice_or_err(digest);
-                                    Ok(())
-                                } else {
-                                    Err(ErrorCode::NOMEM)
-                                }
-                            })
+                            source.copy_to_slice(&mut destination[..source.len()]);
+                            Ok(source.len())
                         })
-                        .unwrap_or_else(|err| err.into())
-                });
-
-                // Notify the app the operation has finished.
-                // let _ = kernel_data.schedule_upcall(upcall::HASH, (into_statuscode(res), 0, 0));
-            });
-        });
-
-        // Unconditionally clear the current app. Either, the app still exists
-        // and we did the upcall, or the app is gone and we need to reset.
-        self.processid.clear();
-
-        // Be sure to replace our buffer.
-        self.dest_buffer.replace(digest);
-
-        // Check for more work to do.
-        self.check_queue_async();
+                    })
+                    .unwrap_or(Err(ErrorCode::RESERVE))
+            })
+            .unwrap_or_else(|error| Err(error.into()))
     }
 
-    fn verification_done(
+    fn read_at(
         &self,
-        result: Result<bool, ErrorCode>,
-        compare: &'static mut crypto::digest::utilities::DigestSlice,
-    ) {
+        allow_number: usize,
+        offset: usize,
+        destination: &mut [u8],
+    ) -> Result<usize, ErrorCode> {
+        let processid = self.active_processid()?;
+        self.apps
+            .enter(processid, |_, kernel_data| {
+                kernel_data
+                    .get_readonly_processbuffer(allow_number)
+                    .and_then(|buffer| {
+                        buffer.enter(|source| {
+                            if offset >= source.len() || destination.is_empty() {
+                                return Err(ErrorCode::SIZE);
+                            }
+                            let read_len = destination.len().min(source.len() - offset);
+                            source[offset..offset + read_len]
+                                .copy_to_slice(&mut destination[..read_len]);
+                            Ok(read_len)
+                        })
+                    })
+                    .unwrap_or(Err(ErrorCode::RESERVE))
+            })
+            .unwrap_or_else(|error| Err(error.into()))
+    }
+
+    fn read_input(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
+        let offset = self.input_offset.get();
+        let read = self.read_at(ro_allow::INPUT, offset, destination)?;
+        self.input_offset.set(offset + read);
+        Ok(read)
+    }
+
+    fn write_at(&self, allow_number: usize, offset: usize, source: &[u8]) -> Result<(), ErrorCode> {
+        let processid = self.active_processid()?;
+        self.apps
+            .enter(processid, |_, kernel_data| {
+                kernel_data
+                    .get_readwrite_processbuffer(allow_number)
+                    .and_then(|buffer| {
+                        buffer.mut_enter(|destination| {
+                            let end = offset.checked_add(source.len()).ok_or(ErrorCode::SIZE)?;
+                            if end > destination.len() {
+                                return Err(ErrorCode::SIZE);
+                            }
+                            destination[offset..end].copy_from_slice(source);
+                            Ok(())
+                        })
+                    })
+                    .unwrap_or(Err(ErrorCode::RESERVE))
+            })
+            .unwrap_or_else(|error| Err(error.into()))
+    }
+
+    fn write_output(&self, source: &[u8]) -> Result<(), ErrorCode> {
+        let offset = self.output_offset.get();
+        self.write_at(rw_allow::OUTPUT, offset, source)?;
+        self.output_offset.set(offset + source.len());
+        Ok(())
+    }
+
+    fn start_operation(&self, processid: ProcessId, mode_value: usize) -> Result<(), ErrorCode> {
+        if !matches!(self.state.get(), State::Idle) {
+            return Err(ErrorCode::BUSY);
+        }
+        if self.cbc_handle.is_none()
+            || self.ccm_handle.is_none()
+            || self.ctr_handle.is_none()
+            || self.ecb_handle.is_none()
+            || self.gcm_handle.is_none()
+        {
+            return Err(ErrorCode::OFF);
+        }
+
+        let mode = parse_mode(mode_value)?;
+        let operation = parse_operation(operation_value)?;
+        let (input_len, associated_data_len, tag_len) = self.apps.enter(
+            processid,
+            |_, kernel_data| -> Result<(usize, usize, usize), ErrorCode> {
+                if readonly_buffer_len(kernel_data, ro_allow::KEY)? != AES128_KEY_SIZE {
+                    return Err(ErrorCode::INVAL);
+                }
+                let input_len = readonly_buffer_len(kernel_data, ro_allow::INPUT)?;
+                let output_len = readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)?;
+                if output_len < input_len {
+                    return Err(ErrorCode::SIZE);
+                }
+
+                let associated_data_len = match mode {
+                    Mode::Ccm | Mode::Gcm => {
+                        readonly_buffer_len(kernel_data, ro_allow::ASSOCIATED_DATA)?
+                    }
+                    Mode::Cbc | Mode::Ctr | Mode::Ecb => 0,
+                };
+                let tag_len = match (mode, operation) {
+                    (Mode::Ccm | Mode::Gcm, Operation::Encrypt) => {
+                        readwrite_buffer_len(kernel_data, rw_allow::TAG)?
+                    }
+                    (Mode::Ccm | Mode::Gcm, Operation::Decrypt) => {
+                        readonly_buffer_len(kernel_data, ro_allow::TAG)?
+                    }
+                    _ => 0,
+                };
+
+                match mode {
+                    Mode::Cbc => {
+                        if readonly_buffer_len(kernel_data, ro_allow::IV)? != BLOCK_SIZE
+                            || readwrite_buffer_len(kernel_data, rw_allow::IV)? < BLOCK_SIZE
+                        {
+                            return Err(ErrorCode::INVAL);
+                        }
+                    }
+                    Mode::Ccm => {
+                        if !(7..=13).contains(&readonly_buffer_len(kernel_data, ro_allow::NONCE)?) {
+                            return Err(ErrorCode::INVAL);
+                        }
+                        parse_ccm_tag_length(tag_len)?;
+                    }
+                    Mode::Ctr => {
+                        let nonce_len = readonly_buffer_len(kernel_data, ro_allow::NONCE)?;
+                        let counter_len = readonly_buffer_len(kernel_data, ro_allow::COUNTER)?;
+                        if counter_len == 0 || nonce_len + counter_len != BLOCK_SIZE {
+                            return Err(ErrorCode::INVAL);
+                        }
+                    }
+                    Mode::Ecb => {}
+                    Mode::Gcm => {
+                        if readonly_buffer_len(kernel_data, ro_allow::IV)? != GCM_IV_SIZE {
+                            return Err(ErrorCode::INVAL);
+                        }
+                        parse_gcm_tag_length(tag_len)?;
+                    }
+                }
+                Ok((input_len, associated_data_len, tag_len))
+            },
+        )??;
+
+        self.operation.set(operation);
+        self.input_len.set(input_len);
+        self.associated_data_len.set(associated_data_len);
+        self.tag_len.set(tag_len);
+        self.input_offset.set(0);
+        self.associated_data_offset.set(0);
+        self.output_offset.set(0);
+        self.ccm_output_offset.set(0);
+        self.state.set(State::Waiting { processid, mode });
+
+        let result = match mode {
+            Mode::Cbc => self
+                .cbc_handle
+                .map_or(Err(ErrorCode::OFF), |handle| self.cbc_mutex.request(handle)),
+            Mode::Ccm => self
+                .ccm_handle
+                .map_or(Err(ErrorCode::OFF), |handle| self.ccm_mutex.request(handle)),
+            Mode::Ctr => self
+                .ctr_handle
+                .map_or(Err(ErrorCode::OFF), |handle| self.ctr_mutex.request(handle)),
+            Mode::Ecb => self
+                .ecb_handle
+                .map_or(Err(ErrorCode::OFF), |handle| self.ecb_mutex.request(handle)),
+            Mode::Gcm => self
+                .gcm_handle
+                .map_or(Err(ErrorCode::OFF), |handle| self.gcm_mutex.request(handle)),
+        };
+        if let Err(error) = result {
+            self.state.set(State::Idle);
+            return Err(error);
+        }
+        Ok(())
+    }
+
+    fn finish(&self, result: Result<(), ErrorCode>) {
+        let state = self.state.replace(State::Idle);
+        self.cbc.take();
+        self.ccm.take();
+        self.ctr.take();
+        self.ecb.take();
+        self.gcm.take();
+
+        let processid = match state {
+            State::Waiting { processid, .. } | State::Active { processid, .. } => processid,
+            State::Idle => return,
+        };
+        let output_len = self.output_offset.get();
+        let _ = self.apps.enter(processid, |_, kernel_data| {
+            let _ =
+                kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), output_len, 0));
+        });
     }
 }
 
-impl<'a, H: crypto::digest::DigestAny> SyscallDriver for ShaDriver<'a, H> {
+impl<H: crypto::digest::Digest> Client for Hash<H> {
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
+        self.read_input(input)
+    }
+
+    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
+        self.write_output(output)
+    }
+
+    fn hash_done(&self, result: Result<(), ErrorCode>) {
+        self.finish(result)
+    }
+}
+
+impl<H: crypto::digest::Digest> SyscallDriver for Hash<H> {
     /// Setup and run a SHA hash.
     ///
     /// We expect userspace to setup buffers for the data, and either the
@@ -436,8 +422,8 @@ impl<'a, H: crypto::digest::DigestAny> SyscallDriver for ShaDriver<'a, H> {
                 .apps
                 .enter(processid, |app, _kernel_data| match parse_mode(data1) {
                     Ok(mode) => {
-                        if let Ok(validated_mode) = self.hash.verify_mode(mode) {
-                            app.algorithm = validated_mode;
+                        if let Ok(_) = self.hash.verify_mode(mode) {
+                            app.algorithm.set(mode);
                             CommandReturn::success()
                         } else {
                             CommandReturn::failure(ErrorCode::NOSUPPORT)
@@ -446,36 +432,6 @@ impl<'a, H: crypto::digest::DigestAny> SyscallDriver for ShaDriver<'a, H> {
                     Err(e) => CommandReturn::failure(e),
                 })
                 .unwrap_or_else(|err| err.into()),
-
-            // hash
-            2 => {
-                let res = self.apps.enter(processid, |app, _kernel_data| {
-                    if app.operation.is_some() {
-                        // No more room in the queue, nowhere to store this request.
-                        Err(ErrorCode::NOMEM)
-                    } else {
-                        app.operation.set(AppOp::Hash);
-                        Ok(())
-                    }
-                });
-                match res {
-                    Ok(_) => {
-                        // If we were able to enqueue the operation, check if we can
-                        // actually run it. If there was an error starting it return the
-                        // error, otherwise return ok if the operation started successfully
-                        // or was queued for later. This also ensures we are not already in
-                        // the grant.
-                        self.check_queue()
-                            .inspect_err(|_| {
-                                let _ = self.apps.enter(processid, |app, _kernel_data| {
-                                    app.operation.clear();
-                                });
-                            })
-                            .into()
-                    }
-                    Err(e) => e.into(),
-                }
-            }
 
             // default
             _ => CommandReturn::failure(ErrorCode::NOSUPPORT),
