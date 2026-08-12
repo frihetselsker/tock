@@ -1,43 +1,50 @@
-use crate::{
-    ErrorCode,
-    hil::crypto::digest::utilities::*,
-    utilities::leasable_buffer::{SubSlice, SubSliceMut},
-};
+use crate::ErrorCode;
 
-pub mod utilities;
+#[derive(Clone, Copy)]
+pub enum Mode {
+    Md5,
+    Sha1,
+    Sha224,
+    Sha256,
+    Sha384,
+    Sha512_224,
+    Sha512_256,
+    Sha512,
+}
 
-pub trait DigestAny {
-    type DigestConcrete<A: Algotithm>: Digest<A>;
+impl Mode {
+    fn get_digest_len(&self) -> usize {
+        match self {
+            Mode::Md5 => 16,
+            Mode::Sha1 => 20,
+            Mode::Sha224 | Mode::Sha512_224 => 28,
+            Mode::Sha256 | Mode::Sha512_256 => 32,
+            Mode::Sha384 => 48,
+            Mode::Sha512 => 64,
+        }
+    }
+    fn get_block_size(&self) -> usize {
+        match self {
+            Mode::Md5 | Mode::Sha1 | Mode::Sha224 | Mode::Sha256 => 512 >> 3,
+            Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => 1024 >> 3,
+        }
+    }
+}
 
-    fn verify_mode(&self, mode: DigestMode) -> Result<DigestMode, ErrorCode>;
-    fn set_mode(&self, mode: &DigestMode, len: Option<usize>) -> Result<(), ErrorCode>;
+pub trait Digest {
+    fn hash(&self, mode: Mode, len: usize) -> Result<(), ErrorCode>;
     fn clear_data(&self);
-    fn operate_algorithm<A>(&self, token: A::Token) -> Self::DigestConcrete<A>
-    where
-        A: Algotithm;
-    fn set_client(&self, client: &dyn ClientDigestAny);
+    fn set_client(&self, client: &dyn Client);
 }
 
-pub trait Digest<A: Algotithm> {
-    fn add_data(
-        &self,
-        data: SubSlice<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSlice<'static, u8>)>;
-    fn add_mut_data(
-        &self,
-        data: SubSliceMut<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSliceMut<'static, u8>)>;
-    fn run(&self, digest: &'static A::Slice) -> Result<(), (ErrorCode, &'static A::Slice)>;
-    fn verify(&self, compare: &'static A::Slice) -> Result<(), (ErrorCode, &'static A::Slice)>;
+pub trait Client {
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode>;
+    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode>;
+    fn hash_done(&self, result: Result<(), ErrorCode>);
 }
 
-pub trait Hmac {
-    fn set_key(&self, key: &[u8]) -> Result<(), (ErrorCode, &[u8])>;
-}
+pub trait Hmac: Digest {}
 
-pub trait ClientDigestAny {
-    fn add_data_done(&self, result: Result<(), ErrorCode>, data: SubSlice<'static, u8>);
-    fn add_mut_data_done(&self, result: Result<(), ErrorCode>, data: SubSliceMut<'static, u8>);
-    fn hash_done(&self, result: Result<(), ErrorCode>, digest: &'static mut DigestSlice);
-    fn verification_done(&self, result: Result<bool, ErrorCode>, compare: &'static mut DigestSlice);
+pub trait HmacClient: Client {
+    fn read_key(&self, key: &[u8]) -> Result<(), ErrorCode>;
 }
