@@ -13,7 +13,7 @@ pub enum Mode {
 }
 
 impl Mode {
-    fn get_digest_len(&self) -> usize {
+    pub fn get_digest_len(&self) -> usize {
         match self {
             Mode::Md5 => 16,
             Mode::Sha1 => 20,
@@ -23,7 +23,7 @@ impl Mode {
             Mode::Sha512 => 64,
         }
     }
-    fn get_block_size(&self) -> usize {
+    pub fn get_block_size(&self) -> usize {
         match self {
             Mode::Md5 | Mode::Sha1 | Mode::Sha224 | Mode::Sha256 => 512 >> 3,
             Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => 1024 >> 3,

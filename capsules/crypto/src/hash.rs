@@ -7,7 +7,9 @@
 use core::cell::Cell;
 
 use capsules_core::driver;
-use capsules_core::driver_mutex::{DriverMutex, DriverMutexHandle, DriverMutexRef};
+use capsules_core::driver_mutex::{
+    DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
+};
 use kernel::errorcode::into_statuscode;
 use kernel::grant::{AllowRoCount, AllowRwCount, Grant, GrantKernelData, UpcallCount};
 use kernel::hil::crypto;
@@ -95,6 +97,7 @@ pub struct Hash<H: crypto::digest::Digest + 'static> {
     >,
     state: Cell<State>,
     input_len: Cell<usize>,
+    output_len: Cell<usize>,
     input_offset: Cell<usize>,
     // don't know if I need this
     output_offset: Cell<usize>,
@@ -117,6 +120,7 @@ impl<H: crypto::digest::Digest> Hash<H> {
             apps,
             state: Cell::new(State::Idle),
             input_len: Cell::new(0),
+            output_len: Cell::new(0),
             input_offset: Cell::new(0),
             output_offset: Cell::new(0),
         }
@@ -137,46 +141,6 @@ impl<H: crypto::digest::Digest> Hash<H> {
             State::Active { processid, .. } => Ok(processid),
             State::Idle | State::Waiting { .. } => Err(ErrorCode::RESERVE),
         }
-    }
-
-    fn read_exact(&self, allow_number: usize, destination: &mut [u8]) -> Result<(), ErrorCode> {
-        let processid = self.active_processid()?;
-        self.apps
-            .enter(processid, |_, kernel_data| {
-                kernel_data
-                    .get_readonly_processbuffer(allow_number)
-                    .and_then(|buffer| {
-                        buffer.enter(|source| {
-                            if source.len() != destination.len() {
-                                return Err(ErrorCode::SIZE);
-                            }
-                            source.copy_to_slice(destination);
-                            Ok(())
-                        })
-                    })
-                    .unwrap_or(Err(ErrorCode::RESERVE))
-            })
-            .unwrap_or_else(|error| Err(error.into()))
-    }
-
-    fn read_buffer(&self, allow_number: usize, destination: &mut [u8]) -> Result<usize, ErrorCode> {
-        let processid = self.active_processid()?;
-        self.apps
-            .enter(processid, |_, kernel_data| {
-                kernel_data
-                    .get_readonly_processbuffer(allow_number)
-                    .and_then(|buffer| {
-                        buffer.enter(|source| {
-                            if source.len() > destination.len() {
-                                return Err(ErrorCode::SIZE);
-                            }
-                            source.copy_to_slice(&mut destination[..source.len()]);
-                            Ok(source.len())
-                        })
-                    })
-                    .unwrap_or(Err(ErrorCode::RESERVE))
-            })
-            .unwrap_or_else(|error| Err(error.into()))
     }
 
     fn read_at(
@@ -245,106 +209,33 @@ impl<H: crypto::digest::Digest> Hash<H> {
         if !matches!(self.state.get(), State::Idle) {
             return Err(ErrorCode::BUSY);
         }
-        if self.cbc_handle.is_none()
-            || self.ccm_handle.is_none()
-            || self.ctr_handle.is_none()
-            || self.ecb_handle.is_none()
-            || self.gcm_handle.is_none()
-        {
+        if self.hash_handle.is_none() {
             return Err(ErrorCode::OFF);
         }
 
         let mode = parse_mode(mode_value)?;
-        let operation = parse_operation(operation_value)?;
-        let (input_len, associated_data_len, tag_len) = self.apps.enter(
+        let (input_len, output_len) = self.apps.enter(
             processid,
-            |_, kernel_data| -> Result<(usize, usize, usize), ErrorCode> {
-                if readonly_buffer_len(kernel_data, ro_allow::KEY)? != AES128_KEY_SIZE {
+            |_, kernel_data| -> Result<(usize, usize), ErrorCode> {
+                if readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)? != mode.get_digest_len() {
                     return Err(ErrorCode::INVAL);
                 }
                 let input_len = readonly_buffer_len(kernel_data, ro_allow::INPUT)?;
                 let output_len = readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)?;
-                if output_len < input_len {
-                    return Err(ErrorCode::SIZE);
-                }
 
-                let associated_data_len = match mode {
-                    Mode::Ccm | Mode::Gcm => {
-                        readonly_buffer_len(kernel_data, ro_allow::ASSOCIATED_DATA)?
-                    }
-                    Mode::Cbc | Mode::Ctr | Mode::Ecb => 0,
-                };
-                let tag_len = match (mode, operation) {
-                    (Mode::Ccm | Mode::Gcm, Operation::Encrypt) => {
-                        readwrite_buffer_len(kernel_data, rw_allow::TAG)?
-                    }
-                    (Mode::Ccm | Mode::Gcm, Operation::Decrypt) => {
-                        readonly_buffer_len(kernel_data, ro_allow::TAG)?
-                    }
-                    _ => 0,
-                };
-
-                match mode {
-                    Mode::Cbc => {
-                        if readonly_buffer_len(kernel_data, ro_allow::IV)? != BLOCK_SIZE
-                            || readwrite_buffer_len(kernel_data, rw_allow::IV)? < BLOCK_SIZE
-                        {
-                            return Err(ErrorCode::INVAL);
-                        }
-                    }
-                    Mode::Ccm => {
-                        if !(7..=13).contains(&readonly_buffer_len(kernel_data, ro_allow::NONCE)?) {
-                            return Err(ErrorCode::INVAL);
-                        }
-                        parse_ccm_tag_length(tag_len)?;
-                    }
-                    Mode::Ctr => {
-                        let nonce_len = readonly_buffer_len(kernel_data, ro_allow::NONCE)?;
-                        let counter_len = readonly_buffer_len(kernel_data, ro_allow::COUNTER)?;
-                        if counter_len == 0 || nonce_len + counter_len != BLOCK_SIZE {
-                            return Err(ErrorCode::INVAL);
-                        }
-                    }
-                    Mode::Ecb => {}
-                    Mode::Gcm => {
-                        if readonly_buffer_len(kernel_data, ro_allow::IV)? != GCM_IV_SIZE {
-                            return Err(ErrorCode::INVAL);
-                        }
-                        parse_gcm_tag_length(tag_len)?;
-                    }
-                }
-                Ok((input_len, associated_data_len, tag_len))
+                Ok((input_len, output_len))
             },
         )??;
 
-        self.operation.set(operation);
         self.input_len.set(input_len);
-        self.associated_data_len.set(associated_data_len);
-        self.tag_len.set(tag_len);
+        self.output_len.set(output_len);
         self.input_offset.set(0);
-        self.associated_data_offset.set(0);
         self.output_offset.set(0);
-        self.ccm_output_offset.set(0);
         self.state.set(State::Waiting { processid, mode });
 
-        let result = match mode {
-            Mode::Cbc => self
-                .cbc_handle
-                .map_or(Err(ErrorCode::OFF), |handle| self.cbc_mutex.request(handle)),
-            Mode::Ccm => self
-                .ccm_handle
-                .map_or(Err(ErrorCode::OFF), |handle| self.ccm_mutex.request(handle)),
-            Mode::Ctr => self
-                .ctr_handle
-                .map_or(Err(ErrorCode::OFF), |handle| self.ctr_mutex.request(handle)),
-            Mode::Ecb => self
-                .ecb_handle
-                .map_or(Err(ErrorCode::OFF), |handle| self.ecb_mutex.request(handle)),
-            Mode::Gcm => self
-                .gcm_handle
-                .map_or(Err(ErrorCode::OFF), |handle| self.gcm_mutex.request(handle)),
-        };
-        if let Err(error) = result {
+        if let Err(error) = self.hash_handle.map_or(Err(ErrorCode::OFF), |handle| {
+            self.hash_mutex.request(handle)
+        }) {
             self.state.set(State::Idle);
             return Err(error);
         }
@@ -353,11 +244,7 @@ impl<H: crypto::digest::Digest> Hash<H> {
 
     fn finish(&self, result: Result<(), ErrorCode>) {
         let state = self.state.replace(State::Idle);
-        self.cbc.take();
-        self.ccm.take();
-        self.ctr.take();
-        self.ecb.take();
-        self.gcm.take();
+        self.hash.take();
 
         let processid = match state {
             State::Waiting { processid, .. } | State::Active { processid, .. } => processid,
@@ -368,6 +255,31 @@ impl<H: crypto::digest::Digest> Hash<H> {
             let _ =
                 kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), output_len, 0));
         });
+    }
+}
+
+impl<H: crypto::digest::Digest> DriverMutexClient for Hash<H> {
+    fn ready(&'static self, resource: DriverMutexAny) {
+        let (processid, mode) = match self.state.get() {
+            State::Waiting { processid, mode } => (processid, mode),
+            State::Idle | State::Active { .. } => return,
+        };
+        self.state.set(State::Active { processid });
+
+        let result = match resource.downcast::<H>() {
+            Ok(hash) => {
+                hash.set_client(self);
+                self.hash.put(hash);
+                self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                    hash.hash(mode, self.input_len.get())
+                })
+            }
+            Err(_) => Err(ErrorCode::INVAL),
+        };
+
+        if let Err(error) = result {
+            self.finish(Err(error));
+        }
     }
 }
 
@@ -404,8 +316,7 @@ impl<H: crypto::digest::Digest> SyscallDriver for Hash<H> {
     /// ### `command_num`
     ///
     /// - `0`: driver check
-    /// - `1`: set_algorithm
-    /// - `2`: hash
+    /// - `1`: hash
     fn command(
         &self,
         command_num: usize,
@@ -417,21 +328,11 @@ impl<H: crypto::digest::Digest> SyscallDriver for Hash<H> {
             // check if present
             0 => CommandReturn::success(),
 
-            // set_algorithm
-            1 => self
-                .apps
-                .enter(processid, |app, _kernel_data| match parse_mode(data1) {
-                    Ok(mode) => {
-                        if let Ok(_) = self.hash.verify_mode(mode) {
-                            app.algorithm.set(mode);
-                            CommandReturn::success()
-                        } else {
-                            CommandReturn::failure(ErrorCode::NOSUPPORT)
-                        }
-                    }
-                    Err(e) => CommandReturn::failure(e),
-                })
-                .unwrap_or_else(|err| err.into()),
+            // start hash operation
+            1 => match self.start_operation(processid, data1) {
+                Ok(()) => CommandReturn::success(),
+                Err(e) => CommandReturn::failure(e),
+            },
 
             // default
             _ => CommandReturn::failure(ErrorCode::NOSUPPORT),
