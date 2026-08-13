@@ -102,7 +102,6 @@ pub struct Hash<H: crypto::digest::Digest + 'static> {
     input_len: Cell<usize>,
     output_len: Cell<usize>,
     input_offset: Cell<usize>,
-    // don't know if I need this
     output_offset: Cell<usize>,
 }
 
@@ -223,11 +222,11 @@ impl<H: crypto::digest::Digest> Hash<H> {
         let (input_len, output_len) = self.apps.enter(
             processid,
             |_, kernel_data| -> Result<(usize, usize), ErrorCode> {
-                if readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)? != mode.get_digest_len() {
+                let output_len = readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)?;
+                if output_len != mode.get_digest_len() {
                     return Err(ErrorCode::INVAL);
                 }
                 let input_len = readonly_buffer_len(kernel_data, ro_allow::INPUT)?;
-                let output_len = readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)?;
 
                 Ok((input_len, output_len))
             },
