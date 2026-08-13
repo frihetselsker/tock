@@ -13,10 +13,11 @@ use capsules_core::driver_mutex::{
 use kernel::errorcode::into_statuscode;
 use kernel::grant::{AllowRoCount, AllowRwCount, Grant, GrantKernelData, UpcallCount};
 use kernel::hil::crypto;
-use kernel::hil::crypto::digest::{Client, Mode};
+use kernel::hil::crypto::digest::{Client, Mode, TransferMode};
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
-use kernel::utilities::cells::{MapCell, OptionalCell};
+use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
+use kernel::utilities::leasable_buffer::SubSliceMut;
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
@@ -96,6 +97,8 @@ pub struct Hash<H: crypto::digest::Digest + 'static> {
         AllowRwCount<{ rw_allow::COUNT }>,
     >,
     state: Cell<State>,
+    transfer_mode: Cell<TransferMode>,
+    data_buffer: TakeCell<'static, [u8]>,
     input_len: Cell<usize>,
     output_len: Cell<usize>,
     input_offset: Cell<usize>,
@@ -106,6 +109,7 @@ pub struct Hash<H: crypto::digest::Digest + 'static> {
 impl<H: crypto::digest::Digest> Hash<H> {
     pub fn new(
         hash_mutex: &'static DriverMutex<H>,
+        data_buffer: &'static mut [u8],
         apps: Grant<
             (),
             UpcallCount<{ upcall::COUNT }>,
@@ -119,6 +123,8 @@ impl<H: crypto::digest::Digest> Hash<H> {
             hash: MapCell::empty(),
             apps,
             state: Cell::new(State::Idle),
+            transfer_mode: Cell::new(TransferMode::default()),
+            data_buffer: TakeCell::new(data_buffer),
             input_len: Cell::new(0),
             output_len: Cell::new(0),
             input_offset: Cell::new(0),
@@ -244,7 +250,10 @@ impl<H: crypto::digest::Digest> Hash<H> {
 
     fn finish(&self, result: Result<(), ErrorCode>) {
         let state = self.state.replace(State::Idle);
-        self.hash.take();
+        self.hash.take().and_then(|hash| {
+            hash.clear_data();
+            Some(hash)
+        });
 
         let processid = match state {
             State::Waiting { processid, .. } | State::Active { processid, .. } => processid,
@@ -255,6 +264,17 @@ impl<H: crypto::digest::Digest> Hash<H> {
             let _ =
                 kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), output_len, 0));
         });
+    }
+
+    fn handle_dma_buffer(&self) -> Result<SubSliceMut<'static, u8>, ErrorCode> {
+        let offset = self.input_offset.get();
+        self.data_buffer.take().map_or(Err(ErrorCode::FAIL), |buf| {
+            let bytes_read = self.read_at(ro_allow::INPUT, offset, buf)?;
+            offset.checked_add(bytes_read).ok_or(ErrorCode::SIZE)?;
+            let mut lease_buf = SubSliceMut::new(buf);
+            lease_buf.slice(0..bytes_read);
+            Ok(lease_buf)
+        })
     }
 }
 
@@ -272,6 +292,18 @@ impl<H: crypto::digest::Digest> DriverMutexClient for Hash<H> {
                 self.hash.put(hash);
                 self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
                     hash.hash(mode, self.input_len.get())
+                        .and_then(|transfer_mode| {
+                            self.transfer_mode.set(transfer_mode);
+                            if matches!(transfer_mode, TransferMode::DMA) {
+                                let lease_buf = self.handle_dma_buffer()?;
+                                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
+                                    self.data_buffer.replace(buf.take());
+                                    e
+                                })
+                            } else {
+                                Ok(())
+                            }
+                        })
                 })
             }
             Err(_) => Err(ErrorCode::INVAL),
@@ -290,6 +322,29 @@ impl<H: crypto::digest::Digest> Client for Hash<H> {
 
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
         self.write_output(output)
+    }
+
+    fn dma_buffer_done(
+        &self,
+        result: Result<(), ErrorCode>,
+        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMut<'static, u8>,
+    ) {
+        self.data_buffer.replace(dma_buffer.take());
+        if result.is_err() {
+            self.finish(result);
+        }
+        if self.input_offset.get() < self.input_len.get() {
+            let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                let lease_buf = self.handle_dma_buffer()?;
+                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
+                    self.data_buffer.replace(buf.take());
+                    e
+                })
+            });
+            if result.is_err() {
+                self.finish(result);
+            }
+        }
     }
 
     fn hash_done(&self, result: Result<(), ErrorCode>) {
