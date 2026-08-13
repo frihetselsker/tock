@@ -1,4 +1,12 @@
 use crate::ErrorCode;
+use crate::utilities::leasable_buffer::SubSliceMut;
+
+#[derive(Clone, Copy, Default)]
+pub enum TransferMode {
+    #[default]
+    DirectStream,
+    DMA,
+}
 
 #[derive(Clone, Copy)]
 pub enum Mode {
@@ -32,7 +40,11 @@ impl Mode {
 }
 
 pub trait Digest {
-    fn hash(&self, mode: Mode, len: usize) -> Result<(), ErrorCode>;
+    fn hash(&self, mode: Mode, len: usize) -> Result<TransferMode, ErrorCode>;
+    fn feed_dma_buffer(
+        &self,
+        dma_buffer: SubSliceMut<'static, u8>,
+    ) -> Result<(), (ErrorCode, SubSliceMut<'static, u8>)>;
     fn clear_data(&self);
     fn set_client(&self, client: &dyn Client);
 }
@@ -40,10 +52,18 @@ pub trait Digest {
 pub trait Client {
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode>;
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode>;
+    fn dma_buffer_done(&self, result: Result<(), ErrorCode>, dma_buffer: SubSliceMut<'static, u8>);
     fn hash_done(&self, result: Result<(), ErrorCode>);
 }
 
-pub trait Hmac: Digest {}
+pub trait Hmac: Digest {
+    fn authenticate(
+        &self,
+        mode: Mode,
+        input_len: usize,
+        key_length: usize,
+    ) -> Result<TransferMode, ErrorCode>;
+}
 
 pub trait HmacClient: Client {
     fn read_key(&self, key: &[u8]) -> Result<(), ErrorCode>;
