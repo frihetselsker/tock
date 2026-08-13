@@ -66,5 +66,5 @@ pub trait Hmac: Digest {
 }
 
 pub trait HmacClient: Client {
-    fn read_key(&self, key: &[u8]) -> Result<(), ErrorCode>;
+    fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode>;
 }
