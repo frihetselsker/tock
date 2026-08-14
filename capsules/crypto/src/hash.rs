@@ -97,7 +97,6 @@ pub struct Hash<H: crypto::digest::Digest + 'static> {
         AllowRwCount<{ rw_allow::COUNT }>,
     >,
     state: Cell<State>,
-    transfer_mode: Cell<TransferMode>,
     data_buffer: TakeCell<'static, [u8]>,
     input_len: Cell<usize>,
     output_len: Cell<usize>,
@@ -122,7 +121,6 @@ impl<H: crypto::digest::Digest> Hash<H> {
             hash: MapCell::empty(),
             apps,
             state: Cell::new(State::Idle),
-            transfer_mode: Cell::new(TransferMode::default()),
             data_buffer: TakeCell::new(data_buffer),
             input_len: Cell::new(0),
             output_len: Cell::new(0),
@@ -292,7 +290,6 @@ impl<H: crypto::digest::Digest> DriverMutexClient for Hash<H> {
                 self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
                     hash.hash(mode, self.input_len.get())
                         .and_then(|transfer_mode| {
-                            self.transfer_mode.set(transfer_mode);
                             if matches!(transfer_mode, TransferMode::DMA) {
                                 let lease_buf = self.handle_dma_buffer()?;
                                 hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {

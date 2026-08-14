@@ -365,7 +365,7 @@ impl<H: crypto::digest::Hmac> Client for Hmac<H> {
 impl<H: crypto::digest::Hmac> HmacClient for Hmac<H> {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
         let bytes_read = self.read_key(key)?;
-        if self.input_len.get() == self.input_offset.get()
+        if self.key_len.get() == self.key_offset.get()
             && matches!(self.transfer_mode.get(), TransferMode::DMA)
         {
             self.deferred_call.set();
