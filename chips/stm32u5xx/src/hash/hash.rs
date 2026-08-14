@@ -9,21 +9,20 @@ use core::cmp::min;
 use core::ops::Index;
 
 use crate::dma::{ChannelId, Dma};
-use crate::hash::md5::Md5Adapter;
+use crate::hash::regs::CR::Register;
 use crate::hash::regs::HashRegisters;
 use crate::hash::regs::{CR, IMR, SR, STR};
-use crate::hash::sha1::Sha1Adapter;
-use crate::hash::sha224::Sha224Adapter;
-use crate::hash::sha256::Sha256Adapter;
-use crate::hash::utils::{HashAdapter, HmacKey, Leftover, Mode, State};
+use crate::hash::utils::{MsgTracker, HashClient, HmacKey, Leftover, State};
 
 use cortexm33::dma_fence::CortexMDmaFence;
 use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
+use kernel::hil::crypto::digest::{Digest, Hmac, HmacClient, Mode, TransferMode};
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::utilities::dma_slice::{DmaSubSlice, DmaSubSliceMut, DmaSubSliceMutImmut};
 use kernel::utilities::leasable_buffer::{SubSlice, SubSliceMut, SubSliceMutImmut};
+use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
 
 const LONG_HMAC_KEY_LEN: usize = 64;
@@ -35,19 +34,17 @@ pub struct Hash<'a> {
     dma_buffer: MapCell<DmaSubSliceMutImmut<'static, u8>>,
     mode: Cell<Option<Mode>>,
     state: Cell<Option<State>>,
-    hmac_key: HmacKey,
-    data: Cell<Option<SubSliceMutImmut<'static, u8>>>,
-    leftover: Leftover,
-    verify: Cell<bool>,
+    // leftover: Leftover,
+    fifo_length: MsgTracker,
+    key_length: Cell<usize>,
     cancelled: Cell<bool>,
-    adapter: OptionalCell<HashAdapter<'a>>,
-    digest: OptionalCell<&'static mut [u8]>,
+    client: OptionalCell<HashClient<'a>>,
     deferred_call: DeferredCall,
 }
 
 impl<'a> Hash<'a> {
     // Associates a DMA controller and channels with the HASH driver
-    pub(crate) fn set_dma(hash: &'static Self, dma: &'a Dma, channel: ChannelId) {
+    pub fn set_dma(hash: &'static Self, dma: &'a Dma, channel: ChannelId) {
         hash.dma.set(dma);
         hash.dma_channel.set(Some(channel));
         dma.set_client(channel, hash);
@@ -131,13 +128,11 @@ impl Hash<'_> {
             dma_buffer: MapCell::empty(),
             mode: Cell::new(None),
             state: Cell::new(None),
-            data: Cell::new(None),
-            hmac_key: HmacKey::new(),
-            verify: Cell::new(false),
+            key_length: Cell::new(0),
             cancelled: Cell::new(false),
-            leftover: Leftover::new(),
-            digest: OptionalCell::empty(),
-            adapter: OptionalCell::empty(),
+            // leftover: Leftover::new(),
+            fifo_length: MsgTracker::new(),
+            client: OptionalCell::empty(),
             deferred_call: DeferredCall::new(),
         }
     }
@@ -164,8 +159,7 @@ impl Hash<'_> {
                 match (state, self.cancelled.get()) {
                     (State::HmacFinalize | State::Run, true) => {
                         regs.cr.modify(CR::INIT::SET);
-                        self.leftover.empty();
-                        self.adapter.map(|adapter| {
+                        self.leftover.reset();
                             if let Some(digest) = self.digest.take() {
                                 if self.verify.get() {
                                     match adapter {
@@ -987,27 +981,29 @@ impl Hash<'_> {
         Ok(())
     }
 
-    /// Starts the final digest computation with the set verification mode.
-    ///
-    /// Resembles the `verify()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn verify(
-        &self,
-        compare: &'static mut [u8],
-    ) -> Result<(), (ErrorCode, &'static mut [u8])> {
-        self.verify.set(true);
-        self.run(compare)
-    }
-
     /// Resets digest registers and empties FIFO.
-    pub(crate) fn clear_data(&self) {
+    pub fn clear_data(&self) {
         if self.state.get().is_none() {
             // No operation at the moment -> just reset the peripheral keeping the settings
+            self.
             self.regs.cr.modify(CR::INIT::SET);
         } else {
             // Set the cancellation flag and wait for the interrupt
             self.cancelled.set(true);
         }
     }
+
+    fn parse_mode(&self, mode: Mode) -> Result<FieldValue<u32, CR::Register>, ErrorCode> {
+        match mode {
+            Mode::Md5 => Ok(CR::ALGO::MD5),
+            Mode::Sha1 => Ok(CR::ALGO::SHA_1),
+            Mode::Sha224 => Ok(CR::ALGO::SHA2_224),
+            Mode::Sha256 => Ok(CR::ALGO::SHA2_256),
+            Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => Err(ErrorCode::NOSUPPORT),
+        }
+    }
+
+    fn parse_key_len(&self, key_size: usize)
 
     /// Set the peripheral mode to MD5.
     /// By default, the datawidth is 8 bits.
@@ -1193,55 +1189,6 @@ impl Hash<'_> {
     }
 }
 
-impl<'a> Hash<'a> {
-    /// Set an MD5 adapter for the core unit. Without setting it no client will get any callback.
-    ///
-    /// Returns an error if the core unit already owns an adapter.
-    pub fn set_md5_adapter(&self, adapter: &'a Md5Adapter<'a>) -> Result<(), ErrorCode> {
-        if self.adapter.is_none() {
-            self.adapter.set(HashAdapter::Md5(adapter));
-            Ok(())
-        } else {
-            Err(ErrorCode::BUSY)
-        }
-    }
-
-    /// Set a SHA1 adapter for the core unit. Without setting it no client will get any callback.
-    ///
-    /// Returns an error if the core unit already owns an adapter.
-    pub fn set_sha1_adapter(&self, adapter: &'a Sha1Adapter<'a>) -> Result<(), ErrorCode> {
-        if self.adapter.is_none() {
-            self.adapter.set(HashAdapter::Sha1(adapter));
-            Ok(())
-        } else {
-            Err(ErrorCode::BUSY)
-        }
-    }
-
-    /// Set a SHA224 adapter for the core unit. Without setting it no client will get any callback.
-    ///
-    /// Returns an error if the core unit already owns an adapter.
-    pub fn set_sha224_adapter(&self, adapter: &'a Sha224Adapter<'a>) -> Result<(), ErrorCode> {
-        if self.adapter.is_none() {
-            self.adapter.set(HashAdapter::Sha224(adapter));
-            Ok(())
-        } else {
-            Err(ErrorCode::BUSY)
-        }
-    }
-
-    /// Set a SHA256 adapter for the core unit. Without setting it no client will get any callback.
-    ///
-    /// Returns an error if the core unit already owns an adapter.
-    pub fn set_sha256_adapter(&self, adapter: &'a Sha256Adapter<'a>) -> Result<(), ErrorCode> {
-        if self.adapter.is_none() {
-            self.adapter.set(HashAdapter::Sha256(adapter));
-            Ok(())
-        } else {
-            Err(ErrorCode::BUSY)
-        }
-    }
-}
 
 impl crate::dma::DmaClient for Hash<'_> {
     fn transfer_done(&self, channel: ChannelId) {
@@ -1263,7 +1210,7 @@ impl DeferredCallClient for Hash<'_> {
                 SubSliceMutImmut::Immutable(mut b) => {
                     if self.cancelled.get() {
                         self.cancelled.set(false);
-                        self.leftover.empty();
+                        self.leftover.reset();
                         // Reset the hash core
                         self.regs.cr.modify(CR::INIT::SET);
                         b.reset();
@@ -1342,5 +1289,80 @@ impl DeferredCallClient for Hash<'_> {
 
     fn register(&'static self) {
         self.deferred_call.register(self);
+    }
+}
+
+impl Digest for Hash<'_> {
+    fn hash(&self, mode: Mode, len: usize) -> Result<TransferMode, ErrorCode> {
+        if self.state.get().is_some() {
+            return Err(ErrorCode::BUSY);
+        }
+
+        let mode_val = self.parse_mode(mode)?;
+        self.fifo_length.set(len)?;
+        self.state.set(Some(State::Add(false)));
+        self.mode.set(Some(mode));
+
+        self.regs.cr.modify(mode_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::CLEAR + CR::INIT::SET);
+
+        if self.dma.is_some() && self.dma_channel.get().is_some() {
+            Ok(TransferMode::DMA)
+        } else {
+            self.deferred_call.set();
+            Ok(TransferMode::DirectStream)
+        }
+    }
+
+    fn feed_dma_buffer(
+        &self,
+        dma_buffer: SubSliceMut<'static, u8>,
+    ) -> Result<(), (ErrorCode, SubSliceMut<'static, u8>)> {
+
+    }
+
+    fn clear_data(&self) {
+        todo!()
+    }
+
+    fn set_client(&self, client: &dyn kernel::hil::crypto::digest::Client) {
+        self.client.set(HashClient::Hash(client));
+    }
+}
+
+impl Hmac for Hash<'_> {
+    fn authenticate(
+        &self,
+        mode: Mode,
+        input_len: usize,
+        key_len: usize,
+    ) -> Result<TransferMode, ErrorCode> {
+        if self.state.get().is_some() {
+            return Err(ErrorCode::BUSY);
+        }
+
+        let mode_val = self.parse_mode(mode)?;
+        self.fifo_length.set(input_len)?;
+
+        let key_val = if key_len > LONG_HMAC_KEY_LEN {
+            CR::LKEY::SET
+        } else {
+            CR::LKEY::CLEAR
+        };
+        self.key_length.set(key_len);
+        self.regs.cr.modify(mode_val + key_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET + CR::INIT::SET);
+
+        self.state.set(Some(State::HmacInit));
+        self.mode.set(Some(mode));
+
+        if self.dma.is_some() && self.dma_channel.get().is_some() {
+            Ok(TransferMode::DMA)
+        } else {
+            self.deferred_call.set();
+            Ok(TransferMode::DirectStream)
+        }
+    }
+
+    fn set_hmac_client(&self, client: &dyn HmacClient) {
+        self.client.set(HashClient::Hmac(client));
     }
 }
