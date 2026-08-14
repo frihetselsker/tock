@@ -1,0 +1,255 @@
+// Licensed under the Apache License, Version 2.0 or the MIT License.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright Tock Contributors 2026.
+
+//! Test the implementation of Hash driver by performing a hash
+//! and checking it against the expected hash value.
+
+use core::cell::Cell;
+
+use capsules_core::driver_mutex::{
+    DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
+};
+use capsules_core::test::capsule_test::{CapsuleTest, CapsuleTestClient};
+use kernel::hil::crypto::digest::{Client, Mode, TransferMode};
+use kernel::hil::crypto::{self, digest};
+use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
+use kernel::utilities::leasable_buffer::SubSliceMut;
+use kernel::{ErrorCode, debug};
+
+pub struct TestHash<H: crypto::digest::Digest + 'static> {
+    hash_mutex: &'static DriverMutex<H>,
+    hash_handle: OptionalCell<DriverMutexHandle>,
+    hash: MapCell<DriverMutexRef<H>>,
+    mode: Cell<Mode>,
+    transfer_mode: Cell<TransferMode>,
+    input_buffer: TakeCell<'static, [u8]>,
+    output_buffer: TakeCell<'static, [u8]>,
+    input_len: Cell<usize>,
+    output_len: Cell<usize>,
+    input_offset: Cell<usize>,
+    output_offset: Cell<usize>,
+    client: OptionalCell<&'static dyn CapsuleTestClient>,
+}
+
+const CHUNK_SIZE: usize = 32;
+
+impl<H: crypto::digest::Digest> TestHash<H> {
+    pub fn new(
+        hash_mutex: &'static DriverMutex<H>,
+        mode: Mode,
+        input_buffer: &'static mut [u8],
+        output_buffer: &'static mut [u8],
+    ) -> TestHash<H> {
+        TestHash {
+            hash_mutex,
+            hash_handle: OptionalCell::empty(),
+            hash: MapCell::empty(),
+            mode: Cell::new(mode),
+            transfer_mode: Cell::new(TransferMode::default()),
+            input_buffer: TakeCell::new(input_buffer),
+            output_buffer: TakeCell::new(output_buffer),
+            input_len: Cell::new(0),
+            output_len: Cell::new(0),
+            input_offset: Cell::new(0),
+            output_offset: Cell::new(0),
+            client: OptionalCell::empty(),
+        }
+    }
+
+    pub fn register(&'static self) -> Result<(), ErrorCode> {
+        if self.hash_handle.is_some() {
+            return Err(ErrorCode::ALREADY);
+        }
+
+        let hash_handle = self.hash_mutex.add_client(self).ok_or(ErrorCode::NOMEM)?;
+        self.hash_handle.set(hash_handle);
+        Ok(())
+    }
+
+    fn read_input(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
+        self.input_buffer.map_or(Err(ErrorCode::FAIL), |source| {
+            let offset = self.input_offset.get();
+            if offset >= source.len() || destination.is_empty() {
+                panic!("HashTest: Either destination is empty or offset got bigger than the actual size of input buffer, offset: {}, input size: {}", offset, source.len());
+            }
+            let read_len = destination.len().min(source.len() - offset);
+            destination[..read_len].copy_from_slice(&source[offset..offset + read_len]);
+            self.input_offset.set(offset + read_len);
+            Ok(read_len)
+        })
+    }
+
+    fn write_output(&self, source: &[u8]) -> Result<(), ErrorCode> {
+        // The correct hash value will be checked here.
+        self.output_buffer
+            .map_or(Err(ErrorCode::FAIL), |destination| {
+                let offset = self.output_offset.get();
+                let end = offset.checked_add(source.len()).ok_or(ErrorCode::SIZE)?;
+                if end > destination.len() {
+                    panic!("HashTest: offset got bigger than the actual size of output buffer, offset: {}, input size: {}", offset, destination.len());
+                }
+                for i in 0..source.len() {
+                    if destination[offset + i] != source[i] {
+                        panic!(
+                            "HashTest: Verification failed at byte 0x{:02x}, index {}",
+                            destination[offset + i],
+                            offset + i
+                        );
+                    }
+                }
+
+                self.output_offset.set(offset + source.len());
+                Ok(())
+            })
+    }
+
+    pub fn run(&self) -> Result<(), ErrorCode> {
+        if self.hash_handle.is_none() {
+            return Err(ErrorCode::OFF);
+        }
+
+        let r = self.input_buffer.map_or(Err(ErrorCode::FAIL), |buf| {
+            self.input_len.set(buf.len());
+            Ok(())
+        });
+        if r.is_err() {
+            panic!("HashTest: input buffer is missing");
+        }
+        let r = self.output_buffer.map_or(Err(ErrorCode::FAIL), |buf| {
+            let len = buf.len();
+            if len != self.mode.get().get_digest_len() {
+                panic!("HashTest: output buffer is incomaptible with the set mode, expected: {} bytes, got: {} bytes", self.mode.get().get_digest_len(), len);
+            }
+            self.output_len.set(len);
+            Ok(())
+        });
+        if r.is_err() {
+            panic!("HashTest: output buffer is missing");
+        }
+        self.input_offset.set(0);
+        self.output_offset.set(0);
+
+        if let Err(error) = self.hash_handle.map_or(Err(ErrorCode::OFF), |handle| {
+            self.hash_mutex.request(handle)
+        }) {
+            panic!(
+                "HashTest: failed to request access to hash peripheral, error: {:?}",
+                error
+            );
+        }
+        Ok(())
+    }
+
+    fn finish(&self, result: Result<(), ErrorCode>) {
+        self.hash.take().and_then(|hash| {
+            hash.clear_data();
+            Some(hash)
+        });
+
+        if let Err(e) = result {
+            panic!(
+                "HashTest: verification passed, but there was an error from the driver side: {:?}",
+                e
+            );
+        } else {
+            debug!("HashTest: Verification was successful!");
+            self.client.map(|client| {
+                client.done(Ok(()));
+            });
+        }
+    }
+
+    fn handle_dma_buffer(&self) -> Result<SubSliceMut<'static, u8>, ErrorCode> {
+        let offset = self.input_offset.get();
+        self.input_buffer
+            .take()
+            .map_or(Err(ErrorCode::FAIL), |buf| {
+                let chunk_size = CHUNK_SIZE.min(buf.len() - offset);
+                offset.checked_add(chunk_size).ok_or(ErrorCode::SIZE)?;
+                let mut lease_buf = SubSliceMut::new(buf);
+                lease_buf.slice(offset..offset + chunk_size);
+                Ok(lease_buf)
+            })
+    }
+}
+
+impl<H: crypto::digest::Digest> DriverMutexClient for TestHash<H> {
+    fn ready(&'static self, resource: DriverMutexAny) {
+        let result = match resource.downcast::<H>() {
+            Ok(hash) => {
+                hash.set_client(self);
+                self.hash.put(hash);
+                self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                    hash.hash(self.mode.get(), self.input_len.get())
+                        .and_then(|transfer_mode| {
+                            self.transfer_mode.set(transfer_mode);
+                            if matches!(transfer_mode, TransferMode::DMA) {
+                                let lease_buf = self.handle_dma_buffer()?;
+                                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
+                                    self.input_buffer.replace(buf.take());
+                                    e
+                                })
+                            } else {
+                                Ok(())
+                            }
+                        })
+                })
+            }
+            Err(_) => Err(ErrorCode::INVAL),
+        };
+
+        if let Err(error) = result {
+            panic!("HashTest: operation didn't start, error: {:?}", error);
+        }
+    }
+}
+
+impl<H: crypto::digest::Digest> Client for TestHash<H> {
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
+        self.read_input(input)
+    }
+
+    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
+        self.write_output(output)
+    }
+
+    fn dma_buffer_done(
+        &self,
+        result: Result<(), ErrorCode>,
+        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMut<'static, u8>,
+    ) {
+        self.input_buffer.replace(dma_buffer.take());
+        if let Err(error) = result {
+            panic!(
+                "HashTest: peripheral didn't manage to send contents of DMA buffer, error: {:?}",
+                error
+            );
+        }
+        if self.input_offset.get() < self.input_len.get() {
+            let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                let lease_buf = self.handle_dma_buffer()?;
+                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
+                    self.input_buffer.replace(buf.take());
+                    e
+                })
+            });
+            if let Err(error) = result {
+                panic!(
+                    "HashTest: DMA buffer was failed to be sent, error: {:?}",
+                    error
+                );
+            }
+        }
+    }
+
+    fn hash_done(&self, result: Result<(), ErrorCode>) {
+        self.finish(result)
+    }
+}
+
+impl<H: digest::Digest> CapsuleTest for TestHash<H> {
+    fn set_client(&self, client: &'static dyn CapsuleTestClient) {
+        self.client.set(client);
+    }
+}
