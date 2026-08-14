@@ -61,8 +61,10 @@ pub trait Hmac: Digest {
         &self,
         mode: Mode,
         input_len: usize,
-        key_length: usize,
+        key_len: usize,
     ) -> Result<TransferMode, ErrorCode>;
+
+    fn set_hmac_client(&self, client: &dyn HmacClient);
 }
 
 pub trait HmacClient: Client {
