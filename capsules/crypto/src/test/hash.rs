@@ -14,7 +14,7 @@ use capsules_core::test::capsule_test::{CapsuleTest, CapsuleTestClient};
 use kernel::hil::crypto::digest::{Client, Mode, TransferMode};
 use kernel::hil::crypto::{self, digest};
 use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::SubSliceMut;
+use kernel::utilities::leasable_buffer::{SubSliceMut, SubSliceMutImmut};
 use kernel::{ErrorCode, debug};
 
 pub struct TestHash<H: crypto::digest::Digest + 'static> {
@@ -186,10 +186,14 @@ impl<H: crypto::digest::Digest> DriverMutexClient for TestHash<H> {
                             self.transfer_mode.set(transfer_mode);
                             if matches!(transfer_mode, TransferMode::DMA) {
                                 let lease_buf = self.handle_dma_buffer()?;
-                                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                                    self.input_buffer.replace(buf.take());
-                                    e
-                                })
+                                hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                                    .map_err(|(e, buf)| match buf {
+                                        SubSliceMutImmut::Immutable(_) => unreachable!(),
+                                        SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                                            self.input_buffer.replace(sub_slice_mut.take());
+                                            e
+                                        }
+                                    })
                             } else {
                                 Ok(())
                             }
@@ -217,28 +221,38 @@ impl<H: crypto::digest::Digest> Client for TestHash<H> {
     fn dma_buffer_done(
         &self,
         result: Result<(), ErrorCode>,
-        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMut<'static, u8>,
+        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMutImmut<'static, u8>,
     ) {
-        self.input_buffer.replace(dma_buffer.take());
-        if let Err(error) = result {
-            panic!(
-                "HashTest: peripheral didn't manage to send contents of DMA buffer, error: {:?}",
-                error
-            );
-        }
-        if self.input_offset.get() < self.input_len.get() {
-            let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
-                let lease_buf = self.handle_dma_buffer()?;
-                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                    self.input_buffer.replace(buf.take());
-                    e
-                })
-            });
+        if let SubSliceMutImmut::Mutable(s) = dma_buffer {
+            self.input_buffer.replace(s.take());
             if let Err(error) = result {
                 panic!(
-                    "HashTest: DMA buffer was failed to be sent, error: {:?}",
+                    "HashTest: peripheral didn't manage to send contents of DMA buffer, error: {:?}",
                     error
                 );
+            }
+            if self.input_offset.get() < self.input_len.get() {
+                let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                    let lease_buf = self.handle_dma_buffer()?;
+                    hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                        .map_err(|(e, buf)| {
+                            match buf {
+                                // Will not happen per se
+                                SubSliceMutImmut::Immutable(_) => unreachable!(),
+                                SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                                    self.input_buffer.replace(sub_slice_mut.take());
+                                }
+                            }
+
+                            e
+                        })
+                });
+                if let Err(error) = result {
+                    panic!(
+                        "HashTest: DMA buffer was failed to be sent, error: {:?}",
+                        error
+                    );
+                }
             }
         }
     }

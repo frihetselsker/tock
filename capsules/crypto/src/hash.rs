@@ -17,7 +17,7 @@ use kernel::hil::crypto::digest::{Client, Mode, TransferMode};
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
 use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::SubSliceMut;
+use kernel::utilities::leasable_buffer::{SubSliceMut, SubSliceMutImmut};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
@@ -292,10 +292,16 @@ impl<H: crypto::digest::Digest> DriverMutexClient for Hash<H> {
                         .and_then(|transfer_mode| {
                             if matches!(transfer_mode, TransferMode::DMA) {
                                 let lease_buf = self.handle_dma_buffer()?;
-                                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                                    self.data_buffer.replace(buf.take());
-                                    e
-                                })
+                                hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                                    .map_err(|(e, buf)| {
+                                        match buf {
+                                            SubSliceMutImmut::Immutable(_) => unreachable!(),
+                                            SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                                                self.data_buffer.replace(sub_slice_mut.take());
+                                            }
+                                        }
+                                        e
+                                    })
                             } else {
                                 Ok(())
                             }
@@ -323,22 +329,30 @@ impl<H: crypto::digest::Digest> Client for Hash<H> {
     fn dma_buffer_done(
         &self,
         result: Result<(), ErrorCode>,
-        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMut<'static, u8>,
+        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMutImmut<'static, u8>,
     ) {
-        self.data_buffer.replace(dma_buffer.take());
-        if result.is_err() {
-            self.finish(result);
-        }
-        if self.input_offset.get() < self.input_len.get() {
-            let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
-                let lease_buf = self.handle_dma_buffer()?;
-                hash.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                    self.data_buffer.replace(buf.take());
-                    e
-                })
-            });
+        if let SubSliceMutImmut::Mutable(s) = dma_buffer {
+            self.data_buffer.replace(s.take());
             if result.is_err() {
                 self.finish(result);
+            }
+            if self.input_offset.get() < self.input_len.get() {
+                let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
+                    let lease_buf = self.handle_dma_buffer()?;
+                    hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                        .map_err(|(e, buf)| {
+                            match buf {
+                                SubSliceMutImmut::Immutable(_) => unreachable!(),
+                                SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                                    self.data_buffer.replace(sub_slice_mut.take());
+                                }
+                            }
+                            e
+                        })
+                });
+                if result.is_err() {
+                    self.finish(result);
+                }
             }
         }
     }
