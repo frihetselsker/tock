@@ -18,7 +18,7 @@ use kernel::hil::crypto::digest::{Client, HmacClient, Mode, TransferMode};
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
 use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::SubSliceMut;
+use kernel::utilities::leasable_buffer::{SubSliceMut, SubSliceMutImmut};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
@@ -337,22 +337,30 @@ impl<H: crypto::digest::Hmac> Client for Hmac<H> {
     fn dma_buffer_done(
         &self,
         result: Result<(), ErrorCode>,
-        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMut<'static, u8>,
+        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMutImmut<'static, u8>,
     ) {
-        self.data_buffer.replace(dma_buffer.take());
-        if result.is_err() {
-            self.finish(result);
-        }
-        if self.input_offset.get() < self.input_len.get() {
-            let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-                let lease_buf = self.handle_dma_buffer()?;
-                hmac.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                    self.data_buffer.replace(buf.take());
-                    e
-                })
-            });
+        if let SubSliceMutImmut::Mutable(s) = dma_buffer {
+            self.data_buffer.replace(s.take());
             if result.is_err() {
                 self.finish(result);
+            }
+            if self.input_offset.get() < self.input_len.get() {
+                let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
+                    let lease_buf = self.handle_dma_buffer()?;
+                    hmac.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                        .map_err(|(e, buf)| {
+                            match buf {
+                                SubSliceMutImmut::Immutable(_) => unreachable!(),
+                                SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                                    self.data_buffer.replace(sub_slice_mut.take());
+                                }
+                            }
+                            e
+                        })
+                });
+                if result.is_err() {
+                    self.finish(result);
+                }
             }
         }
     }
@@ -427,10 +435,16 @@ impl<H: crypto::digest::Hmac> DeferredCallClient for Hmac<H> {
         // and key has already been read by the driver.
         let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
             let lease_buf = self.handle_dma_buffer()?;
-            hmac.feed_dma_buffer(lease_buf).map_err(|(e, buf)| {
-                self.data_buffer.replace(buf.take());
-                e
-            })
+            hmac.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
+                .map_err(|(e, buf)| {
+                    match buf {
+                        SubSliceMutImmut::Immutable(_) => unreachable!(),
+                        SubSliceMutImmut::Mutable(sub_slice_mut) => {
+                            self.data_buffer.replace(sub_slice_mut.take());
+                        }
+                    }
+                    e
+                })
         });
         if result.is_err() {
             self.finish(result);
