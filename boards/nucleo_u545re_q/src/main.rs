@@ -6,10 +6,11 @@
 #![no_std]
 #![no_main]
 
-use components::hmac_component_static;
+use components::{driver_mutex, hmac_component_static};
 use kernel::capabilities::{self, MemoryAllocationCapability};
 use kernel::component::Component;
 use kernel::debug::PanicResources;
+use kernel::hil::crypto::digest::Mode;
 use kernel::hil::gpio::{Configure, Output};
 use kernel::hil::symmetric_encryption::AES256;
 use kernel::platform::chip::Chip;
@@ -63,11 +64,12 @@ struct NucleoU545RE {
     dac: &'static capsules_extra::dac::Dac<'static>,
     gpio: &'static GpioDriver,
     crc: &'static capsules_extra::crc::CrcDriver<'static, stm32u545::crc::CRC<'static>>,
-    hmac: &'static capsules_extra::hmac::HmacDriver<
-        'static,
-        stm32u545::hash::sha256::Sha256Adapter<'static>,
-        32,
-    >,
+    // hmac: &'static capsules_extra::hmac::HmacDriver<
+    //     'static,
+    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
+    //     32,
+    // >,
+    test_hash: &'static capsules_crypto::test::hash::TestHash<stm32u545::hash::hash::Hash<'static>>,
     aes: &'static capsules_extra::symmetric_encryption::aes::AesDriver<
         'static,
         stm32u545::aes::ecb::Aes<'static, AES256>,
@@ -100,7 +102,7 @@ impl SyscallDriverLookup for NucleoU545RE {
             capsules_extra::dac::DRIVER_NUM => f(Some(self.dac)),
             capsules_core::gpio::DRIVER_NUM => f(Some(self.gpio)),
             capsules_extra::crc::DRIVER_NUM => f(Some(self.crc)),
-            capsules_extra::hmac::DRIVER_NUM => f(Some(self.hmac)),
+            // capsules_extra::hmac::DRIVER_NUM => f(Some(self.hmac)),
             capsules_extra::symmetric_encryption::aes::DRIVER_NUM => f(Some(self.aes)),
             capsules_core::spi_controller::DRIVER_NUM => f(Some(self.spi)),
             capsules_core::i2c_master::DRIVER_NUM => f(Some(self.i2c)),
@@ -305,13 +307,13 @@ unsafe fn start() -> (
 
     // Create an adapter for the HASH peripheral.
     // In this way it is ensured that only one mode is used by the peripheral.
-    let sha256 = static_init!(
-        stm32u545::hash::sha256::Sha256Adapter<'static>,
-        stm32u545::hash::sha256::Sha256Adapter::new(&periphs.hash)
-    );
+    // let sha256 = static_init!(
+    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
+    //     stm32u545::hash::sha256::Sha256Adapter::new(&periphs.hash)
+    // );
 
     // Adapter receives callbacks from the peripheral
-    let _ = periphs.hash.set_sha256_adapter(sha256);
+    // let _ = periphs.hash.set_sha256_adapter(sha256);
 
     // Kernel and Muxes
     let processes = components::process_array::ProcessArrayComponent::new()
@@ -525,17 +527,44 @@ unsafe fn start() -> (
         create_capability!(capabilities::MemoryAllocationCapability),
     )
     .finalize(components::gpio_component_static!(GpioHw));
-
-    let hmac = components::hmac::HmacComponent::new(
-        board_kernel,
-        capsules_extra::hmac::DRIVER_NUM,
-        sha256,
-        create_capability!(capabilities::MemoryAllocationCapability),
-    )
-    .finalize(hmac_component_static!(
-        stm32u545::hash::sha256::Sha256Adapter<'static>,
-        32
-    ));
+    // let hmac = components::hmac::HmacComponent::new(
+    //     board_kernel,
+    //     capsules_extra::hmac::DRIVER_NUM,
+    //     sha256,
+    //     create_capability!(capabilities::MemoryAllocationCapability),
+    // )
+    // .finalize(hmac_component_static!(
+    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
+    //     32
+    // ));
+    //
+    //
+    //
+    let input_buffer = static_init!([u8; 6], [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+    let output_buffer = static_init!(
+        [u8; 32],
+        [
+            0x71, 0x92, 0x38, 0x5c, 0x3c, 0x06, 0x05, 0xde, 0x55, 0xbb, 0x94, 0x76, 0xce, 0x1d,
+            0x90, 0x74, 0x81, 0x90, 0xec, 0xb3, 0x2a, 0x8e, 0xed, 0x7f, 0x52, 0x07, 0xb3, 0x0c,
+            0xf6, 0xa1, 0xfe, 0x89
+        ]
+    );
+    let hash_mutex = components::driver_mutex::DriverMutexComponent::new(&periphs.hash).finalize(
+        components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 2),
+    );
+    let test_hash = static_init!(
+        capsules_crypto::test::hash::TestHash<stm32u545::hash::hash::Hash<'static>>,
+        capsules_crypto::test::hash::TestHash::new(
+            hash_mutex,
+            Mode::Sha256,
+            input_buffer,
+            output_buffer
+        )
+    );
+    let r = test_hash.register();
+    if r.is_err() {
+        panic!("Didn't manage to register in the mutex")
+    }
 
     let crc = components::crc::CrcComponent::new(
         board_kernel,
@@ -574,7 +603,7 @@ unsafe fn start() -> (
             dac,
             gpio,
             crc,
-            hmac,
+            test_hash,
             aes: aes_driver,
             spi,
             date_time,
@@ -626,6 +655,10 @@ pub unsafe fn main() {
     let main_loop_capability = create_capability!(capabilities::MainLoopCapability);
 
     let (board_kernel, platform, chip) = start();
+    let r = platform.test_hash.run();
+    if r.is_err() {
+        panic!("Test hasn't started, error: {:?}", r)
+    }
     // Hand over control to the Tock Kernel Loop
     board_kernel.kernel_loop::<NucleoU545RE, ChipHw, { NUM_PROCS as u8 }>(
         platform,

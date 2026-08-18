@@ -8,29 +8,59 @@ use core::cell::Cell;
 
 use kernel::ErrorCode;
 use kernel::hil::crypto::digest::{Client, HmacClient};
-use kernel::utilities::cells::MapCell;
-use kernel::utilities::leasable_buffer::SubSliceMut;
-
-const MAX_HMAC_KEY_LEN: usize = 128;
+use kernel::utilities::leasable_buffer::SubSliceMutImmut;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum State {
-    Add(bool),
-    PreRun,
-    Run,
-    HmacInit,
-    HmacPreAuth,
-    HmacPostAuth,
-    HmacFinalize,
+    Add(usize, DataType),
+    Run(bool, DataType),
 }
 
+impl State {
+    pub(crate) fn update(self, updated_len: Option<usize>) -> Option<Self> {
+        match (self, updated_len) {
+            (State::Run(true, DataType::InnerKey), Some(len)) => {
+                Some(State::Add(len, DataType::Input))
+            }
+            (State::Run(true, DataType::Input), Some(len)) => {
+                Some(State::Add(len, DataType::OuterKey))
+            }
+            (State::Run(false, data_type), None) => Some(State::Run(true, data_type)),
+            (State::Add(0, datatype), _) | (State::Add(_, datatype), Some(0)) => {
+                Some(State::Run(false, datatype))
+            }
+            (State::Add(_, datatype), Some(len)) => Some(State::Add(len, datatype)),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn get_datatype(&self) -> &DataType {
+        match self {
+            State::Add(_, data_type) => data_type,
+            State::Run(_, data_type) => data_type,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum DataType {
+    Input,
+    InnerKey,
+    OuterKey,
+}
+
+#[derive(Clone, Copy)]
 pub(crate) enum HashClient<'a> {
     Hash(&'a dyn Client),
     Hmac(&'a dyn HmacClient),
 }
 
 impl<'a> Client for HashClient<'a> {
-    fn dma_buffer_done(&self, result: Result<(), ErrorCode>, dma_buffer: SubSliceMut<'static, u8>) {
+    fn dma_buffer_done(
+        &self,
+        result: Result<(), ErrorCode>,
+        dma_buffer: SubSliceMutImmut<'static, u8>,
+    ) {
         match self {
             HashClient::Hash(client) => client.dma_buffer_done(result, dma_buffer),
             HashClient::Hmac(client) => client.dma_buffer_done(result, dma_buffer),

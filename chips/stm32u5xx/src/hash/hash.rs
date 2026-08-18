@@ -6,26 +6,25 @@
 
 use core::cell::Cell;
 use core::cmp::min;
-use core::ops::Index;
 
 use crate::dma::{ChannelId, Dma};
-use crate::hash::regs::CR::Register;
 use crate::hash::regs::HashRegisters;
 use crate::hash::regs::{CR, IMR, SR, STR};
-use crate::hash::utils::{MsgTracker, HashClient, HmacKey, Leftover, State};
+use crate::hash::utils::{DataType, HashClient, Leftover, State};
 
 use cortexm33::dma_fence::CortexMDmaFence;
 use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
-use kernel::hil::crypto::digest::{Digest, Hmac, HmacClient, Mode, TransferMode};
+use kernel::hil::crypto::digest::{Client, Digest, Hmac, HmacClient, Mode, TransferMode};
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::utilities::dma_slice::{DmaSubSlice, DmaSubSliceMut, DmaSubSliceMutImmut};
-use kernel::utilities::leasable_buffer::{SubSlice, SubSliceMut, SubSliceMutImmut};
+use kernel::utilities::leasable_buffer::SubSliceMutImmut;
 use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
 
 const LONG_HMAC_KEY_LEN: usize = 64;
+const FIFO_SIZE: usize = 16 * 4;
 
 pub struct Hash<'a> {
     regs: StaticRef<HashRegisters>,
@@ -33,9 +32,10 @@ pub struct Hash<'a> {
     dma_channel: Cell<Option<ChannelId>>,
     dma_buffer: MapCell<DmaSubSliceMutImmut<'static, u8>>,
     mode: Cell<Option<Mode>>,
+    transfer_mode: Cell<TransferMode>,
     state: Cell<Option<State>>,
-    // leftover: Leftover,
-    fifo_length: MsgTracker,
+    leftover: Leftover,
+    data_length: Cell<usize>,
     key_length: Cell<usize>,
     cancelled: Cell<bool>,
     client: OptionalCell<HashClient<'a>>,
@@ -50,71 +50,62 @@ impl<'a> Hash<'a> {
         dma.set_client(channel, hash);
     }
 
-    fn start_dma_transfer(&self, dma: &'a Dma) -> Result<(), ()> {
-        if let Some(mut data) = self.data.take() {
-            let mut can_start = true;
-            if !self.leftover.is_empty() {
-                // Imagine there is a situation when the FIFO is full,
-                // and we cannot write more
-                let (count, start) = self.trim_subslice(&data, data.len());
-                data.slice(count..);
-                if let Some(s) = start {
-                    can_start = s;
-                }
-            }
+    fn start_dma_transfer(
+        &self,
+        dma: &'a Dma,
+        dma_channel: ChannelId,
+        mut dma_buffer: SubSliceMutImmut<'static, u8>,
+    ) -> Result<(), (ErrorCode, SubSliceMutImmut<'static, u8>)> {
+        let leftover_loaded = if !self.leftover.is_empty() {
+            // Imagine there is a situation when the FIFO is full,
+            // and no more data can be written
+            let (count, start) = self.trim_dma_subslice(&dma_buffer);
+            dma_buffer.slice(count..);
+            start
+        } else {
+            true
+        };
+        if leftover_loaded {
             // Truncate
-            let count = self.truncate_subslice(&data, data.len());
-            data.slice(..data.len() - count);
-            if data.len() == 0 {
-                if can_start {
-                    self.data.set(Some(data));
-                    self.deferred_call.set();
-                }
+            let count = self.truncate_dma_subslice(&dma_buffer);
+            dma_buffer.slice(..dma_buffer.len() - count);
+            if dma_buffer.len() == 0 {
                 return Ok(());
             }
 
             // Trigger HASH
-            if let Some(ch) = self.dma_channel.get() {
-                let regs = self.regs;
-                // Hardware fence
-                // Load data only if we have a channel
-                // Otherwise, it is meaningless
-                let fence = unsafe { CortexMDmaFence::new() };
-                // Convert subslice into DmaSlice
-                let (dma_slice, ptr, len) = match data {
-                    SubSliceMutImmut::Immutable(d) => {
-                        let dma_slice = DmaSubSlice::new(d, fence);
-                        // Extract the physical pointer and length for MMIO
-                        let ptr = dma_slice.as_ptr() as u32;
-                        let len = dma_slice.len() as u32;
-                        self.data.set(Some(data));
-                        (DmaSubSliceMutImmut::Immutable(dma_slice), ptr, len)
-                    }
-                    SubSliceMutImmut::Mutable(d) => {
-                        let dma_slice = unsafe { DmaSubSliceMut::new(d, fence) };
-                        // Extract the physical pointer and length for MMIO
-                        let ptr = dma_slice.as_mut_ptr() as u32;
-                        let len = dma_slice.len() as u32;
-                        (DmaSubSliceMutImmut::Mutable(dma_slice), ptr, len)
-                    }
-                };
-                // Save DmaSlice in the peripheral struct
-                self.dma_buffer.replace(dma_slice);
-                dma.setup(ch, crate::dma::DmaPeripheral::Hash, ptr, len);
-
-                regs.imr.modify(IMR::DINIE::SET);
-
-                if can_start {
-                    regs.cr.modify(CR::DMAE::SET);
+            let regs = self.regs;
+            // Hardware fence
+            // Load data only if we have a channel
+            // Otherwise, it is meaningless
+            let fence = unsafe { CortexMDmaFence::new() };
+            // Convert subslice into DmaSlice
+            let (dma_slice, ptr, len) = match dma_buffer {
+                SubSliceMutImmut::Immutable(d) => {
+                    let dma_slice = DmaSubSlice::new(d, fence);
+                    // Extract the physical pointer and length for MMIO
+                    let ptr = dma_slice.as_ptr() as u32;
+                    let len = dma_slice.len() as u32;
+                    (DmaSubSliceMutImmut::Immutable(dma_slice), ptr, len)
                 }
+                SubSliceMutImmut::Mutable(d) => {
+                    let dma_slice = unsafe { DmaSubSliceMut::new(d, fence) };
+                    // Extract the physical pointer and length for MMIO
+                    let ptr = dma_slice.as_mut_ptr() as u32;
+                    let len = dma_slice.len() as u32;
+                    (DmaSubSliceMutImmut::Mutable(dma_slice), ptr, len)
+                }
+            };
+            // Save DmaSlice in the peripheral struct
+            self.dma_buffer.replace(dma_slice);
+            dma.setup(dma_channel, crate::dma::DmaPeripheral::Hash, ptr, len);
 
-                Ok(())
-            } else {
-                Err(())
-            }
+            regs.imr.modify(IMR::DINIE::SET);
+            regs.cr.modify(CR::DMAE::SET);
+
+            Ok(())
         } else {
-            // No data found
-            Err(())
+            Err((ErrorCode::FAIL, dma_buffer))
         }
     }
 }
@@ -127,11 +118,13 @@ impl Hash<'_> {
             dma_channel: Cell::new(None),
             dma_buffer: MapCell::empty(),
             mode: Cell::new(None),
+            transfer_mode: Cell::new(TransferMode::DirectStream),
             state: Cell::new(None),
+            data_length: Cell::new(0),
             key_length: Cell::new(0),
             cancelled: Cell::new(false),
-            // leftover: Leftover::new(),
-            fifo_length: MsgTracker::new(),
+            leftover: Leftover::new(),
+            // fifo_length: MsgTracker::new(),
             client: OptionalCell::empty(),
             deferred_call: DeferredCall::new(),
         }
@@ -151,291 +144,50 @@ impl Hash<'_> {
         let regs = self.regs;
         // Disable all the interrupts
         regs.imr.modify(IMR::DCIE::CLEAR + IMR::DINIE::CLEAR);
-
-        if let Some(state) = self.state.get() {
-            // Has digest calculation completed?
-            if regs.sr.read(SR::DCIS) != 0 {
-                // If key is present, then we need to process it accordingly
-                match (state, self.cancelled.get()) {
-                    (State::HmacFinalize | State::Run, true) => {
-                        regs.cr.modify(CR::INIT::SET);
-                        self.leftover.reset();
-                            if let Some(digest) = self.digest.take() {
-                                if self.verify.get() {
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha1(sha1) => {
-                                            sha1.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha224(sha224) => {
-                                            sha224.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha256(sha256) => {
-                                            sha256.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
+        if let Some(client) = self.client.get() {
+            if self.cancelled.take() {
+                self.finish(Err(ErrorCode::CANCEL), client);
+            } else {
+                if let Some(state) = self.state.get() {
+                    // Is final digest ready?
+                    if regs.sr.is_set(SR::DCIS) {
+                        match state {
+                            State::Run(true, DataType::Input)
+                            | State::Run(true, DataType::OuterKey) => {
+                                self.finish(self.get_digest(), client);
+                            }
+                            _ => self.finish(Err(ErrorCode::FAIL), client),
+                        }
+                    }
+                    // Is FIFO ready?
+                    if regs.sr.is_set(SR::DINIS) {
+                        match state {
+                            State::Run(true, DataType::InnerKey) => {
+                                state.update(Some(self.data_length.get()));
+                            }
+                            State::Run(true, DataType::Input) => {
+                                state.update(Some(self.key_length.get()));
+                            }
+                            State::Run(false, data_type) => match self.run(data_type) {
+                                Ok(false) => self.deferred_call.set(),
+                                Ok(true) => self.state.set(state.update(None)),
+                                Err(e) => self.finish(Err(e), client),
+                            },
+                            State::Add(left, data_type) => {
+                                let bytes_loaded = self.load_data(client, data_type).unwrap_or(0);
+                                let updated_length = left.checked_sub(bytes_loaded);
+                                if updated_length.is_some() {
+                                    self.state.set(state.update(updated_length));
+                                    if !self.regs.sr.is_set(SR::BUSY) {
+                                        self.deferred_call.set();
                                     }
                                 } else {
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha1(sha1) => {
-                                            sha1.hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha224(sha224) => {
-                                            sha224
-                                                .hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha256(sha256) => {
-                                            sha256
-                                                .hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                    }
+                                    self.finish(Err(ErrorCode::FAIL), client);
                                 }
                             }
-                        });
-                    }
-                    (State::HmacFinalize | State::Run, false) => {
-                        // It's time to return data to the client
-                        self.return_data();
-                    }
-                    _ => (),
-                }
-            // Is data input buffer empty?
-            } else if regs.sr.read(SR::DINIS) != 0 {
-                match (state, self.cancelled.get()) {
-                    (State::Add | State::HmacInit | State::HmacPreAuth, true) => {
-                        self.cancelled.set(false);
-                        self.leftover.empty();
-                        regs.cr.modify(CR::INIT::SET);
-                        self.adapter.map(|adapter| {
-                            self.data.take().map(|buf| match buf {
-                                SubSliceMutImmut::Immutable(mut b) => {
-                                    b.reset();
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.add_data_done(Err(kernel::ErrorCode::CANCEL), b)
-                                        }
-
-                                        HashAdapter::Sha1(sha1) => {
-                                            sha1.add_data_done(Err(kernel::ErrorCode::CANCEL), b)
-                                        }
-
-                                        HashAdapter::Sha224(sha224) => {
-                                            sha224.add_data_done(Err(kernel::ErrorCode::CANCEL), b)
-                                        }
-
-                                        HashAdapter::Sha256(sha256) => {
-                                            sha256.add_data_done(Err(kernel::ErrorCode::CANCEL), b)
-                                        }
-                                    }
-                                }
-                                SubSliceMutImmut::Mutable(mut b) => {
-                                    b.reset();
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.add_mut_data_done(Err(kernel::ErrorCode::CANCEL), b)
-                                        }
-
-                                        HashAdapter::Sha1(sha1) => sha1
-                                            .add_mut_data_done(Err(kernel::ErrorCode::CANCEL), b),
-
-                                        HashAdapter::Sha224(sha224) => sha224
-                                            .add_mut_data_done(Err(kernel::ErrorCode::CANCEL), b),
-
-                                        HashAdapter::Sha256(sha256) => sha256
-                                            .add_mut_data_done(Err(kernel::ErrorCode::CANCEL), b),
-                                    }
-                                }
-                            })
-                        });
-                    }
-                    (
-                        State::Run | State::PreRun | State::HmacPostAuth | State::HmacFinalize,
-                        true,
-                    ) => {
-                        self.cancelled.set(false);
-                        self.leftover.empty();
-                        self.regs.cr.modify(CR::INIT::SET);
-                        self.adapter.map(|adapter| {
-                            if let Some(digest) = self.digest.take() {
-                                if self.verify.get() {
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha1(sha1) => {
-                                            sha1.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha224(sha224) => {
-                                            sha224.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                        HashAdapter::Sha256(sha256) => {
-                                            sha256.verification_done(
-                                                Err(kernel::ErrorCode::CANCEL),
-                                                digest,
-                                            );
-                                        }
-                                    }
-                                } else {
-                                    match adapter {
-                                        HashAdapter::Md5(md5) => {
-                                            md5.hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha1(sha1) => {
-                                            sha1.hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha224(sha224) => {
-                                            sha224
-                                                .hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                        HashAdapter::Sha256(sha256) => {
-                                            sha256
-                                                .hash_done(Err(kernel::ErrorCode::CANCEL), digest);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    (State::Add, false) => {
-                        if self.dma.is_some() {
-                            // Theoretically, there can be a situation
-                            // when the FIFO is already filled, but leftovers have to be written
-                            // The DMA transfer cannot start until all the previous data is loaded
-                            // to the peripheral so that calculated hash is not corrupted.
-                            if self.leftover.is_full() {
-                                regs.din.set(self.leftover.to_le());
-                                // It is the appropriate moment to start the DMA transfer
-                                regs.cr.modify(CR::DMAE::SET);
-                            }
-                        } else {
-                            if !self.data_progress() {
-                                self.deferred_call.set();
-                            } else {
-                                regs.imr.modify(IMR::DINIE::SET);
-                            }
+                            _ => self.finish(Err(ErrorCode::FAIL), client),
                         }
                     }
-                    (State::HmacInit | State::HmacPostAuth, false) => {
-                        self.load_key();
-                    }
-                    (State::PreRun, false) => {
-                        if !self.leftover.is_empty() {
-                            self.flush_leftover();
-                        } else {
-                            // No padding
-                            regs.str.modify(STR::NBLW.val(0));
-                        }
-                        // Enable interrupts
-                        if self.hmac_key.is_stored() {
-                            // Reset the index to prepare for the outer key loading
-                            self.hmac_key.reset_index();
-                            regs.imr.modify(IMR::DINIE::SET + IMR::DCIE::SET);
-                        } else {
-                            regs.imr.modify(IMR::DCIE::SET);
-                        }
-
-                        self.state.set(Some(State::Run));
-                        // Start the final digest calculation
-                        regs.str.modify(STR::DCAL::SET);
-                    }
-                    (State::Run, false) => {
-                        if !self.leftover.is_empty() {
-                            self.flush_leftover();
-
-                            if self.hmac_key.is_stored() {
-                                self.hmac_key.reset_index();
-                                regs.imr.modify(IMR::DINIE::SET + IMR::DCIE::SET);
-                            } else {
-                                regs.imr.modify(IMR::DCIE::SET);
-                            }
-
-                            regs.str.modify(STR::DCAL::SET);
-                        } else {
-                            self.state.set(Some(State::HmacPostAuth));
-                            self.load_key();
-                        }
-                    }
-                    (State::HmacPreAuth, false) => {
-                        self.state.set(Some(State::Add));
-
-                        if let Some(dma) = self.dma.get() {
-                            if self.start_dma_transfer(dma).is_err() {
-                                self.adapter.map(|adapter| {
-                                    self.data.take().map(|buf| match buf {
-                                        SubSliceMutImmut::Immutable(mut b) => {
-                                            b.reset();
-                                            match adapter {
-                                                HashAdapter::Md5(md5) => md5
-                                                    .add_data_done(Err(kernel::ErrorCode::FAIL), b),
-                                                HashAdapter::Sha1(sha1) => sha1
-                                                    .add_data_done(Err(kernel::ErrorCode::FAIL), b),
-                                                HashAdapter::Sha224(sha224) => sha224
-                                                    .add_data_done(Err(kernel::ErrorCode::FAIL), b),
-                                                HashAdapter::Sha256(sha256) => sha256
-                                                    .add_data_done(Err(kernel::ErrorCode::FAIL), b),
-                                            }
-                                        }
-                                        SubSliceMutImmut::Mutable(mut b) => {
-                                            b.reset();
-                                            match adapter {
-                                                HashAdapter::Md5(md5) => md5.add_mut_data_done(
-                                                    Err(kernel::ErrorCode::FAIL),
-                                                    b,
-                                                ),
-                                                HashAdapter::Sha1(sha1) => sha1.add_mut_data_done(
-                                                    Err(kernel::ErrorCode::FAIL),
-                                                    b,
-                                                ),
-                                                HashAdapter::Sha224(sha224) => sha224
-                                                    .add_mut_data_done(
-                                                        Err(kernel::ErrorCode::FAIL),
-                                                        b,
-                                                    ),
-                                                HashAdapter::Sha256(sha256) => sha256
-                                                    .add_mut_data_done(
-                                                        Err(kernel::ErrorCode::FAIL),
-                                                        b,
-                                                    ),
-                                            }
-                                        }
-                                    })
-                                });
-                            }
-                        } else {
-                            if !self.data_progress() {
-                                // we added all the data
-                                self.deferred_call.set();
-                            } else {
-                                regs.imr.modify(IMR::DINIE::SET);
-                            }
-                        }
-                    }
-                    _ => (),
                 }
             }
         }
@@ -446,209 +198,106 @@ impl Hash<'_> {
         // Disable the DMA trigger to release the channel
         regs.cr.modify(CR::DMAE::CLEAR);
         if let Some(dma_slice) = self.dma_buffer.take() {
-            if let Some(State::Add) = self.state.get() {
-                self.state.take();
-                match dma_slice {
-                    DmaSubSliceMutImmut::Immutable(b) => {
-                        let mut subslice = b.as_sub_slice();
-                        if self.cancelled.get() {
-                            self.cancelled.set(false);
-                            self.leftover.empty();
-                            self.regs.cr.modify(CR::INIT::SET);
-                            subslice.reset();
-                            self.adapter.map(|adapter| match adapter {
-                                HashAdapter::Md5(md5) => {
-                                    md5.add_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha1(sha1) => {
-                                    sha1.add_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha224(sha224) => {
-                                    sha224.add_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha256(sha256) => {
-                                    sha256.add_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                            });
-                        } else {
-                            // ugly line of code
-                            subslice.slice(0..0);
-                            self.adapter.map(|adapter| match adapter {
-                                HashAdapter::Md5(md5) => {
-                                    md5.add_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha1(sha1) => {
-                                    sha1.add_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha224(sha224) => {
-                                    sha224.add_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha256(sha256) => {
-                                    sha256.add_data_done(Ok(()), subslice);
-                                }
-                            });
-                        }
+            if let (Some(state @ State::Add(len, _)), Some(client)) =
+                (self.state.take(), self.client.get())
+            {
+                let mut subslice = match dma_slice {
+                    DmaSubSliceMutImmut::Immutable(dma_sub_slice) => {
+                        let subslice = dma_sub_slice.as_sub_slice();
+                        SubSliceMutImmut::Immutable(subslice)
                     }
-                    DmaSubSliceMutImmut::Mutable(b) => {
+                    DmaSubSliceMutImmut::Mutable(dma_sub_slice_mut) => {
                         let fence = unsafe { CortexMDmaFence::new() };
-                        let mut subslice = unsafe { b.take(fence) };
-                        if self.cancelled.get() {
-                            self.cancelled.set(false);
-                            self.leftover.empty();
-                            self.regs.cr.modify(CR::INIT::SET);
-                            subslice.reset();
-                            self.adapter.map(|adapter| match adapter {
-                                HashAdapter::Md5(md5) => {
-                                    md5.add_mut_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha1(sha1) => {
-                                    sha1.add_mut_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha224(sha224) => {
-                                    sha224.add_mut_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                                HashAdapter::Sha256(sha256) => {
-                                    sha256.add_mut_data_done(Err(ErrorCode::CANCEL), subslice);
-                                }
-                            });
-                        } else {
-                            // ugly line of code
-                            subslice.slice(0..0);
-                            self.adapter.map(|adapter| match adapter {
-                                HashAdapter::Md5(md5) => {
-                                    md5.add_mut_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha1(sha1) => {
-                                    sha1.add_mut_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha224(sha224) => {
-                                    sha224.add_mut_data_done(Ok(()), subslice);
-                                }
-                                HashAdapter::Sha256(sha256) => {
-                                    sha256.add_mut_data_done(Ok(()), subslice);
-                                }
-                            });
-                        }
+                        let subslice = unsafe { dma_sub_slice_mut.take(fence) };
+                        SubSliceMutImmut::Mutable(subslice)
                     }
-                }
-            }
-        }
-    }
-
-    /// Sends the callback with the digest to the adapter once either hashing or verification is done.
-    fn return_data(&self) {
-        self.adapter.map(|adapter| {
-            let regs = self.regs;
-            if let Some(digest) = self.digest.take() {
-                // We need to compare the result with the digest received before.
-                // If there is no operation, we react in no manner.
-                if let Some(mode) = self.mode.get() {
-                    if self.verify.get() {
-                        let mut equal = true;
-                        for i in 0..mode.get_digest_len() {
-                            let d = regs.hr[i].get().to_be_bytes();
-                            let idx = i * 4;
-                            if digest[idx + 0] != d[0]
-                                || digest[idx + 1] != d[1]
-                                || digest[idx + 2] != d[2]
-                                || digest[idx + 3] != d[3]
-                            {
-                                equal = false;
-                            }
+                };
+                if self.cancelled.take() {
+                    self.clear_data();
+                    subslice.reset();
+                    client.dma_buffer_done(Err(ErrorCode::CANCEL), subslice);
+                } else {
+                    // ugly line of code
+                    let updated_len = len.checked_sub(subslice.len());
+                    if let Some(len) = updated_len {
+                        subslice.slice(0..0);
+                        self.state.set(state.update(updated_len));
+                        if len == 0 {
+                            self.deferred_call.set();
                         }
-
-                        // Reset the peripheral
-                        regs.cr.modify(CR::INIT::SET);
-                        self.state.take();
-                        if self.hmac_key.is_stored() {
-                            self.hmac_key.reset_index();
-                        }
-                        self.verify.set(false);
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.verification_done(Ok(equal), digest);
-                            }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.verification_done(Ok(equal), digest);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.verification_done(Ok(equal), digest);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.verification_done(Ok(equal), digest);
-                            }
-                        }
+                        client.dma_buffer_done(Ok(()), subslice);
                     } else {
-                        for i in 0..mode.get_digest_len() {
-                            let d = regs.hr[i].get().to_be_bytes();
-                            let idx = i * 4;
-
-                            digest[idx + 0] = d[0];
-                            digest[idx + 1] = d[1];
-                            digest[idx + 2] = d[2];
-                            digest[idx + 3] = d[3];
-                        }
-
-                        // reset the peripheral
-                        regs.cr.modify(CR::INIT::SET);
-                        // release the peripheral
-                        self.state.take();
-                        if self.hmac_key.is_stored() {
-                            self.hmac_key.reset_index();
-                        }
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.hash_done(Ok(()), digest);
-                            }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.hash_done(Ok(()), digest);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.hash_done(Ok(()), digest);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.hash_done(Ok(()), digest);
-                            }
-                        }
+                        client.dma_buffer_done(Err(ErrorCode::FAIL), subslice);
                     }
                 }
             }
-        });
+        }
     }
 
-    /// Transfer bytes to FIFO for processing.
-    ///
-    /// Returns the number of bytes written.
-    fn process(&self, data: &dyn Index<usize, Output = u8>, count: usize) -> usize {
+    // Write digest back
+    fn get_digest(&self) -> Result<(), ErrorCode> {
         let regs = self.regs;
-        // Only 32-bit words can be written in the FIFO
-        let words_num = count / 4;
-        // Send the 32-bit words first
-        for i in 0..words_num {
-            if regs.sr.read(SR::NBWE) == 0 {
-                // FIFO is full, stop here
-                return i * 4;
+        if let (Some(mode), Some(client)) = (self.mode.get(), self.client.get()) {
+            for i in 0..mode.get_digest_len() {
+                let d = regs.hr[i].get().to_be_bytes();
+                let result = [d[0], d[1], d[2], d[3]];
+                client.write_output(&result)?;
             }
-            let data_idx = i * 4;
-            let d = u32::from_le_bytes([
-                data[data_idx + 0],
-                data[data_idx + 1],
-                data[data_idx + 2],
-                data[data_idx + 3],
-            ]);
+            Ok(())
+        } else {
+            Err(ErrorCode::FAIL)
+        }
+    }
 
-            regs.din.set(d);
-        }
-        // Handle leftover bytes
-        // by this moment, it is ensured that the leftover buffer is empty.
-        if !count.is_multiple_of(4) {
-            for i in 0..(count % 4) {
-                let data_idx = (count - (count % 4)) + i;
-                // Accumulate leftover bytes
-                self.leftover.add(data[data_idx]);
+    fn load_data(&self, client: HashClient<'_>, data_type: DataType) -> Result<usize, ErrorCode> {
+        let regs = self.regs;
+        let mut buffer = [0u8; FIFO_SIZE];
+        let bytes_read = match data_type {
+            DataType::Input => client.read_input(&mut buffer)?,
+            DataType::InnerKey | DataType::OuterKey => client.read_key(&mut buffer)?,
+        };
+        let bytes_written = {
+            let mut offset = 0;
+            // if leftover buffer is not empty, it should be written right now
+            if !self.leftover.is_empty() {
+                let bytes_to_load = min(self.leftover.bytes_left(), bytes_read);
+
+                for data in buffer[offset..bytes_to_load].iter() {
+                    self.leftover.add(*data);
+                }
+
+                if !regs.sr.is_set(SR::BUSY) {
+                    regs.din.set(self.leftover.to_le());
+                    offset += bytes_to_load
+                } else {
+                    return Ok(offset);
+                }
             }
-        }
-        count
+
+            let fifo_space = regs.sr.read(SR::NBWE) as usize;
+            let bytes_to_load = min(bytes_read - offset, fifo_space);
+            let (words_to_load, leftover_to_load) = (bytes_to_load / 4, bytes_to_load % 4);
+
+            // Send the 32-bit wordss
+            for data in buffer[offset..offset + (words_to_load * 4)].chunks_exact(4) {
+                let d = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+                regs.din.set(d);
+            }
+
+            offset += words_to_load * 4;
+
+            if leftover_to_load != 0 {
+                for data in buffer[offset..offset + leftover_to_load].iter() {
+                    // Accumulate leftover bytes
+                    self.leftover.add(*data);
+                }
+                offset += leftover_to_load;
+            }
+
+            Ok(offset)
+        };
+
+        bytes_written
     }
 
     /// Trim the subslice to get rid of the old leftover bytes.
@@ -657,15 +306,10 @@ impl Hash<'_> {
     /// Return the tuple of number of bytes written and boolean values showing
     /// if the write operation was successful and there is no need to wait for the interrupt
     /// when the FIFO is free.
-    fn trim_subslice(
-        &self,
-        data: &dyn Index<usize, Output = u8>,
-        count: usize,
-    ) -> (usize, Option<bool>) {
-        let bytes_to_write = min(self.leftover.bytes_left(), count);
-        let mut is_write_successful = None;
+    fn trim_dma_subslice(&self, dma_buffer: &SubSliceMutImmut<'_, u8>) -> (usize, bool) {
+        let bytes_to_write = min(self.leftover.bytes_left(), dma_buffer.len());
         for data_idx in 0..bytes_to_write {
-            self.leftover.add(data[data_idx]);
+            self.leftover.add(dma_buffer[data_idx]);
         }
         // Leftover buffer is full, it is time to empty it
         if self.leftover.is_full() {
@@ -673,324 +317,56 @@ impl Hash<'_> {
             if regs.sr.read(SR::NBWE) == 0 {
                 // New data cannot be written at the moment
                 // Wait for an interrupt when FIFO is empty
-                is_write_successful = Some(false);
+                return (bytes_to_write, false);
             } else {
                 regs.din.set(self.leftover.to_le());
                 // Leftover was written successfully
-                is_write_successful = Some(true);
+                return (bytes_to_write, true);
             }
         }
-        (bytes_to_write, is_write_successful)
+        (bytes_to_write, false)
     }
 
     /// Truncate the subslice to make its size divisible by 4.
     ///
     /// Fill the leftover buffer with bytes from the end of subslice.
     /// Return the number of bytes written.
-    fn truncate_subslice(&self, data: &dyn Index<usize, Output = u8>, count: usize) -> usize {
-        let bytes_written = count % 4;
+    fn truncate_dma_subslice(&self, dma_buffer: &SubSliceMutImmut<'_, u8>) -> usize {
+        let bytes_written = dma_buffer.len() % 4;
         for i in 0..bytes_written {
-            let data_idx = (count - bytes_written) + i;
-            self.leftover.add(data[data_idx]);
+            let data_idx = (dma_buffer.len() - bytes_written) + i;
+            self.leftover.add(dma_buffer[data_idx]);
         }
         bytes_written
     }
 
-    /// Track the status of data being loaded by software.
-    ///
-    /// Return true if processing more data, false if the buffer
-    /// is completely processed.
-    fn data_progress(&self) -> bool {
-        self.data.take().is_some_and(|buf| match buf {
-            SubSliceMutImmut::Immutable(mut b) => {
-                // If it is already empty, all the data has been already processed
-                if b.len() == 0 {
-                    self.data.set(Some(SubSliceMutImmut::Immutable(b)));
-                    false
-                } else {
-                    // If the leftover buffer is not empty,
-                    // it has to be filled with new bytes and written to the FIFO right now.
-                    //
-                    // Otherwise, go directly to writing 32-bit words
-                    if !self.leftover.is_empty() {
-                        let (count, is_write_successful) = self.trim_subslice(&b, b.len());
-                        b.slice(count..);
-                        // FIFO is full, wait for the interrupt when it is empty
-                        if let Some(false) = is_write_successful {
-                            self.data.set(Some(SubSliceMutImmut::Immutable(b)));
-                            return true;
-                        }
-                    }
-                    let count = self.process(&b, b.len());
-                    b.slice(count..);
-
-                    if b.len() == 0 {
-                        // Finished processing
-                        self.data.set(Some(SubSliceMutImmut::Immutable(b)));
-                        false
-                    } else {
-                        // Continue the process when the FIFO is ready
-                        self.data.set(Some(SubSliceMutImmut::Immutable(b)));
-                        true
-                    }
-                }
-            }
-            SubSliceMutImmut::Mutable(mut b) => {
-                // If it is already empty, all the data has been already processed
-                if b.len() == 0 {
-                    self.data.set(Some(SubSliceMutImmut::Mutable(b)));
-                    false
-                } else {
-                    if !self.leftover.is_empty() {
-                        // If the leftover buffer is not empty,
-                        // it has to be filled with new bytes and written to the FIFO right now.
-                        //
-                        // Otherwise, go directly to writing 32-bit words.
-                        let (count, is_write_successful) = self.trim_subslice(&b, b.len());
-                        b.slice(count..);
-                        // FIFO is full, wait for the interrupt once the FIFO is empty.
-                        if let Some(false) = is_write_successful {
-                            self.data.set(Some(SubSliceMutImmut::Mutable(b)));
-                            return true;
-                        }
-                    }
-                    let count = self.process(&b, b.len());
-                    b.slice(count..);
-                    if b.len() == 0 {
-                        // Finished processing
-                        self.data.set(Some(SubSliceMutImmut::Mutable(b)));
-                        false
-                    } else {
-                        // Continue the process when the FIFO is ready
-                        self.data.set(Some(SubSliceMutImmut::Mutable(b)));
-                        true
-                    }
-                }
-            }
-        })
-    }
-
-    /// Load the key to the FIFO
-    ///
-    /// Similar to `process()`, but without trimming and truncation
-    // Loaded only by software, no DMA support for key loading
-    fn load_key(&self) {
-        let regs = self.regs;
-
-        // Treat the key as simple data
-        self.hmac_key.key.map(|buf| {
-            let count = self.process(buf, self.hmac_key.left_to_load());
-            self.hmac_key.index.update(|idx| idx + count);
-        });
-        //  It's time to compute digest on it.
-        if self.hmac_key.left_to_load() == 0 {
-            self.hmac_key.reset_index();
-            regs.imr.modify(IMR::DINIE::SET);
-            if !self.leftover.is_empty() {
-                // FIXME(frihetselsker): handle better
-                // Are we sure that we can load more data
-                self.flush_leftover();
-            }
-
-            self.state.update(|s| match s {
-                // inner key
-                Some(State::HmacInit) => Some(State::HmacPreAuth),
-                // outer key
-                Some(State::HmacPostAuth) => Some(State::HmacFinalize),
-                _ => s,
-            });
-            // Set the mask for the key
-            regs.str
-                .modify(STR::NBLW.val(self.hmac_key.len() as u32 % 4));
-            // Start the digest calculation
-            regs.str.modify(STR::DCAL::SET);
-        } else {
-            // We need to process more
-            regs.imr.modify(IMR::DINIE::SET);
-        }
-    }
-
-    /// Flush the leftover.
-    ///
-    /// Write the leftover bytes to the FIFO and set the corresponding masking.
-    fn flush_leftover(&self) {
-        let regs = self.regs;
-        regs.str
-            .modify(STR::NBLW.val(((4 - self.leftover.bytes_left()) * 8) as u32));
-        regs.din.set(self.leftover.to_le());
-    }
-
-    pub(crate) fn add_data(
-        &self,
-        data: SubSlice<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSlice<'static, u8>)> {
-        // If there is a state set in the peripheral, return BUSY
-        if self.state.get().is_some() {
-            return Err((ErrorCode::BUSY, data));
-        }
-        // If neither mode nor data width is set, return error
-        if self.mode.get().is_none() {
-            return Err((ErrorCode::INVAL, data));
-        }
-        if data.len() == 0 {
-            return Err((ErrorCode::SIZE, data));
-        }
-
-        // If either data length is larger than the available size of the FIFO buffer
-        // or HMAC key is not loaded and the number of bytes left to load is larger as well,
-        // set an interrupt.
-        if data.len() > self.regs.sr.read(SR::NBWE) as usize
-            || (self.hmac_key.left_to_load() > self.regs.sr.read(SR::NBWE) as usize
-                && !self.hmac_key.is_loaded())
-        {
-            self.regs.imr.modify(IMR::DINIE::SET);
-        }
-
-        self.data.set(Some(SubSliceMutImmut::Immutable(data)));
-
-        // If we have key and it is not loaded yet, do load it now
-        if self.hmac_key.is_stored() && self.hmac_key.left_to_load() > 0 {
-            self.state.set(Some(State::HmacInit));
-            self.load_key();
-        } else {
-            self.state.set(Some(State::Add));
-
-            // If DMA is available, then do use it.
-            if let Some(dma) = self.dma.get() {
-                match self.start_dma_transfer(dma) {
-                    Ok(()) => return Ok(()),
-                    Err(()) => {
-                        if let Some(SubSliceMutImmut::Immutable(data)) = self.data.take() {
-                            return Err((ErrorCode::FAIL, data));
-                        }
-                    }
-                }
-            } else {
-                // Otherwise, act as usual
-                if !self.data_progress() {
-                    self.deferred_call.set();
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    pub(crate) fn add_mut_data(
-        &self,
-        data: SubSliceMut<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSliceMut<'static, u8>)> {
-        // If there is a state set in the peripheral, return BUSY
-        if self.state.get().is_some() {
-            return Err((ErrorCode::BUSY, data));
-        }
-        // If neither mode nor data width is set, return error
-        if self.mode.get().is_none() {
-            return Err((ErrorCode::INVAL, data));
-        }
-        if data.len() == 0 {
-            return Err((ErrorCode::SIZE, data));
-        }
-
-        // If either data length is larger than the available size of the FIFO buffer
-        // or HMAC key is not loaded and the number of bytes left to load is larger as well,
-        // set an interrupt.
-        if data.len() > self.regs.sr.read(SR::NBWE) as usize
-            || (self.hmac_key.left_to_load() > self.regs.sr.read(SR::NBWE) as usize
-                && !self.hmac_key.is_loaded())
-        {
-            self.regs.imr.modify(IMR::DINIE::SET);
-        }
-
-        self.data.set(Some(SubSliceMutImmut::Mutable(data)));
-
-        // If we have key and it is not loaded yet, do load it now
-        if self.hmac_key.is_stored() && self.hmac_key.left_to_load() > 0 {
-            self.state.set(Some(State::HmacInit));
-            self.load_key();
-        } else {
-            self.state.set(Some(State::Add));
-
-            // If DMA is available, then do use it.
-            if let Some(dma) = self.dma.get() {
-                match self.start_dma_transfer(dma) {
-                    Ok(()) => return Ok(()),
-                    Err(()) => {
-                        if let Some(SubSliceMutImmut::Mutable(data)) = self.data.take() {
-                            return Err((ErrorCode::FAIL, data));
-                        }
-                    }
-                }
-            } else {
-                // Otherwise, act as usual
-                if !self.data_progress() {
-                    self.deferred_call.set();
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     /// Starts the final digest computation.
     ///
-    /// Resembles the `run()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn run(
-        &self,
-        digest: &'static mut [u8],
-    ) -> Result<(), (ErrorCode, &'static mut [u8])> {
-        if self.state.get().is_some() {
-            return Err((ErrorCode::BUSY, digest));
-        }
+    /// Responsible only for starting the calculation
+    fn run(&self, data_type: DataType) -> Result<bool, ErrorCode> {
         // No computations without the mode set
         if self.mode.get().is_none() {
-            return Err((ErrorCode::INVAL, digest));
+            return Err(ErrorCode::INVAL);
         }
         let regs = self.regs;
-        // Set the padding
+
         if !self.leftover.is_empty() {
-            if regs.sr.read(SR::BUSY) == 0 {
-                // Peripheral is free -> flush the leftover bytes
-                self.flush_leftover();
+            if !regs.sr.is_set(SR::BUSY) {
+                regs.din.set(self.leftover.to_le());
             } else {
-                // Otherwise, it is busy, no leftover bytes can be written
-                // wait for an interrupt when FIFO is empty
-                regs.imr.modify(IMR::DINIE::SET);
-                self.state.set(Some(State::PreRun));
-                self.digest.set(digest);
-                return Ok(());
+                return Ok(false);
             }
-        } else {
-            // No padding
-            regs.str.modify(STR::NBLW.val(0));
-        }
-        // Enable interrupts
-        if self.hmac_key.is_stored() {
-            // Reset the index to prepare for the outer keyh loading
-            self.hmac_key.reset_index();
-            regs.imr.modify(IMR::DINIE::SET + IMR::DCIE::SET);
-        } else {
-            regs.imr.modify(IMR::DCIE::SET);
         }
 
-        // Start the final digest calculation
+        // Start the digest calculation
+        let valid_mask = match data_type {
+            DataType::Input => ((self.data_length.get() % 4) * 8) as u32,
+            DataType::InnerKey | DataType::OuterKey => ((self.key_length.get() % 4) * 8) as u32,
+        };
+        regs.str.modify(STR::NBLW.val(valid_mask));
         regs.str.modify(STR::DCAL::SET);
-        self.state.set(Some(State::Run));
-        self.digest.set(digest);
 
-        Ok(())
-    }
-
-    /// Resets digest registers and empties FIFO.
-    pub fn clear_data(&self) {
-        if self.state.get().is_none() {
-            // No operation at the moment -> just reset the peripheral keeping the settings
-            self.
-            self.regs.cr.modify(CR::INIT::SET);
-        } else {
-            // Set the cancellation flag and wait for the interrupt
-            self.cancelled.set(true);
-        }
+        Ok(true)
     }
 
     fn parse_mode(&self, mode: Mode) -> Result<FieldValue<u32, CR::Register>, ErrorCode> {
@@ -999,196 +375,18 @@ impl Hash<'_> {
             Mode::Sha1 => Ok(CR::ALGO::SHA_1),
             Mode::Sha224 => Ok(CR::ALGO::SHA2_224),
             Mode::Sha256 => Ok(CR::ALGO::SHA2_256),
-            Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => Err(ErrorCode::NOSUPPORT),
+            Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => {
+                Err(ErrorCode::NOSUPPORT)
+            }
         }
     }
 
-    fn parse_key_len(&self, key_size: usize)
-
-    /// Set the peripheral mode to MD5.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_md5()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_md5(&self) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(kernel::ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::MD5));
-        self.hmac_key.clear();
-        self.regs.cr.modify(
-            CR::ALGO::MD5
-                + CR::MODE::CLEAR
-                + CR::MDMAT::SET
-                + CR::DATATYPE::_8bitData
-                + CR::INIT::SET,
-        );
-        self.hmac_key.clear();
-        Ok(())
-    }
-
-    /// Set the peripheral mode to SHA1.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_sha1()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_sha1(&self) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(kernel::ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::SHA1));
-        self.hmac_key.clear();
-        self.regs.cr.modify(
-            CR::ALGO::SHA_1
-                + CR::MODE::CLEAR
-                + CR::MDMAT::SET
-                + CR::DATATYPE::_8bitData
-                + CR::INIT::SET,
-        );
-        Ok(())
-    }
-
-    /// Set the peripheral mode to SHA224.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_sha1()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_sha224(&self) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(kernel::ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::SHA2_224));
-        self.hmac_key.clear();
-        self.regs.cr.modify(
-            CR::ALGO::SHA2_224
-                + CR::MODE::CLEAR
-                + CR::MDMAT::SET
-                + CR::DATATYPE::_8bitData
-                + CR::INIT::SET,
-        );
-        Ok(())
-    }
-
-    /// Set the peripheral mode to SHA256.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_sha256()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_sha256(&self) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(kernel::ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::SHA2_256));
-        self.hmac_key.clear();
-        self.regs.cr.modify(
-            CR::ALGO::SHA2_256
-                + CR::MODE::CLEAR
-                + CR::MDMAT::SET
-                + CR::DATATYPE::_8bitData
-                + CR::INIT::SET,
-        );
-        Ok(())
-    }
-
-    /// Set the peripheral mode to HMAC MD5.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_hmacmd5()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_hmacmd5(&self, key: &[u8]) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::MD5));
-        self.hmac_key.set(key)?;
-        self.regs
-            .cr
-            .modify(CR::ALGO::MD5 + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET);
-        if key.len() > LONG_HMAC_KEY_LEN {
-            self.regs.cr.modify(CR::LKEY::SET + CR::INIT::SET);
-        } else {
-            self.regs.cr.modify(CR::LKEY::CLEAR + CR::INIT::SET);
-        }
-        Ok(())
-    }
-
-    /// Set the peripheral mode to HMAC SHA1.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_hmacsha1()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_hmacsha1(&self, key: &[u8]) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::SHA1));
-        self.hmac_key.set(key)?;
-        self.regs
-            .cr
-            .modify(CR::ALGO::SHA_1 + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET);
-        if key.len() > LONG_HMAC_KEY_LEN {
-            self.regs.cr.modify(CR::LKEY::SET + CR::INIT::SET);
-        } else {
-            self.regs.cr.modify(CR::LKEY::CLEAR + CR::INIT::SET);
-        }
-        Ok(())
-    }
-
-    /// Set the peripheral mode to HMAC SHA224.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_hmacsha224()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_hmacsha224(&self, key: &[u8]) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(ErrorCode::BUSY);
-        }
-        self.mode.set(Some(Mode::SHA2_224));
-        self.hmac_key.set(key)?;
-        self.regs
-            .cr
-            .modify(CR::ALGO::SHA2_224 + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET);
-        if key.len() > LONG_HMAC_KEY_LEN {
-            self.regs.cr.modify(CR::LKEY::SET + CR::INIT::SET);
-        } else {
-            self.regs.cr.modify(CR::LKEY::CLEAR + CR::INIT::SET);
-        }
-
-        Ok(())
-    }
-
-    /// Set the peripheral mode to HMAC SHA256.
-    /// By default, the datawidth is 8 bits.
-    ///
-    /// See more about datawidth at STM32 RM0456 Reference manual, pages 2016-2017.
-    ///
-    /// Resembles the `set_mode_hmacsha256()` contract defined in the Digest HIL for hashing.
-    pub(crate) fn set_mode_hmacsha256(&self, key: &[u8]) -> Result<(), ErrorCode> {
-        if self.state.get().is_some() {
-            return Err(ErrorCode::BUSY);
-        }
-        let regs = self.regs;
-        self.mode.set(Some(Mode::SHA2_256));
-        self.hmac_key.set(key)?;
-        regs.cr
-            .modify(CR::ALGO::SHA2_256 + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET);
-        if key.len() > LONG_HMAC_KEY_LEN {
-            regs.cr.modify(CR::LKEY::SET + CR::INIT::SET);
-        } else {
-            regs.cr.modify(CR::LKEY::CLEAR + CR::INIT::SET);
-        }
-
-        Ok(())
+    fn finish(&self, result: Result<(), ErrorCode>, client: HashClient<'_>) {
+        self.state.take();
+        self.clear_data();
+        client.hash_done(result);
     }
 }
-
 
 impl crate::dma::DmaClient for Hash<'_> {
     fn transfer_done(&self, channel: ChannelId) {
@@ -1202,89 +400,39 @@ impl crate::dma::DmaClient for Hash<'_> {
 
 impl DeferredCallClient for Hash<'_> {
     fn handle_deferred_call(&self) {
-        // A deferred call is handled if the data is loaded by software.
-        // It is called once the software has finished loading.
-        self.state.take();
-        self.adapter.map(|adapter| {
-            self.data.take().map(|buf| match buf {
-                SubSliceMutImmut::Immutable(mut b) => {
-                    if self.cancelled.get() {
-                        self.cancelled.set(false);
-                        self.leftover.reset();
-                        // Reset the hash core
-                        self.regs.cr.modify(CR::INIT::SET);
-                        b.reset();
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.add_data_done(Err(ErrorCode::CANCEL), b);
+        if let (Some(state), Some(client)) = (self.state.get(), self.client.get()) {
+            if !self.cancelled.take() {
+                let result = match state {
+                    State::Add(left, data_type) => {
+                        let bytes_loaded = self.load_data(client, data_type).unwrap_or(0);
+                        let updated_length = left.checked_sub(bytes_loaded);
+                        if updated_length.is_some() {
+                            self.state.set(state.update(updated_length));
+                            if !self.regs.sr.is_set(SR::BUSY) {
+                                self.deferred_call.set();
                             }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.add_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.add_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.add_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                        }
-                    } else {
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.add_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.add_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.add_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.add_data_done(Ok(()), b);
-                            }
+                            Ok(())
+                        } else {
+                            Err(ErrorCode::FAIL)
                         }
                     }
-                }
-                SubSliceMutImmut::Mutable(mut b) => {
-                    if self.cancelled.get() {
-                        self.cancelled.set(false);
-                        self.leftover.empty();
-                        // Reset the hash core
-                        self.regs.cr.modify(CR::INIT::SET);
-                        b.reset();
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.add_mut_data_done(Err(ErrorCode::CANCEL), b);
+                    State::Run(false, data_type) => {
+                        // no need for setting deferred call, wait for an interrupt
+                        self.run(data_type).map(|is_sent| {
+                            if !is_sent {
+                                self.deferred_call.set();
                             }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.add_mut_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.add_mut_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.add_mut_data_done(Err(ErrorCode::CANCEL), b);
-                            }
-                        }
-                    } else {
-                        match adapter {
-                            HashAdapter::Md5(md5) => {
-                                md5.add_mut_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha1(sha1) => {
-                                sha1.add_mut_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha224(sha224) => {
-                                sha224.add_mut_data_done(Ok(()), b);
-                            }
-                            HashAdapter::Sha256(sha256) => {
-                                sha256.add_mut_data_done(Ok(()), b);
-                            }
-                        }
+                        })
                     }
+                    State::Run(true, _) => Err(ErrorCode::FAIL),
+                };
+                if result.is_err() {
+                    self.finish(result, client);
                 }
-            })
-        });
+            } else {
+                self.finish(Err(ErrorCode::CANCEL), client);
+            }
+        }
     }
 
     fn register(&'static self) {
@@ -1299,15 +447,19 @@ impl Digest for Hash<'_> {
         }
 
         let mode_val = self.parse_mode(mode)?;
-        self.fifo_length.set(len)?;
-        self.state.set(Some(State::Add(false)));
+        self.data_length.set(len);
+        self.state.set(Some(State::Add(len, DataType::Input)));
         self.mode.set(Some(mode));
 
-        self.regs.cr.modify(mode_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::CLEAR + CR::INIT::SET);
+        self.regs.cr.modify(
+            mode_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::CLEAR + CR::INIT::SET,
+        );
 
-        if self.dma.is_some() && self.dma_channel.get().is_some() {
+        if self.dma.is_some() && self.dma_channel.get().is_some() && len >= 16 {
+            self.transfer_mode.set(TransferMode::DMA);
             Ok(TransferMode::DMA)
         } else {
+            self.transfer_mode.set(TransferMode::DirectStream);
             self.deferred_call.set();
             Ok(TransferMode::DirectStream)
         }
@@ -1315,16 +467,29 @@ impl Digest for Hash<'_> {
 
     fn feed_dma_buffer(
         &self,
-        dma_buffer: SubSliceMut<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSliceMut<'static, u8>)> {
-
+        dma_buffer: SubSliceMutImmut<'static, u8>,
+    ) -> Result<(), (ErrorCode, SubSliceMutImmut<'static, u8>)> {
+        if let (Some(dma), Some(dma_channel)) = (self.dma.get(), self.dma_channel.get()) {
+            self.start_dma_transfer(dma, dma_channel, dma_buffer)?;
+            Ok(())
+        } else {
+            Err((ErrorCode::INVAL, dma_buffer))
+        }
     }
 
     fn clear_data(&self) {
-        todo!()
+        if self.state.get().is_none() {
+            // No operation at the moment -> reset the peripheral keeping the settings
+            self.regs.cr.modify(CR::INIT::SET);
+            self.data_length.take();
+            self.key_length.take();
+        } else {
+            // Set the cancellation flag and wait for the interrupt / deferred call
+            self.cancelled.set(true);
+        }
     }
 
-    fn set_client(&self, client: &dyn kernel::hil::crypto::digest::Client) {
+    fn set_client(&self, client: &'static dyn kernel::hil::crypto::digest::Client) {
         self.client.set(HashClient::Hash(client));
     }
 }
@@ -1341,7 +506,6 @@ impl Hmac for Hash<'_> {
         }
 
         let mode_val = self.parse_mode(mode)?;
-        self.fifo_length.set(input_len)?;
 
         let key_val = if key_len > LONG_HMAC_KEY_LEN {
             CR::LKEY::SET
@@ -1349,20 +513,31 @@ impl Hmac for Hash<'_> {
             CR::LKEY::CLEAR
         };
         self.key_length.set(key_len);
-        self.regs.cr.modify(mode_val + key_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::SET + CR::INIT::SET);
+        self.data_length.set(input_len);
+        self.regs.cr.modify(
+            mode_val
+                + key_val
+                + CR::MDMAT::SET
+                + CR::DATATYPE::_8bitData
+                + CR::MODE::SET
+                + CR::INIT::SET,
+        );
 
-        self.state.set(Some(State::HmacInit));
+        self.state
+            .set(Some(State::Add(key_len, DataType::InnerKey)));
         self.mode.set(Some(mode));
 
-        if self.dma.is_some() && self.dma_channel.get().is_some() {
+        if self.dma.is_some() && self.dma_channel.get().is_some() && input_len >= 16 {
+            self.transfer_mode.set(TransferMode::DMA);
             Ok(TransferMode::DMA)
         } else {
+            self.transfer_mode.set(TransferMode::DirectStream);
             self.deferred_call.set();
             Ok(TransferMode::DirectStream)
         }
     }
 
-    fn set_hmac_client(&self, client: &dyn HmacClient) {
+    fn set_hmac_client(&self, client: &'static dyn HmacClient) {
         self.client.set(HashClient::Hmac(client));
     }
 }
