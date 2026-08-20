@@ -11,18 +11,16 @@ use capsules_core::driver_mutex::{
     DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
 };
 use capsules_core::test::capsule_test::{CapsuleTest, CapsuleTestClient};
-use kernel::hil::crypto::digest::{Client, Mode, TransferMode};
+use kernel::hil::crypto::digest::{Algorithm, Client};
 use kernel::hil::crypto::{self, digest};
 use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::{SubSliceMut, SubSliceMutImmut};
 use kernel::{ErrorCode, debug};
 
 pub struct TestHash<H: crypto::digest::Digest + 'static> {
     hash_mutex: &'static DriverMutex<H>,
     hash_handle: OptionalCell<DriverMutexHandle>,
     hash: MapCell<DriverMutexRef<H>>,
-    mode: Cell<Mode>,
-    transfer_mode: Cell<TransferMode>,
+    algorithm: Cell<Algorithm>,
     input_buffer: TakeCell<'static, [u8]>,
     output_buffer: TakeCell<'static, [u8]>,
     input_len: Cell<usize>,
@@ -32,12 +30,10 @@ pub struct TestHash<H: crypto::digest::Digest + 'static> {
     client: OptionalCell<&'static dyn CapsuleTestClient>,
 }
 
-const CHUNK_SIZE: usize = 32;
-
 impl<H: crypto::digest::Digest> TestHash<H> {
     pub fn new(
         hash_mutex: &'static DriverMutex<H>,
-        mode: Mode,
+        algorithm: Algorithm,
         input_buffer: &'static mut [u8],
         output_buffer: &'static mut [u8],
     ) -> TestHash<H> {
@@ -45,8 +41,7 @@ impl<H: crypto::digest::Digest> TestHash<H> {
             hash_mutex,
             hash_handle: OptionalCell::empty(),
             hash: MapCell::empty(),
-            mode: Cell::new(mode),
-            transfer_mode: Cell::new(TransferMode::default()),
+            algorithm: Cell::new(algorithm),
             input_buffer: TakeCell::new(input_buffer),
             output_buffer: TakeCell::new(output_buffer),
             input_len: Cell::new(0),
@@ -75,6 +70,7 @@ impl<H: crypto::digest::Digest> TestHash<H> {
             }
             let read_len = destination.len().min(source.len() - offset);
             destination[..read_len].copy_from_slice(&source[offset..offset + read_len]);
+            debug!("Capsule: new input offset: {}", offset + read_len);
             self.input_offset.set(offset + read_len);
             Ok(read_len)
         })
@@ -118,8 +114,8 @@ impl<H: crypto::digest::Digest> TestHash<H> {
         }
         let r = self.output_buffer.map_or(Err(ErrorCode::FAIL), |buf| {
             let len = buf.len();
-            if len != self.mode.get().get_digest_len() {
-                panic!("HashTest: output buffer is incomaptible with the set mode, expected: {} bytes, got: {} bytes", self.mode.get().get_digest_len(), len);
+            if len != self.algorithm.get().get_digest_len() {
+                panic!("HashTest: output buffer is incomaptible with the set mode, expected: {} bytes, got: {} bytes", self.algorithm.get().get_digest_len(), len);
             }
             self.output_len.set(len);
             Ok(())
@@ -149,7 +145,7 @@ impl<H: crypto::digest::Digest> TestHash<H> {
 
         if let Err(e) = result {
             panic!(
-                "HashTest: verification passed, but there was an error from the driver side: {:?}",
+                "HashTest: verification failed, there was an error from the driver side: {:?}",
                 e
             );
         } else {
@@ -158,19 +154,6 @@ impl<H: crypto::digest::Digest> TestHash<H> {
                 client.done(Ok(()));
             });
         }
-    }
-
-    fn handle_dma_buffer(&self) -> Result<SubSliceMut<'static, u8>, ErrorCode> {
-        let offset = self.input_offset.get();
-        self.input_buffer
-            .take()
-            .map_or(Err(ErrorCode::FAIL), |buf| {
-                let chunk_size = CHUNK_SIZE.min(buf.len() - offset);
-                offset.checked_add(chunk_size).ok_or(ErrorCode::SIZE)?;
-                let mut lease_buf = SubSliceMut::new(buf);
-                lease_buf.slice(offset..offset + chunk_size);
-                Ok(lease_buf)
-            })
     }
 }
 
@@ -181,23 +164,7 @@ impl<H: crypto::digest::Digest> DriverMutexClient for TestHash<H> {
                 hash.set_client(self);
                 self.hash.put(hash);
                 self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
-                    hash.hash(self.mode.get(), self.input_len.get())
-                        .and_then(|transfer_mode| {
-                            self.transfer_mode.set(transfer_mode);
-                            if matches!(transfer_mode, TransferMode::DMA) {
-                                let lease_buf = self.handle_dma_buffer()?;
-                                hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
-                                    .map_err(|(e, buf)| match buf {
-                                        SubSliceMutImmut::Immutable(_) => unreachable!(),
-                                        SubSliceMutImmut::Mutable(sub_slice_mut) => {
-                                            self.input_buffer.replace(sub_slice_mut.take());
-                                            e
-                                        }
-                                    })
-                            } else {
-                                Ok(())
-                            }
-                        })
+                    hash.hash(self.algorithm.get(), self.input_len.get())
                 })
             }
             Err(_) => Err(ErrorCode::INVAL),
@@ -216,45 +183,6 @@ impl<H: crypto::digest::Digest> Client for TestHash<H> {
 
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
         self.write_output(output)
-    }
-
-    fn dma_buffer_done(
-        &self,
-        result: Result<(), ErrorCode>,
-        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMutImmut<'static, u8>,
-    ) {
-        if let SubSliceMutImmut::Mutable(s) = dma_buffer {
-            self.input_buffer.replace(s.take());
-            if let Err(error) = result {
-                panic!(
-                    "HashTest: peripheral didn't manage to send contents of DMA buffer, error: {:?}",
-                    error
-                );
-            }
-            if self.input_offset.get() < self.input_len.get() {
-                let result = self.hash.map_or(Err(ErrorCode::FAIL), |hash| {
-                    let lease_buf = self.handle_dma_buffer()?;
-                    hash.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
-                        .map_err(|(e, buf)| {
-                            match buf {
-                                // Will not happen per se
-                                SubSliceMutImmut::Immutable(_) => unreachable!(),
-                                SubSliceMutImmut::Mutable(sub_slice_mut) => {
-                                    self.input_buffer.replace(sub_slice_mut.take());
-                                }
-                            }
-
-                            e
-                        })
-                });
-                if let Err(error) = result {
-                    panic!(
-                        "HashTest: DMA buffer was failed to be sent, error: {:?}",
-                        error
-                    );
-                }
-            }
-        }
     }
 
     fn hash_done(&self, result: Result<(), ErrorCode>) {

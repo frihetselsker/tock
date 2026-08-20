@@ -10,15 +10,13 @@ use capsules_core::driver;
 use capsules_core::driver_mutex::{
     DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
 };
-use kernel::deferred_call::{DeferredCall, DeferredCallClient};
 use kernel::errorcode::into_statuscode;
 use kernel::grant::{AllowRoCount, AllowRwCount, Grant, GrantKernelData, UpcallCount};
 use kernel::hil::crypto;
-use kernel::hil::crypto::digest::{Client, HmacClient, Mode, TransferMode};
+use kernel::hil::crypto::digest::{Algorithm, Client, HmacClient};
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
-use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
-use kernel::utilities::leasable_buffer::{SubSliceMut, SubSliceMutImmut};
+use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
@@ -48,20 +46,25 @@ mod rw_allow {
 #[derive(Clone, Copy)]
 enum State {
     Idle,
-    Waiting { processid: ProcessId, mode: Mode },
-    Active { processid: ProcessId },
+    Waiting {
+        processid: ProcessId,
+        algorithm: Algorithm,
+    },
+    Active {
+        processid: ProcessId,
+    },
 }
 
-fn parse_mode(value: usize) -> Result<Mode, ErrorCode> {
+fn parse_algorithm(value: usize) -> Result<Algorithm, ErrorCode> {
     match value {
-        0 => Ok(Mode::Md5),
-        1 => Ok(Mode::Sha1),
-        2 => Ok(Mode::Sha224),
-        3 => Ok(Mode::Sha256),
-        4 => Ok(Mode::Sha384),
-        5 => Ok(Mode::Sha512),
-        6 => Ok(Mode::Sha512_224),
-        7 => Ok(Mode::Sha512_256),
+        0 => Ok(Algorithm::Md5),
+        1 => Ok(Algorithm::Sha1),
+        2 => Ok(Algorithm::Sha224),
+        3 => Ok(Algorithm::Sha256),
+        4 => Ok(Algorithm::Sha384),
+        5 => Ok(Algorithm::Sha512),
+        6 => Ok(Algorithm::Sha512_224),
+        7 => Ok(Algorithm::Sha512_256),
         _ => Err(ErrorCode::INVAL),
     }
 }
@@ -97,21 +100,17 @@ pub struct Hmac<H: crypto::digest::Hmac + 'static> {
         AllowRwCount<{ rw_allow::COUNT }>,
     >,
     state: Cell<State>,
-    transfer_mode: Cell<TransferMode>,
-    data_buffer: TakeCell<'static, [u8]>,
     input_len: Cell<usize>,
     output_len: Cell<usize>,
     key_len: Cell<usize>,
     input_offset: Cell<usize>,
     output_offset: Cell<usize>,
     key_offset: Cell<usize>,
-    deferred_call: DeferredCall,
 }
 
 impl<H: crypto::digest::Hmac> Hmac<H> {
     pub fn new(
         hmac_mutex: &'static DriverMutex<H>,
-        data_buffer: &'static mut [u8],
         apps: Grant<
             (),
             UpcallCount<{ upcall::COUNT }>,
@@ -125,15 +124,12 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
             hmac: MapCell::empty(),
             apps,
             state: Cell::new(State::Idle),
-            transfer_mode: Cell::new(TransferMode::default()),
-            data_buffer: TakeCell::new(data_buffer),
             input_len: Cell::new(0),
             output_len: Cell::new(0),
             key_len: Cell::new(0),
             input_offset: Cell::new(0),
             output_offset: Cell::new(0),
             key_offset: Cell::new(0),
-            deferred_call: DeferredCall::new(),
         }
     }
 
@@ -223,7 +219,7 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
         Ok(())
     }
 
-    fn start_operation(&self, processid: ProcessId, mode_value: usize) -> Result<(), ErrorCode> {
+    fn start_operation(&self, processid: ProcessId, algo_value: usize) -> Result<(), ErrorCode> {
         if !matches!(self.state.get(), State::Idle) {
             return Err(ErrorCode::BUSY);
         }
@@ -231,16 +227,16 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
             return Err(ErrorCode::OFF);
         }
 
-        let mode = parse_mode(mode_value)?;
+        let algorithm = parse_algorithm(algo_value)?;
         let (input_len, output_len, key_len) = self.apps.enter(
             processid,
             |_, kernel_data| -> Result<(usize, usize, usize), ErrorCode> {
                 let output_len = readwrite_buffer_len(kernel_data, rw_allow::OUTPUT)?;
-                if output_len != mode.get_digest_len() {
+                if output_len != algorithm.get_digest_len() {
                     return Err(ErrorCode::INVAL);
                 }
                 let key_len = readonly_buffer_len(kernel_data, ro_allow::KEY)?;
-                if key_len > mode.get_block_size() {
+                if key_len > algorithm.get_block_size() {
                     return Err(ErrorCode::INVAL);
                 }
                 let input_len = readonly_buffer_len(kernel_data, ro_allow::INPUT)?;
@@ -255,7 +251,10 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
         self.input_offset.set(0);
         self.output_offset.set(0);
         self.key_offset.set(0);
-        self.state.set(State::Waiting { processid, mode });
+        self.state.set(State::Waiting {
+            processid,
+            algorithm,
+        });
 
         if let Err(error) = self.hmac_handle.map_or(Err(ErrorCode::OFF), |handle| {
             self.hmac_mutex.request(handle)
@@ -283,23 +282,15 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
                 kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), output_len, 0));
         });
     }
-
-    fn handle_dma_buffer(&self) -> Result<SubSliceMut<'static, u8>, ErrorCode> {
-        let offset = self.input_offset.get();
-        self.data_buffer.take().map_or(Err(ErrorCode::FAIL), |buf| {
-            let bytes_read = self.read_at(ro_allow::INPUT, offset, buf)?;
-            offset.checked_add(bytes_read).ok_or(ErrorCode::SIZE)?;
-            let mut lease_buf = SubSliceMut::new(buf);
-            lease_buf.slice(0..bytes_read);
-            Ok(lease_buf)
-        })
-    }
 }
 
 impl<H: crypto::digest::Hmac> DriverMutexClient for Hmac<H> {
     fn ready(&'static self, resource: DriverMutexAny) {
-        let (processid, mode) = match self.state.get() {
-            State::Waiting { processid, mode } => (processid, mode),
+        let (processid, algorithm) = match self.state.get() {
+            State::Waiting {
+                processid,
+                algorithm,
+            } => (processid, algorithm),
             State::Idle | State::Active { .. } => return,
         };
         self.state.set(State::Active { processid });
@@ -309,11 +300,7 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for Hmac<H> {
                 hmac.set_client(self);
                 self.hmac.put(hmac);
                 self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-                    hmac.authenticate(mode, self.input_len.get(), self.key_len.get())
-                        .and_then(|transfer_mode| {
-                            self.transfer_mode.set(transfer_mode);
-                            Ok(())
-                        })
+                    hmac.authenticate(algorithm, self.input_len.get(), self.key_len.get())
                 })
             }
             Err(_) => Err(ErrorCode::INVAL),
@@ -334,37 +321,6 @@ impl<H: crypto::digest::Hmac> Client for Hmac<H> {
         self.write_output(output)
     }
 
-    fn dma_buffer_done(
-        &self,
-        result: Result<(), ErrorCode>,
-        dma_buffer: kernel::utilities::leasable_buffer::SubSliceMutImmut<'static, u8>,
-    ) {
-        if let SubSliceMutImmut::Mutable(s) = dma_buffer {
-            self.data_buffer.replace(s.take());
-            if result.is_err() {
-                self.finish(result);
-            }
-            if self.input_offset.get() < self.input_len.get() {
-                let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-                    let lease_buf = self.handle_dma_buffer()?;
-                    hmac.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
-                        .map_err(|(e, buf)| {
-                            match buf {
-                                SubSliceMutImmut::Immutable(_) => unreachable!(),
-                                SubSliceMutImmut::Mutable(sub_slice_mut) => {
-                                    self.data_buffer.replace(sub_slice_mut.take());
-                                }
-                            }
-                            e
-                        })
-                });
-                if result.is_err() {
-                    self.finish(result);
-                }
-            }
-        }
-    }
-
     fn hash_done(&self, result: Result<(), ErrorCode>) {
         self.finish(result)
     }
@@ -372,13 +328,7 @@ impl<H: crypto::digest::Hmac> Client for Hmac<H> {
 
 impl<H: crypto::digest::Hmac> HmacClient for Hmac<H> {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
-        let bytes_read = self.read_key(key)?;
-        if self.key_len.get() == self.key_offset.get()
-            && matches!(self.transfer_mode.get(), TransferMode::DMA)
-        {
-            self.deferred_call.set();
-        }
-        Ok(bytes_read)
+        self.read_key(key)
     }
 }
 
@@ -426,32 +376,5 @@ impl<H: crypto::digest::Hmac> SyscallDriver for Hmac<H> {
 
     fn allocate_grant(&self, processid: ProcessId) -> Result<(), kernel::process::Error> {
         self.apps.enter(processid, |_, _| {})
-    }
-}
-
-impl<H: crypto::digest::Hmac> DeferredCallClient for Hmac<H> {
-    fn handle_deferred_call(&'static self) {
-        // This can be called only if DMA is used
-        // and key has already been read by the driver.
-        let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-            let lease_buf = self.handle_dma_buffer()?;
-            hmac.feed_dma_buffer(SubSliceMutImmut::Mutable(lease_buf))
-                .map_err(|(e, buf)| {
-                    match buf {
-                        SubSliceMutImmut::Immutable(_) => unreachable!(),
-                        SubSliceMutImmut::Mutable(sub_slice_mut) => {
-                            self.data_buffer.replace(sub_slice_mut.take());
-                        }
-                    }
-                    e
-                })
-        });
-        if result.is_err() {
-            self.finish(result);
-        }
-    }
-
-    fn register(&'static self) {
-        self.deferred_call.register(self);
     }
 }
