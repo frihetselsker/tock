@@ -10,28 +10,29 @@ use core::cmp::min;
 use crate::dma::{ChannelId, Dma};
 use crate::hash::regs::HashRegisters;
 use crate::hash::regs::{CR, IMR, SR, STR};
-use crate::hash::utils::{DataType, HashClient, Leftover, State};
+use crate::hash::utils::{DataType, HashClient, Leftover, State, TransferMode};
 
 use cortexm33::dma_fence::CortexMDmaFence;
-use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
-use kernel::hil::crypto::digest::{Client, Digest, Hmac, HmacClient, Mode, TransferMode};
+use kernel::hil::crypto::digest::{Algorithm, Client, Digest, Hmac, HmacClient};
 use kernel::utilities::StaticRef;
-use kernel::utilities::cells::{MapCell, OptionalCell};
-use kernel::utilities::dma_slice::{DmaSubSlice, DmaSubSliceMut, DmaSubSliceMutImmut};
-use kernel::utilities::leasable_buffer::SubSliceMutImmut;
+use kernel::utilities::cells::{MapCell, OptionalCell, TakeCell};
+use kernel::utilities::dma_slice::DmaSubSliceMut;
+use kernel::utilities::leasable_buffer::SubSliceMut;
 use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
+use kernel::{ErrorCode, debug};
 
 const LONG_HMAC_KEY_LEN: usize = 64;
-const FIFO_SIZE: usize = 16 * 4;
+pub const FIFO_SIZE: usize = 17 * 4;
 
 pub struct Hash<'a> {
     regs: StaticRef<HashRegisters>,
     dma: OptionalCell<&'a Dma>,
     dma_channel: Cell<Option<ChannelId>>,
-    dma_buffer: MapCell<DmaSubSliceMutImmut<'static, u8>>,
-    mode: Cell<Option<Mode>>,
+    dma_buffer: MapCell<DmaSubSliceMut<'static, u8>>,
+    data_buffer: TakeCell<'static, [u8]>,
+    algorithm: Cell<Option<Algorithm>>,
     transfer_mode: Cell<TransferMode>,
     state: Cell<Option<State>>,
     leftover: Leftover,
@@ -44,9 +45,15 @@ pub struct Hash<'a> {
 
 impl<'a> Hash<'a> {
     // Associates a DMA controller and channels with the HASH driver
-    pub fn set_dma(hash: &'static Self, dma: &'a Dma, channel: ChannelId) {
+    pub fn set_dma(
+        hash: &'static Self,
+        dma: &'a Dma,
+        channel: ChannelId,
+        buffer: &'static mut [u8],
+    ) {
         hash.dma.set(dma);
         hash.dma_channel.set(Some(channel));
+        hash.data_buffer.put(Some(buffer));
         dma.set_client(channel, hash);
     }
 
@@ -54,8 +61,8 @@ impl<'a> Hash<'a> {
         &self,
         dma: &'a Dma,
         dma_channel: ChannelId,
-        mut dma_buffer: SubSliceMutImmut<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSliceMutImmut<'static, u8>)> {
+        mut dma_buffer: SubSliceMut<'static, u8>,
+    ) -> Result<(), (ErrorCode, SubSliceMut<'a, u8>)> {
         let leftover_loaded = if !self.leftover.is_empty() {
             // Imagine there is a situation when the FIFO is full,
             // and no more data can be written
@@ -80,27 +87,15 @@ impl<'a> Hash<'a> {
             // Otherwise, it is meaningless
             let fence = unsafe { CortexMDmaFence::new() };
             // Convert subslice into DmaSlice
-            let (dma_slice, ptr, len) = match dma_buffer {
-                SubSliceMutImmut::Immutable(d) => {
-                    let dma_slice = DmaSubSlice::new(d, fence);
-                    // Extract the physical pointer and length for MMIO
-                    let ptr = dma_slice.as_ptr() as u32;
-                    let len = dma_slice.len() as u32;
-                    (DmaSubSliceMutImmut::Immutable(dma_slice), ptr, len)
-                }
-                SubSliceMutImmut::Mutable(d) => {
-                    let dma_slice = unsafe { DmaSubSliceMut::new(d, fence) };
-                    // Extract the physical pointer and length for MMIO
-                    let ptr = dma_slice.as_mut_ptr() as u32;
-                    let len = dma_slice.len() as u32;
-                    (DmaSubSliceMutImmut::Mutable(dma_slice), ptr, len)
-                }
-            };
+            let dma_slice = unsafe { DmaSubSliceMut::new(dma_buffer, fence) };
+            // Extract the physical pointer and length for MMIO
+            let ptr = dma_slice.as_mut_ptr() as u32;
+            let len = dma_slice.len() as u32;
+
             // Save DmaSlice in the peripheral struct
             self.dma_buffer.replace(dma_slice);
             dma.setup(dma_channel, crate::dma::DmaPeripheral::Hash, ptr, len);
 
-            regs.imr.modify(IMR::DINIE::SET);
             regs.cr.modify(CR::DMAE::SET);
 
             Ok(())
@@ -117,14 +112,14 @@ impl Hash<'_> {
             dma: OptionalCell::empty(),
             dma_channel: Cell::new(None),
             dma_buffer: MapCell::empty(),
-            mode: Cell::new(None),
+            data_buffer: TakeCell::empty(),
+            algorithm: Cell::new(None),
             transfer_mode: Cell::new(TransferMode::DirectStream),
             state: Cell::new(None),
             data_length: Cell::new(0),
             key_length: Cell::new(0),
             cancelled: Cell::new(false),
             leftover: Leftover::new(),
-            // fifo_length: MsgTracker::new(),
             client: OptionalCell::empty(),
             deferred_call: DeferredCall::new(),
         }
@@ -142,6 +137,7 @@ impl Hash<'_> {
         // (if FIFO is not empty) PreRun -> Run -> HmacPostAuth -> HmacFinalize -> Callback
 
         let regs = self.regs;
+        debug!("INTERRUPT");
         // Disable all the interrupts
         regs.imr.modify(IMR::DCIE::CLEAR + IMR::DINIE::CLEAR);
         if let Some(client) = self.client.get() {
@@ -151,6 +147,7 @@ impl Hash<'_> {
                 if let Some(state) = self.state.get() {
                     // Is final digest ready?
                     if regs.sr.is_set(SR::DCIS) {
+                        debug!("Is final digest ready? - {:?}", state);
                         match state {
                             State::Run(true, DataType::Input)
                             | State::Run(true, DataType::OuterKey) => {
@@ -160,17 +157,20 @@ impl Hash<'_> {
                         }
                     }
                     // Is FIFO ready?
-                    if regs.sr.is_set(SR::DINIS) {
+                    else if regs.sr.is_set(SR::DINIS) {
+                        debug!("Is FIFO ready? - {:?}", state);
                         match state {
                             State::Run(true, DataType::InnerKey) => {
-                                state.update(Some(self.data_length.get()));
+                                self.state.set(state.update(Some(self.data_length.get())));
+                                self.deferred_call.set();
                             }
                             State::Run(true, DataType::Input) => {
-                                state.update(Some(self.key_length.get()));
+                                self.state.set(state.update(Some(self.key_length.get())));
+                                self.deferred_call.set();
                             }
                             State::Run(false, data_type) => match self.run(data_type) {
-                                Ok(false) => self.deferred_call.set(),
                                 Ok(true) => self.state.set(state.update(None)),
+                                Ok(false) => self.finish(Err(ErrorCode::FAIL), client),
                                 Err(e) => self.finish(Err(e), client),
                             },
                             State::Add(left, data_type) => {
@@ -201,33 +201,21 @@ impl Hash<'_> {
             if let (Some(state @ State::Add(len, _)), Some(client)) =
                 (self.state.take(), self.client.get())
             {
-                let mut subslice = match dma_slice {
-                    DmaSubSliceMutImmut::Immutable(dma_sub_slice) => {
-                        let subslice = dma_sub_slice.as_sub_slice();
-                        SubSliceMutImmut::Immutable(subslice)
-                    }
-                    DmaSubSliceMutImmut::Mutable(dma_sub_slice_mut) => {
-                        let fence = unsafe { CortexMDmaFence::new() };
-                        let subslice = unsafe { dma_sub_slice_mut.take(fence) };
-                        SubSliceMutImmut::Mutable(subslice)
-                    }
-                };
+                let fence = unsafe { CortexMDmaFence::new() };
+                let mut subslice = unsafe { dma_slice.take(fence) };
+
                 if self.cancelled.take() {
-                    self.clear_data();
                     subslice.reset();
-                    client.dma_buffer_done(Err(ErrorCode::CANCEL), subslice);
+                    self.finish(Err(ErrorCode::CANCEL), client);
                 } else {
                     // ugly line of code
                     let updated_len = len.checked_sub(subslice.len());
-                    if let Some(len) = updated_len {
+                    if updated_len.is_some() {
                         subslice.slice(0..0);
                         self.state.set(state.update(updated_len));
-                        if len == 0 {
-                            self.deferred_call.set();
-                        }
-                        client.dma_buffer_done(Ok(()), subslice);
+                        self.deferred_call.set();
                     } else {
-                        client.dma_buffer_done(Err(ErrorCode::FAIL), subslice);
+                        self.finish(Err(ErrorCode::FAIL), client);
                     }
                 }
             }
@@ -237,10 +225,11 @@ impl Hash<'_> {
     // Write digest back
     fn get_digest(&self) -> Result<(), ErrorCode> {
         let regs = self.regs;
-        if let (Some(mode), Some(client)) = (self.mode.get(), self.client.get()) {
-            for i in 0..mode.get_digest_len() {
+        if let (Some(algo), Some(client)) = (self.algorithm.get(), self.client.get()) {
+            for i in 0..(algo.get_digest_len() / 4) {
                 let d = regs.hr[i].get().to_be_bytes();
                 let result = [d[0], d[1], d[2], d[3]];
+                // debug!("Received: {:?}", result);
                 client.write_output(&result)?;
             }
             Ok(())
@@ -252,49 +241,57 @@ impl Hash<'_> {
     fn load_data(&self, client: HashClient<'_>, data_type: DataType) -> Result<usize, ErrorCode> {
         let regs = self.regs;
         let mut buffer = [0u8; FIFO_SIZE];
+        // prepare the total length of data that can be loaded at this call
+        let fifo_space = (regs.sr.read(SR::NBWE) * 4) as usize;
+        debug!("Current space: {} b", fifo_space);
+        let space_limit = fifo_space.min(FIFO_SIZE);
         let bytes_read = match data_type {
-            DataType::Input => client.read_input(&mut buffer)?,
-            DataType::InnerKey | DataType::OuterKey => client.read_key(&mut buffer)?,
+            DataType::Input => client.read_input(&mut buffer[..space_limit])?,
+            DataType::InnerKey | DataType::OuterKey => {
+                client.read_key(&mut buffer[..space_limit])?
+            }
         };
+        // panic!("Current buffer content: {:?}", buffer);
         let bytes_written = {
             let mut offset = 0;
             // if leftover buffer is not empty, it should be written right now
             if !self.leftover.is_empty() {
-                let bytes_to_load = min(self.leftover.bytes_left(), bytes_read);
-
-                for data in buffer[offset..bytes_to_load].iter() {
+                // debug!(
+                //     "Leftovers needs {} bytes to get full",
+                //     self.leftover.bytes_left()
+                // );
+                let bytes_to_accept = min(bytes_read, self.leftover.bytes_left());
+                for data in buffer[..bytes_to_accept].iter() {
+                    debug!("Adding to thr leftover 0x{:02x}", *data);
                     self.leftover.add(*data);
                 }
-
-                if !regs.sr.is_set(SR::BUSY) {
-                    regs.din.set(self.leftover.to_le());
-                    offset += bytes_to_load
+                offset += bytes_to_accept;
+                if !self.regs.sr.is_set(SR::BUSY) && self.leftover.is_full() {
+                    self.regs.din.set(self.leftover.to_le());
                 } else {
-                    return Ok(offset);
+                    return Ok(bytes_to_accept);
                 }
             }
 
-            let fifo_space = regs.sr.read(SR::NBWE) as usize;
-            let bytes_to_load = min(bytes_read - offset, fifo_space);
-            let (words_to_load, leftover_to_load) = (bytes_to_load / 4, bytes_to_load % 4);
+            let (words_to_load, leftover_to_load) =
+                ((bytes_read - offset) / 4, (bytes_read - offset) % 4);
 
             // Send the 32-bit wordss
             for data in buffer[offset..offset + (words_to_load * 4)].chunks_exact(4) {
                 let d = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+                debug!("W: 0x{:02x}", d);
                 regs.din.set(d);
             }
 
             offset += words_to_load * 4;
 
-            if leftover_to_load != 0 {
-                for data in buffer[offset..offset + leftover_to_load].iter() {
-                    // Accumulate leftover bytes
-                    self.leftover.add(*data);
-                }
-                offset += leftover_to_load;
+            for data in buffer[offset..offset + leftover_to_load].iter() {
+                debug!("R: 0x{:02x}", *data);
+                // Accumulate leftover bytes
+                self.leftover.add(*data);
             }
 
-            Ok(offset)
+            Ok(bytes_read)
         };
 
         bytes_written
@@ -306,7 +303,7 @@ impl Hash<'_> {
     /// Return the tuple of number of bytes written and boolean values showing
     /// if the write operation was successful and there is no need to wait for the interrupt
     /// when the FIFO is free.
-    fn trim_dma_subslice(&self, dma_buffer: &SubSliceMutImmut<'_, u8>) -> (usize, bool) {
+    fn trim_dma_subslice(&self, dma_buffer: &SubSliceMut<'_, u8>) -> (usize, bool) {
         let bytes_to_write = min(self.leftover.bytes_left(), dma_buffer.len());
         for data_idx in 0..bytes_to_write {
             self.leftover.add(dma_buffer[data_idx]);
@@ -331,7 +328,7 @@ impl Hash<'_> {
     ///
     /// Fill the leftover buffer with bytes from the end of subslice.
     /// Return the number of bytes written.
-    fn truncate_dma_subslice(&self, dma_buffer: &SubSliceMutImmut<'_, u8>) -> usize {
+    fn truncate_dma_subslice(&self, dma_buffer: &SubSliceMut<'_, u8>) -> usize {
         let bytes_written = dma_buffer.len() % 4;
         for i in 0..bytes_written {
             let data_idx = (dma_buffer.len() - bytes_written) + i;
@@ -344,40 +341,68 @@ impl Hash<'_> {
     ///
     /// Responsible only for starting the calculation
     fn run(&self, data_type: DataType) -> Result<bool, ErrorCode> {
-        // No computations without the mode set
-        if self.mode.get().is_none() {
+        // No computations without the algorithm set
+        if self.algorithm.get().is_none() {
             return Err(ErrorCode::INVAL);
         }
         let regs = self.regs;
 
         if !self.leftover.is_empty() {
             if !regs.sr.is_set(SR::BUSY) {
-                regs.din.set(self.leftover.to_le());
+                let leftover_content = self.leftover.to_le();
+                debug!(
+                    "There is leftover, we need to load it - 0x{:02x}",
+                    leftover_content
+                );
+                regs.din.set(leftover_content);
             } else {
                 return Ok(false);
             }
         }
 
+        if let Some(state) = self.state.take() {
+            self.state.set(state.update(None));
+        } else {
+            return Err(ErrorCode::FAIL);
+        }
+
         // Start the digest calculation
         let valid_mask = match data_type {
-            DataType::Input => ((self.data_length.get() % 4) * 8) as u32,
-            DataType::InnerKey | DataType::OuterKey => ((self.key_length.get() % 4) * 8) as u32,
+            DataType::Input => {
+                if self.key_length.get() > 0 {
+                    regs.imr.modify(IMR::DINIE::SET);
+                } else {
+                    regs.imr.modify(IMR::DCIE::SET);
+                }
+                ((self.data_length.get() % 4) * 8) as u32
+            }
+            DataType::InnerKey => {
+                regs.imr.modify(IMR::DINIE::SET);
+                ((self.key_length.get() % 4) * 8) as u32
+            }
+            DataType::OuterKey => {
+                regs.imr.modify(IMR::DCIE::SET);
+                ((self.key_length.get() % 4) * 8) as u32
+            }
         };
+        debug!("Mask for starting: {}", valid_mask);
+
         regs.str.modify(STR::NBLW.val(valid_mask));
         regs.str.modify(STR::DCAL::SET);
 
         Ok(true)
     }
 
-    fn parse_mode(&self, mode: Mode) -> Result<FieldValue<u32, CR::Register>, ErrorCode> {
-        match mode {
-            Mode::Md5 => Ok(CR::ALGO::MD5),
-            Mode::Sha1 => Ok(CR::ALGO::SHA_1),
-            Mode::Sha224 => Ok(CR::ALGO::SHA2_224),
-            Mode::Sha256 => Ok(CR::ALGO::SHA2_256),
-            Mode::Sha384 | Mode::Sha512_224 | Mode::Sha512_256 | Mode::Sha512 => {
-                Err(ErrorCode::NOSUPPORT)
-            }
+    fn parse_algo(&self, algorithm: Algorithm) -> Result<FieldValue<u32, CR::Register>, ErrorCode> {
+        match algorithm {
+            Algorithm::Md5 => Ok(CR::ALGO::MD5),
+            Algorithm::Sha1 => Ok(CR::ALGO::SHA_1),
+            Algorithm::Sha224 => Ok(CR::ALGO::SHA2_224),
+            Algorithm::Sha256 => Ok(CR::ALGO::SHA2_256),
+            Algorithm::Sha384
+            | Algorithm::Sha512_224
+            | Algorithm::Sha512_256
+            | Algorithm::Sha512 => Err(ErrorCode::NOSUPPORT),
         }
     }
 
@@ -402,15 +427,18 @@ impl DeferredCallClient for Hash<'_> {
     fn handle_deferred_call(&self) {
         if let (Some(state), Some(client)) = (self.state.get(), self.client.get()) {
             if !self.cancelled.take() {
+                debug!("DC - {:?}", state);
                 let result = match state {
                     State::Add(left, data_type) => {
                         let bytes_loaded = self.load_data(client, data_type).unwrap_or(0);
                         let updated_length = left.checked_sub(bytes_loaded);
+                        debug!("Updated: {:?}", updated_length);
                         if updated_length.is_some() {
                             self.state.set(state.update(updated_length));
+                            debug!("New: {:?}", self.state.get());
                             if !self.regs.sr.is_set(SR::BUSY) {
                                 self.deferred_call.set();
-                            }
+                            } // TODO: Add interrupt support here
                             Ok(())
                         } else {
                             Err(ErrorCode::FAIL)
@@ -420,7 +448,7 @@ impl DeferredCallClient for Hash<'_> {
                         // no need for setting deferred call, wait for an interrupt
                         self.run(data_type).map(|is_sent| {
                             if !is_sent {
-                                self.deferred_call.set();
+                                self.regs.imr.modify(IMR::DINIE::SET);
                             }
                         })
                     }
@@ -441,40 +469,30 @@ impl DeferredCallClient for Hash<'_> {
 }
 
 impl Digest for Hash<'_> {
-    fn hash(&self, mode: Mode, len: usize) -> Result<TransferMode, ErrorCode> {
+    fn hash(&self, algorithm: Algorithm, len: usize) -> Result<(), ErrorCode> {
         if self.state.get().is_some() {
             return Err(ErrorCode::BUSY);
         }
 
-        let mode_val = self.parse_mode(mode)?;
+        let algo_val = self.parse_algo(algorithm)?;
+        let regs = self.regs;
         self.data_length.set(len);
         self.state.set(Some(State::Add(len, DataType::Input)));
-        self.mode.set(Some(mode));
+        self.algorithm.set(Some(algorithm));
 
-        self.regs.cr.modify(
-            mode_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::CLEAR + CR::INIT::SET,
+        regs.cr.modify(
+            algo_val + CR::MDMAT::SET + CR::DATATYPE::_8bitData + CR::MODE::CLEAR + CR::INIT::SET,
         );
 
         if self.dma.is_some() && self.dma_channel.get().is_some() && len >= 16 {
-            self.transfer_mode.set(TransferMode::DMA);
-            Ok(TransferMode::DMA)
+            debug!("Hash: Setting DMA mode");
+            self.transfer_mode.set(TransferMode::Dma);
         } else {
+            debug!("Hash: Setting direct stream mode");
             self.transfer_mode.set(TransferMode::DirectStream);
-            self.deferred_call.set();
-            Ok(TransferMode::DirectStream)
         }
-    }
-
-    fn feed_dma_buffer(
-        &self,
-        dma_buffer: SubSliceMutImmut<'static, u8>,
-    ) -> Result<(), (ErrorCode, SubSliceMutImmut<'static, u8>)> {
-        if let (Some(dma), Some(dma_channel)) = (self.dma.get(), self.dma_channel.get()) {
-            self.start_dma_transfer(dma, dma_channel, dma_buffer)?;
-            Ok(())
-        } else {
-            Err((ErrorCode::INVAL, dma_buffer))
-        }
+        self.deferred_call.set();
+        Ok(())
     }
 
     fn clear_data(&self) {
@@ -483,6 +501,7 @@ impl Digest for Hash<'_> {
             self.regs.cr.modify(CR::INIT::SET);
             self.data_length.take();
             self.key_length.take();
+            self.leftover.reset();
         } else {
             // Set the cancellation flag and wait for the interrupt / deferred call
             self.cancelled.set(true);
@@ -497,15 +516,15 @@ impl Digest for Hash<'_> {
 impl Hmac for Hash<'_> {
     fn authenticate(
         &self,
-        mode: Mode,
+        algorithm: Algorithm,
         input_len: usize,
         key_len: usize,
-    ) -> Result<TransferMode, ErrorCode> {
+    ) -> Result<(), ErrorCode> {
         if self.state.get().is_some() {
             return Err(ErrorCode::BUSY);
         }
 
-        let mode_val = self.parse_mode(mode)?;
+        let algo_val = self.parse_algo(algorithm)?;
 
         let key_val = if key_len > LONG_HMAC_KEY_LEN {
             CR::LKEY::SET
@@ -515,7 +534,7 @@ impl Hmac for Hash<'_> {
         self.key_length.set(key_len);
         self.data_length.set(input_len);
         self.regs.cr.modify(
-            mode_val
+            algo_val
                 + key_val
                 + CR::MDMAT::SET
                 + CR::DATATYPE::_8bitData
@@ -525,16 +544,19 @@ impl Hmac for Hash<'_> {
 
         self.state
             .set(Some(State::Add(key_len, DataType::InnerKey)));
-        self.mode.set(Some(mode));
+        self.algorithm.set(Some(algorithm));
 
-        if self.dma.is_some() && self.dma_channel.get().is_some() && input_len >= 16 {
-            self.transfer_mode.set(TransferMode::DMA);
-            Ok(TransferMode::DMA)
+        if self.dma.is_some()
+            && self.dma_channel.get().is_some()
+            && self.data_buffer.is_some()
+            && input_len >= 16
+        {
+            self.transfer_mode.set(TransferMode::Dma);
         } else {
             self.transfer_mode.set(TransferMode::DirectStream);
-            self.deferred_call.set();
-            Ok(TransferMode::DirectStream)
         }
+        self.deferred_call.set();
+        Ok(())
     }
 
     fn set_hmac_client(&self, client: &'static dyn HmacClient) {
