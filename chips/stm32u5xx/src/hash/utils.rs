@@ -8,7 +8,6 @@ use core::cell::Cell;
 
 use kernel::ErrorCode;
 use kernel::hil::crypto::digest::{Client, HmacClient};
-use kernel::utilities::leasable_buffer::SubSliceMutImmut;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum State {
@@ -33,13 +32,12 @@ impl State {
             _ => None,
         }
     }
+}
 
-    pub(crate) fn get_datatype(&self) -> &DataType {
-        match self {
-            State::Add(_, data_type) => data_type,
-            State::Run(_, data_type) => data_type,
-        }
-    }
+#[derive(Clone, Copy)]
+pub(crate) enum TransferMode {
+    DirectStream,
+    Dma,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -56,17 +54,6 @@ pub(crate) enum HashClient<'a> {
 }
 
 impl<'a> Client for HashClient<'a> {
-    fn dma_buffer_done(
-        &self,
-        result: Result<(), ErrorCode>,
-        dma_buffer: SubSliceMutImmut<'static, u8>,
-    ) {
-        match self {
-            HashClient::Hash(client) => client.dma_buffer_done(result, dma_buffer),
-            HashClient::Hmac(client) => client.dma_buffer_done(result, dma_buffer),
-        }
-    }
-
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
         match self {
             HashClient::Hash(client) => client.read_input(input),
@@ -91,6 +78,7 @@ impl<'a> Client for HashClient<'a> {
 
 impl<'a> HmacClient for HashClient<'a> {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
+        // panic!("Reached reding key");
         match self {
             HashClient::Hmac(client) => client.read_key(key),
             HashClient::Hash(_) => Err(ErrorCode::INVAL),
@@ -109,10 +97,6 @@ impl Leftover {
             buffer: Cell::new(None),
             index: Cell::new(0),
         }
-    }
-
-    pub fn len(&self) -> usize {
-        self.index.get()
     }
 
     /// Add a new byte to the leftover buffer.
@@ -163,49 +147,5 @@ impl Leftover {
     /// Returns if the buffer empty or not.
     pub fn is_empty(&self) -> bool {
         self.buffer.get().is_none()
-    }
-}
-
-pub(crate) struct MsgTracker {
-    data_len: Cell<Option<usize>>,
-}
-
-impl MsgTracker {
-    pub fn new() -> Self {
-        Self {
-            data_len: Cell::new(None),
-        }
-    }
-
-    pub fn set(&self, len: usize) -> Result<(), ErrorCode> {
-        if let None = self.data_len.get() {
-            self.data_len.set(Some(len));
-            Ok(())
-        } else {
-            Err(ErrorCode::ALREADY)
-        }
-    }
-
-    pub fn add(&self, len: usize) -> Result<(), ErrorCode> {
-        let data_len = self.data_len.get().ok_or(ErrorCode::INVAL)?;
-        data_len.checked_sub(len).ok_or(ErrorCode::SIZE)?;
-        self.data_len.set(Some(data_len));
-        Ok(())
-    }
-
-    pub fn get_remaining(&self) -> Result<usize, ErrorCode> {
-        self.data_len.get().ok_or(ErrorCode::INVAL)
-    }
-
-    pub fn is_loaded(&self) -> Result<bool, ErrorCode> {
-        match self.data_len.get() {
-            Some(0) => Ok(true),
-            Some(_) => Ok(false),
-            _ => Err(ErrorCode::INVAL),
-        }
-    }
-
-    pub fn reset(&self) {
-        self.data_len.take();
     }
 }

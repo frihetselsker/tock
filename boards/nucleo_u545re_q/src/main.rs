@@ -10,7 +10,7 @@ use components::{driver_mutex, hmac_component_static};
 use kernel::capabilities::{self, MemoryAllocationCapability};
 use kernel::component::Component;
 use kernel::debug::PanicResources;
-use kernel::hil::crypto::digest::Mode;
+use kernel::hil::crypto::digest::Algorithm;
 use kernel::hil::gpio::{Configure, Output};
 use kernel::hil::symmetric_encryption::AES256;
 use kernel::platform::chip::Chip;
@@ -19,6 +19,7 @@ use kernel::utilities::single_thread_value::SingleThreadValue;
 use kernel::{create_capability, static_init};
 
 use stm32u545::gpio::PinId;
+use stm32u545::hash::hash::FIFO_SIZE;
 use stm32u545::rng::RNG_BASE;
 
 pub mod io;
@@ -69,7 +70,7 @@ struct NucleoU545RE {
     //     stm32u545::hash::sha256::Sha256Adapter<'static>,
     //     32,
     // >,
-    test_hash: &'static capsules_crypto::test::hash::TestHash<stm32u545::hash::hash::Hash<'static>>,
+    test_hmac: &'static capsules_crypto::test::hmac::TestHmac<stm32u545::hash::hash::Hash<'static>>,
     aes: &'static capsules_extra::symmetric_encryption::aes::AesDriver<
         'static,
         stm32u545::aes::ecb::Aes<'static, AES256>,
@@ -298,22 +299,15 @@ unsafe fn start() -> (
     trng.init();
     periphs.rcc.enable_trng();
 
+    // Initialize DMA buffer for hash peripheral
+    let hash_dma_buf = static_init!([u8; FIFO_SIZE], [0u8; FIFO_SIZE]);
+
     // Initialize wiring (DMA, clocks)
-    periphs.init();
+    periphs.init(hash_dma_buf);
 
     // Board specific wiring
     periphs.tim2.start();
     set_pin_primary_functions(periphs);
-
-    // Create an adapter for the HASH peripheral.
-    // In this way it is ensured that only one mode is used by the peripheral.
-    // let sha256 = static_init!(
-    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
-    //     stm32u545::hash::sha256::Sha256Adapter::new(&periphs.hash)
-    // );
-
-    // Adapter receives callbacks from the peripheral
-    // let _ = periphs.hash.set_sha256_adapter(sha256);
 
     // Kernel and Muxes
     let processes = components::process_array::ProcessArrayComponent::new()
@@ -539,29 +533,54 @@ unsafe fn start() -> (
     // ));
     //
     //
-    //
-    let input_buffer = static_init!([u8; 6], [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+    let input_buffer = static_init!(
+        [u8; 173],
+        [
+            0x48, 0x69, 0x20, 0x54, 0x68, 0x65, 0x72, 0x65, 0x89, 0x32, 0x56, 0x26, 0x53, 0x28,
+            0x96, 0x53, 0x28, 0x90, 0x56, 0x32, 0x89, 0x57, 0x23, 0x48, 0x90, 0x57, 0x24, 0x89,
+            0x35, 0x68, 0x32, 0x49, 0x56, 0x23, 0x47, 0x98, 0x56, 0x32, 0x89, 0x56, 0x34, 0x95,
+            0x63, 0x94, 0x86, 0x32, 0x48, 0x96, 0x54, 0x39, 0x85, 0x69, 0x34, 0x56, 0x34, 0x96,
+            0x54, 0x39, 0x76, 0x59, 0x87, 0x34, 0x68, 0x75, 0x92, 0x63, 0x54, 0x98, 0x65, 0x34,
+            0x86, 0x34, 0x97, 0x46, 0x53, 0x47, 0x64, 0x78, 0x63, 0x48, 0x97, 0x93, 0x52, 0x46,
+            0x98, 0x46, 0x39, 0x84, 0x25, 0x69, 0x83, 0x47, 0x53, 0x24, 0x89, 0x05, 0x74, 0x39,
+            0x85, 0x77, 0x59, 0x82, 0x37, 0x58, 0x93, 0x27, 0x68, 0x93, 0x27, 0x60, 0x23, 0x76,
+            0x03, 0x28, 0x75, 0x89, 0x32, 0x75, 0x23, 0x89, 0x57, 0x32, 0x89, 0x56, 0x32, 0x97,
+            0x56, 0x32, 0x95, 0x62, 0x35, 0x62, 0x38, 0x95, 0x63, 0x25, 0x98, 0x63, 0x28, 0x95,
+            0x63, 0x25, 0x68, 0x93, 0x65, 0x89, 0x23, 0x56, 0x98, 0x32, 0x56, 0x38, 0x92, 0x56,
+            0x23, 0x98, 0x56, 0x32, 0x89, 0x56, 0x23, 0x98, 0x56, 0x29, 0x69, 0x83, 0x95, 0x73,
+            0x29, 0x05, 0x03, 0x49, 0x70
+        ]
+    );
+    let key_buffer = static_init!(
+        [u8; 38],
+        [
+            0x0b, 0x0b, 0x0b, 0x0b, 0xb0, 0xb0, 0xb0, 0x0b, 0x0b, 0x0b, 0xb0, 0x0b, 0x0b, 0x0b,
+            0x0b, 0x00, 0xb0, 0xb0, 0xb0, 0xb0, 0xb0, 0xb0, 0x0b, 0x0b, 0x0b, 0x0b, 0x00, 0xb0,
+            0xb0, 0xb0, 0xb0, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x00, 0xbb
+        ]
+    );
     let output_buffer = static_init!(
         [u8; 32],
         [
-            0x71, 0x92, 0x38, 0x5c, 0x3c, 0x06, 0x05, 0xde, 0x55, 0xbb, 0x94, 0x76, 0xce, 0x1d,
-            0x90, 0x74, 0x81, 0x90, 0xec, 0xb3, 0x2a, 0x8e, 0xed, 0x7f, 0x52, 0x07, 0xb3, 0x0c,
-            0xf6, 0xa1, 0xfe, 0x89
+            0xcc, 0x8d, 0x40, 0xe7, 0x9e, 0x37, 0xce, 0xab, 0xba, 0xb8, 0x43, 0xbc, 0x54, 0xf3,
+            0xa2, 0x26, 0xa6, 0x81, 0x3e, 0xa3, 0xd2, 0xf5, 0x2f, 0x12, 0x59, 0xe2, 0xb7, 0x2f,
+            0xbe, 0x8f, 0xca, 0xb2
         ]
     );
     let hash_mutex = components::driver_mutex::DriverMutexComponent::new(&periphs.hash).finalize(
         components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 2),
     );
-    let test_hash = static_init!(
-        capsules_crypto::test::hash::TestHash<stm32u545::hash::hash::Hash<'static>>,
-        capsules_crypto::test::hash::TestHash::new(
+    let test_hmac = static_init!(
+        capsules_crypto::test::hmac::TestHmac<stm32u545::hash::hash::Hash<'static>>,
+        capsules_crypto::test::hmac::TestHmac::new(
             hash_mutex,
-            Mode::Sha256,
+            Algorithm::Sha256,
             input_buffer,
-            output_buffer
+            output_buffer,
+            key_buffer
         )
     );
-    let r = test_hash.register();
+    let r = test_hmac.register();
     if r.is_err() {
         panic!("Didn't manage to register in the mutex")
     }
@@ -603,7 +622,7 @@ unsafe fn start() -> (
             dac,
             gpio,
             crc,
-            test_hash,
+            test_hmac,
             aes: aes_driver,
             spi,
             date_time,
@@ -655,7 +674,7 @@ pub unsafe fn main() {
     let main_loop_capability = create_capability!(capabilities::MainLoopCapability);
 
     let (board_kernel, platform, chip) = start();
-    let r = platform.test_hash.run();
+    let r = platform.test_hmac.run();
     if r.is_err() {
         panic!("Test hasn't started, error: {:?}", r)
     }
