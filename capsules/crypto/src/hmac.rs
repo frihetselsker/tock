@@ -187,7 +187,12 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
     fn read_key(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
         let offset = self.key_offset.get();
         let read = self.read_at(ro_allow::KEY, offset, destination)?;
-        self.key_offset.set(offset + read);
+        let updated_offset = offset + read;
+        if updated_offset == self.key_len.get() {
+            self.key_offset.take();
+        } else {
+            self.key_offset.set(updated_offset);
+        }
         Ok(read)
     }
 
