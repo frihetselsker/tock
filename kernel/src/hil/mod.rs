@@ -14,6 +14,7 @@ pub mod crc;
 pub mod dac;
 pub mod date_time;
 pub mod digest;
+pub mod digest_old;
 pub mod eic;
 pub mod entropy;
 pub mod ethernet;
