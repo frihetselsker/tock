@@ -70,7 +70,6 @@ impl<H: crypto::digest::Digest> TestHash<H> {
             }
             let read_len = destination.len().min(source.len() - offset);
             destination[..read_len].copy_from_slice(&source[offset..offset + read_len]);
-            debug!("Capsule: new input offset: {}", offset + read_len);
             self.input_offset.set(offset + read_len);
             Ok(read_len)
         })
@@ -94,8 +93,7 @@ impl<H: crypto::digest::Digest> TestHash<H> {
                         );
                     }
                 }
-
-                self.output_offset.set(offset + source.len());
+                self.output_offset.set(end);
                 Ok(())
             })
     }
