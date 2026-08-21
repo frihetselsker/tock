@@ -78,12 +78,7 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
             }
             let read_len = destination.len().min(source.len() - offset);
             destination[..read_len].copy_from_slice(&source[offset..offset + read_len]);
-            let updated_offset = offset + read_len;
-            if updated_offset == self.input_len.get() {
-                self.input_offset.take();
-            } else {
-                self.input_offset.set(updated_offset);
-            }
+            self.input_offset.set(offset + read_len);
             Ok(read_len)
         })
     }
@@ -95,8 +90,8 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
                 panic!("HmacTest: Either destination is empty or offset got bigger than the actual size of key buffer, offset: {}, input size: {}", offset, source.len());
             }
             let read_len = destination.len().min(source.len() - offset);
-            destination[..read_len].copy_from_slice(&source[offset..offset + read_len]);
             let updated_offset = offset + read_len;
+            destination[..read_len].copy_from_slice(&source[offset..updated_offset]);
             if updated_offset == self.key_len.get() {
                 self.key_offset.take();
             } else {
@@ -116,7 +111,6 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
                     panic!("HmacTest: offset got bigger than the actual size of output buffer, offset: {}, input size: {}", offset, destination.len());
                 }
                 for i in 0..source.len() {
-                    // debug!("dest - 0x{:02}, source - 0x{:02}", destination[offset + i], source[i]);
                     if destination[offset + i] != source[i] {
                         panic!(
                             "HmacTest: Verification failed at byte 0x{:02x}, index {}",
@@ -125,12 +119,8 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
                         );
                     }
                 }
-                let updated_offset = offset + source.len();
-                if updated_offset == self.output_len.get() {
-                    self.output_offset.take();
-                } else {
-                    self.output_offset.set(updated_offset);
-                }
+                self.output_offset.set(end);
+
                 Ok(())
             })
     }
@@ -193,9 +183,9 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
             );
         } else {
             debug!("HmacTest: Verification was successful!");
-            // self.client.map(|client| {
-            //     client.done(Ok(()));
-            // });
+            self.client.map(|client| {
+                client.done(Ok(()));
+            });
         }
     }
 }
