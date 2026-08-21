@@ -1,5 +1,6 @@
 // Licensed under the Apache License, Version 2.0 or the MIT License.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright Tock Contributors 2022.
 // Copyright OxidOS Automotive 2026
 
 //! Interface for Math Operations with long numbers modulo some other number
@@ -8,7 +9,7 @@ use crate::ErrorCode;
 
 /// Upcall from the `RsaCryptoBase` trait.
 pub trait Client<'a> {
-    /// This callback is called when the mod_b operation is complete.
+    /// This callback is called when the mod_* operation is complete.
     ///
     /// The possible ErrorCodes are:
     ///    - BUSY: An operation is already on going
