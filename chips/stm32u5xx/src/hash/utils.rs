@@ -37,7 +37,7 @@ impl State {
 #[derive(Clone, Copy)]
 pub(crate) enum TransferMode {
     DirectStream,
-    Dma,
+    Dma(bool),
 }
 
 #[derive(Debug, Clone, Copy)]
