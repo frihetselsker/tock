@@ -171,9 +171,8 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
     }
 
     fn finish(&self, result: Result<(), ErrorCode>) {
-        self.hmac.take().and_then(|hmac| {
+        self.hmac.take().inspect(|hmac| {
             hmac.clear_data();
-            Some(hmac)
         });
 
         if let Err(e) = result {

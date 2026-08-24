@@ -9,11 +9,7 @@ use crate::crc::{self, CRC_BASE};
 use crate::dma::{ChannelId, Dma};
 use crate::gpio;
 use crate::hash;
-<<<<<<< HEAD
 use crate::i2c;
-use crate::hash::hash::FIFO_SIZE;
-=======
->>>>>>> 858be9992 (finished driver for stm32u545)
 use crate::nvic::{
     ADC1_2_IRQ, AES_IRQ, EXTI0_IRQ, EXTI1_IRQ, EXTI2_IRQ, EXTI3_IRQ, EXTI4_IRQ, EXTI5_IRQ,
     EXTI6_IRQ, EXTI7_IRQ, EXTI8_IRQ, EXTI9_IRQ, EXTI10_IRQ, EXTI11_IRQ, EXTI12_IRQ, EXTI13_IRQ,
@@ -169,24 +165,13 @@ impl<'a> Stm32u5xxDefaultPeripherals<'a> {
             usart::Usart::set_dma(&self.usart1, self.dma1, tx, rx);
         }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         // Link DMA to HASH
         let hash_channel = self.dma1.request_channel();
-        if let Some(tx) = hash_channel {
-            hash::hash::Hash::set_dma(&self.hash, self.dma1, tx);
-        }
-=======
-        // if let Some(tx) = hash_channel {
-        //     hash::hash::Hash::set_dma(&self.hash, self.dma1, tx, hash_dma_buf);
-        // }
-=======
+
         if let Some(tx) = hash_channel {
             hash::hash::Hash::set_dma(&self.hash, self.dma1, tx, hash_dma_buf);
         }
->>>>>>> 858be9992 (finished driver for stm32u545)
 
->>>>>>> c1f325452 (stable driver for stm32u545, needs more of optimization and dma support)
         self.hash.register();
 
         // Link DMA to AES

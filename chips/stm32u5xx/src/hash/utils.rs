@@ -53,7 +53,7 @@ pub(crate) enum HashClient<'a> {
     Hmac(&'a dyn HmacClient),
 }
 
-impl<'a> Client for HashClient<'a> {
+impl Client for HashClient<'_> {
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
         match self {
             HashClient::Hash(client) => client.read_input(input),
@@ -76,9 +76,8 @@ impl<'a> Client for HashClient<'a> {
     }
 }
 
-impl<'a> HmacClient for HashClient<'a> {
+impl HmacClient for HashClient<'_> {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
-        // panic!("Reached reding key");
         match self {
             HashClient::Hmac(client) => client.read_key(key),
             HashClient::Hash(_) => Err(ErrorCode::INVAL),
