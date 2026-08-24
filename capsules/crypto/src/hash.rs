@@ -251,9 +251,8 @@ impl<H: crypto::digest::Digest> Hash<H> {
 
     fn finish(&self, result: Result<(), ErrorCode>) {
         let state = self.state.replace(State::Idle);
-        self.hash.take().and_then(|hash| {
+        self.hash.take().inspect(|hash| {
             hash.clear_data();
-            Some(hash)
         });
 
         let processid = match state {

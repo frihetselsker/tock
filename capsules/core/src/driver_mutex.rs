@@ -286,18 +286,13 @@ impl<T> DriverMutex<T> {
             return Err(ErrorCode::ALREADY);
         }
 
-        // Whether to add this request to the queue of clients awaiting callbacks
-        let should_enqueue;
-
-        // Whether to schedule the deferred call.
-        let should_sched;
-
-        match &mut *self.inner.state.borrow_mut() {
+        // should_enqueue = Whether to add this request to the queue of clients awaiting callbacks
+        // should_sched = Whether to schedule the deferred call.
+        let (should_enqueue, should_sched) = match &mut *self.inner.state.borrow_mut() {
             // No outstanding references.
             State::Free => {
                 // Enqueue and schedule a callback.
-                should_enqueue = true;
-                should_sched = true;
+                (true, true)
             }
 
             // Currently active client requesting another reference
@@ -313,17 +308,15 @@ impl<T> DriverMutex<T> {
 
                 // Skip enqueuing and schedule another callback for the active client.
                 *pending = true;
-                should_enqueue = false;
-                should_sched = true;
+                (false, true)
             }
 
             // Requestor is different from currently active client
             State::Locked { .. } => {
                 // Add to the queue, but wait for the active client to fully release the resource.
-                should_enqueue = true;
-                should_sched = false;
+                (true, false)
             }
-        }
+        };
 
         if should_enqueue && !queue.enqueue(handle.client_index) {
             // Queue length should match the component's client capacity, so this should be

@@ -20,7 +20,7 @@ use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
-pub const DRIVER_NUM: usize = driver::NUM::Hash as usize;
+pub const DRIVER_NUM: usize = driver::NUM::Hmac as usize;
 
 /// Upcalls for SHA operations completing.
 mod upcall {
@@ -272,9 +272,8 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
 
     fn finish(&self, result: Result<(), ErrorCode>) {
         let state = self.state.replace(State::Idle);
-        self.hmac.take().and_then(|hash| {
-            hash.clear_data();
-            Some(hash)
+        self.hmac.take().inspect(|hmac| {
+            hmac.clear_data();
         });
 
         let processid = match state {

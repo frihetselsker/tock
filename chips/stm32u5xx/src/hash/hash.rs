@@ -316,7 +316,10 @@ impl Hash<'_> {
             ((bytes_read - offset) / 4, (bytes_read - offset) % 4);
 
         // Send the 32-bit wordss
-        for data in buffer[offset..offset + (words_to_load * 4)].chunks_exact(4) {
+        for data in buffer[offset..offset + (words_to_load * 4)]
+            .as_chunks::<4>()
+            .0
+        {
             let d = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
             debug!("W: 0x{:02x}", d);
             regs.din.set(d);

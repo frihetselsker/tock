@@ -136,9 +136,8 @@ impl<H: crypto::digest::Digest> TestHash<H> {
     }
 
     fn finish(&self, result: Result<(), ErrorCode>) {
-        self.hash.take().and_then(|hash| {
+        self.hash.take().inspect(|hash| {
             hash.clear_data();
-            Some(hash)
         });
 
         if let Err(e) = result {

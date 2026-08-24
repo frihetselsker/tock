@@ -9,7 +9,6 @@
 use kernel::capabilities::{self, MemoryAllocationCapability};
 use kernel::component::Component;
 use kernel::debug::PanicResources;
-use kernel::hil::crypto::digest::Algorithm;
 use kernel::hil::gpio::{Configure, Output};
 use kernel::hil::symmetric_encryption::AES256;
 use kernel::platform::chip::Chip;
@@ -63,12 +62,8 @@ struct NucleoU545RE {
     dac: &'static capsules_extra::dac::Dac<'static>,
     gpio: &'static GpioDriver,
     crc: &'static capsules_extra::crc::CrcDriver<'static, stm32u545::crc::CRC<'static>>,
-    // hmac: &'static capsules_extra::hmac::HmacDriver<
-    //     'static,
-    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
-    //     32,
-    // >,
-    test_hmac: &'static capsules_crypto::test::hmac::TestHmac<stm32u545::hash::hash::Hash<'static>>,
+    hash: &'static capsules_crypto::hash::Hash<stm32u545::hash::hash::Hash<'static>>,
+    hmac: &'static capsules_crypto::hmac::Hmac<stm32u545::hash::hash::Hash<'static>>,
     aes: &'static capsules_extra::symmetric_encryption::aes::AesDriver<
         'static,
         stm32u545::aes::ecb::Aes<'static, AES256>,
@@ -101,7 +96,8 @@ impl SyscallDriverLookup for NucleoU545RE {
             capsules_extra::dac::DRIVER_NUM => f(Some(self.dac)),
             capsules_core::gpio::DRIVER_NUM => f(Some(self.gpio)),
             capsules_extra::crc::DRIVER_NUM => f(Some(self.crc)),
-            // capsules_extra::hmac::DRIVER_NUM => f(Some(self.hmac)),
+            capsules_crypto::hash::DRIVER_NUM => f(Some(self.hash)),
+            capsules_crypto::hmac::DRIVER_NUM => f(Some(self.hmac)),
             capsules_extra::symmetric_encryption::aes::DRIVER_NUM => f(Some(self.aes)),
             capsules_core::spi_controller::DRIVER_NUM => f(Some(self.spi)),
             capsules_core::i2c_master::DRIVER_NUM => f(Some(self.i2c)),
@@ -519,35 +515,37 @@ unsafe fn start() -> (
         create_capability!(capabilities::MemoryAllocationCapability),
     )
     .finalize(components::gpio_component_static!(GpioHw));
-    // let hmac = components::hmac::HmacComponent::new(
-    //     board_kernel,
-    //     capsules_extra::hmac::DRIVER_NUM,
-    //     sha256,
-    //     create_capability!(capabilities::MemoryAllocationCapability),
-    // )
-    // .finalize(hmac_component_static!(
-    //     stm32u545::hash::sha256::Sha256Adapter<'static>,
-    //     32
-    // ));
-    //
-    //
 
     let hash_mutex = components::driver_mutex::DriverMutexComponent::new(&periphs.hash).finalize(
         components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 2),
     );
-    let test_hmac = static_init!(
-        capsules_crypto::test::hmac::TestHmac<stm32u545::hash::hash::Hash<'static>>,
-        capsules_crypto::test::hmac::TestHmac::new(
-            hash_mutex,
-            Algorithm::Sha256,
-            input_buffer,
-            output_buffer,
-            key_buffer
-        )
-    );
-    let r = test_hmac.register();
-    if r.is_err() {
-        panic!("Didn't manage to register in the mutex")
+
+    let hash = components::crypto::hash::HashComponent::new(
+        board_kernel,
+        capsules_crypto::hash::DRIVER_NUM,
+        hash_mutex,
+        create_capability!(capabilities::MemoryAllocationCapability),
+    )
+    .finalize(components::hash_crypto_component_static!(
+        stm32u545::hash::hash::Hash<'static>,
+    ));
+
+    if hash.register().is_err() {
+        panic!("Unable to register hash capsule into the mutex");
+    }
+
+    let hmac = components::crypto::hmac::HmacComponent::new(
+        board_kernel,
+        capsules_crypto::hmac::DRIVER_NUM,
+        hash_mutex,
+        create_capability!(capabilities::MemoryAllocationCapability),
+    )
+    .finalize(components::hmac_crypto_component_static!(
+        stm32u545::hash::hash::Hash<'static>,
+    ));
+
+    if hmac.register().is_err() {
+        panic!("Unable to register hmac capsule into the mutex");
     }
 
     let crc = components::crc::CrcComponent::new(
@@ -587,7 +585,8 @@ unsafe fn start() -> (
             dac,
             gpio,
             crc,
-            test_hmac,
+            hash,
+            hmac,
             aes: aes_driver,
             spi,
             date_time,
@@ -639,10 +638,7 @@ pub unsafe fn main() {
     let main_loop_capability = create_capability!(capabilities::MainLoopCapability);
 
     let (board_kernel, platform, chip) = start();
-    let r = platform.test_hmac.run();
-    if r.is_err() {
-        panic!("Test hasn't started, error: {:?}", r)
-    }
+
     // Hand over control to the Tock Kernel Loop
     board_kernel.kernel_loop::<NucleoU545RE, ChipHw, { NUM_PROCS as u8 }>(
         platform,
