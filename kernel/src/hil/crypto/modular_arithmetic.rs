@@ -15,15 +15,15 @@ pub enum BasicOperation {
     Exponentiation,
     Inverse,
     GetOutput,
-    Finish,
 }
 
 /// Upcall from the `MathCryptoBase` trait.
 pub trait Client<'a> {
     fn read_modulus(&self, modulus: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_number(&self, num: &mut [u8]) -> Result<(), ErrorCode>;
-    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode>;
-    fn operation_done(&self, result: Result<(), ErrorCode>) -> BasicOperation;
+    fn write_output(&self, output: &[u8]) -> Result<bool, ErrorCode>;
+    fn computation_done(&self, result: Result<(), ErrorCode>) -> BasicOperation;
+    fn operation_done(&self, result: Result<(), ErrorCode>);
 }
 
 pub trait MathCryptoBase<'a> {
