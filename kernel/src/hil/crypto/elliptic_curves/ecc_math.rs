@@ -13,7 +13,7 @@ pub trait Client<'a> {
     fn read_point(&self, point: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_second_point(&self, point: &mut [u8]) -> Result<(), ErrorCode>;
     fn write_point(&self, point: &[u8]) -> Result<(), ErrorCode>;
-    fn multiplication_done(&self, result: Result<(), ErrorCode>);
+    fn operation_done(&self, result: Result<(), ErrorCode>);
 }
 
 pub trait EccCryptoBase<'a> {
