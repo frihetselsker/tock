@@ -25,7 +25,7 @@ pub trait EccCryptoBase<'a> {
 
     fn point_addition<const P_SIZE: usize, C: Curve<P_SIZE>>(&self) -> Result<(), ErrorCode>;
 
-    fn scalar_multiplicaiton<const P_SIZE: usize, C: Curve<P_SIZE>>(
+    fn scalar_multiplication<const P_SIZE: usize, C: Curve<P_SIZE>>(
         &self,
         use_curve_generator: bool,
     ) -> Result<(), ErrorCode>;

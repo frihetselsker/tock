@@ -41,17 +41,21 @@ where
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
+    // Clients
     client: OptionalCell<&'a dyn hil::public_key_crypto::signature::ClientSign<32, 64>>,
     client_key_set: OptionalCell<&'a dyn hil::public_key_crypto::keys::SetKeyBySliceClient<32>>,
 
+    // Hardware support
     ecc_hw: &'a E,
     math_hw: &'a M,
     hmac_hw: &'a H,
 
+    // Cryptographic storage
     signing_key: TakeCell<'static, [u8; 32]>,
     hash_storage: TakeCell<'static, [u8; 32]>,
     signature_storage: TakeCell<'static, [u8; 64]>,
 
+    // Internal variables
     k_val: Cell<[u8; 32]>,
     v_val: Cell<[u8; 32]>,
     r_val: Cell<[u8; 32]>,
@@ -60,6 +64,7 @@ where
     output_counter: Cell<usize>,
     key_counter: Cell<usize>,
 
+    // State and state switching
     state: Cell<State>,
     deferred_call: kernel::deferred_call::DeferredCall,
     new_key_buffer: TakeCell<'static, [u8; 32]>,
@@ -122,7 +127,7 @@ where
         self.key_counter.set(0);
     }
 
-    fn update_variable(&self, var: &Cell<[u8; 32]>, index: usize, buf: &[u8]) -> usize {
+    fn update_var_from_buf(&self, var: &Cell<[u8; 32]>, index: usize, buf: &[u8]) -> usize {
         let mut var_buf = var.get();
         let mut counter = 0;
         buf.iter()
@@ -136,13 +141,13 @@ where
         counter
     }
 
-    fn read_variable(&self, var: &Cell<[u8; 32]>, index: usize, buf: &mut [u8]) -> usize {
+    fn read_var_to_buf(&self, var: &Cell<[u8; 32]>, index: usize, buf: &mut [u8]) -> usize {
         let mut var_buf = var.get();
         let mut counter = 0;
         buf.iter_mut()
             .zip(var_buf.iter().skip(index))
-            .for_each(|(driver_byte, &k_val_byte)| {
-                *driver_byte = k_val_byte;
+            .for_each(|(driver_byte, k_val_byte)| {
+                *driver_byte = *k_val_byte;
                 counter += 1;
             });
         var_buf.fill(0);
@@ -165,7 +170,6 @@ where
                 k_less_than_n |= byte_less & exactly_equal_so_far;
                 exactly_equal_so_far &= byte_equal;
             });
-
         k.fill(0);
         k_less_than_n & non_zero
     }
@@ -193,19 +197,21 @@ where
         if self.state.get() != State::Idle || self.signing_key.is_none() {
             return Err((ErrorCode::BUSY, hash, signature));
         }
-
-        self.hash_storage.replace(hash);
-        self.signature_storage.replace(signature);
-
         // RFC 6979 step b: Set V to 0x01...01
         self.v_val.set([0x01; 32]);
         // RFC 6979 step c: Set K to 0x00...00
         self.k_val.set([0x00; 32]);
 
         self.state.set(State::HmacDerivingK1);
-
-        let _ = self.hmac_hw.authenticate(Algorithm::Sha256, 97, 32);
         self.input_counter.set(0);
+        self.output_counter.set(0);
+        self.key_counter.set(0);
+
+        if let Err(e) = self.hmac_hw.authenticate(Algorithm::Sha256, 97, 32) {
+            return Err((e, hash, signature));
+        }
+        self.hash_storage.replace(hash);
+        self.signature_storage.replace(signature);
 
         Ok(())
     }
@@ -243,8 +249,8 @@ where
                                     .chain(hash.iter()) // hash
                                     .skip(index), // skip over already read bytes
                             )
-                            .for_each(|(input_byte, &target_byte)| {
-                                *input_byte = target_byte;
+                            .for_each(|(input_byte, target_byte)| {
+                                *input_byte = *target_byte;
                                 copied += 1;
                             });
                     });
@@ -255,7 +261,7 @@ where
             }
             State::HmacDerivingV1 | State::HmacDerivingV2 | State::HmacGeneratingK => {
                 // Just V (32 bytes)
-                let counter = self.read_variable(&self.v_val, index, input);
+                let counter = self.read_var_to_buf(&self.v_val, index, input);
                 self.input_counter.set(index + counter);
                 Ok(counter)
             }
@@ -265,21 +271,20 @@ where
 
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
         let index = self.output_counter.get();
-        // RFC 6979 dictates whether the HMAC output updates K or V
         match self.state.get() {
             State::HmacDerivingK1 | State::HmacDerivingK2 => {
                 self.output_counter
-                    .set(index + self.update_variable(&self.k_val, index, output));
+                    .set(index + self.update_var_from_buf(&self.k_val, index, output));
             }
             State::HmacDerivingV1 | State::HmacDerivingV2 => {
                 self.output_counter
-                    .set(index + self.update_variable(&self.v_val, index, output));
+                    .set(index + self.update_var_from_buf(&self.v_val, index, output));
             }
             State::HmacGeneratingK => {
                 // The final output T becomes our ephemeral k
                 self.output_counter
-                    .set(index + self.update_variable(&self.k_val, index, output));
-                self.update_variable(&self.v_val, index, &self.k_val.get()); // V is updated to T for the next potential loop iteration
+                    .set(index + self.update_var_from_buf(&self.k_val, index, output));
+                self.update_var_from_buf(&self.v_val, index, &self.k_val.get()); // V is updated to T for the next potential loop iteration
             }
             _ => return Err(ErrorCode::FAIL),
         }
@@ -298,28 +303,44 @@ where
         match self.state.get() {
             State::HmacDerivingK1 => {
                 self.state.set(State::HmacDerivingV1);
-                let _ = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32);
+                if let Err(e) = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32) {
+                    self.complete_signature(Err(e));
+                    return;
+                }
             }
             State::HmacDerivingV1 => {
                 self.state.set(State::HmacDerivingK2);
-                let _ = self.hmac_hw.authenticate(Algorithm::Sha256, 97, 32);
+                if let Err(e) = self.hmac_hw.authenticate(Algorithm::Sha256, 97, 32) {
+                    self.complete_signature(Err(e));
+                    return;
+                }
             }
             State::HmacDerivingK2 => {
                 self.state.set(State::HmacDerivingV2);
-                let _ = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32);
+                if let Err(e) = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32) {
+                    self.complete_signature(Err(e));
+                    return;
+                }
             }
             State::HmacDerivingV2 => {
                 self.state.set(State::HmacGeneratingK);
-                let _ = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32);
+                if let Err(e) = self.hmac_hw.authenticate(Algorithm::Sha256, 32, 32) {
+                    self.complete_signature(Err(e));
+                    return;
+                }
             }
             State::HmacGeneratingK => {
                 if self.check_k() {
                     debug!("{:02x?}", self.k_val.get());
                     // Move to ECC Math: Calculate R = k * G
                     self.state.set(State::EccCalculatingR);
-                    let _ = self
+                    if let Err(e) = self
                         .ecc_hw
-                        .scalar_multiplicaiton::<32, NistP256Constants>(true);
+                        .scalar_multiplication::<32, NistP256Constants>(true)
+                    {
+                        self.complete_signature(Err(e));
+                        return;
+                    }
                 } else {
                     panic!("NOOOOOOOOO");
                 }
@@ -339,7 +360,7 @@ where
 {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
         let index = self.key_counter.get();
-        let counter = self.read_variable(&self.k_val, index, key);
+        let counter = self.read_var_to_buf(&self.k_val, index, key);
         self.key_counter.set(counter + index);
         Ok(counter)
     }
@@ -354,7 +375,7 @@ where
     fn read_scalar(&self, scalar: &mut [u8]) -> Result<(), ErrorCode> {
         if self.state.get() == State::EccCalculatingR {
             let index = self.input_counter.get();
-            let counter = self.read_variable(&self.k_val, index, scalar);
+            let counter = self.read_var_to_buf(&self.k_val, index, scalar);
             self.input_counter.set(index + counter);
             Ok(())
         } else {
@@ -373,7 +394,7 @@ where
     fn write_point(&self, point: &[u8]) -> Result<(), ErrorCode> {
         if self.state.get() == State::EccCalculatingR {
             let index = self.output_counter.get();
-            let counter = self.update_variable(&self.r_val, index, point);
+            let counter = self.update_var_from_buf(&self.r_val, index, point);
             self.output_counter.set(index + counter);
             Ok(())
         } else {
@@ -390,7 +411,9 @@ where
         }
 
         self.state.set(State::MathWriteR);
-        let _ = self.math_hw.start_operation(32);
+        if let Err(e) = self.math_hw.start_operation(32) {
+            self.complete_signature(Err(e));
+        }
     }
 }
 
@@ -412,7 +435,7 @@ where
         let index = self.input_counter.get();
         match self.state.get() {
             State::MathWriteR => {
-                let counter = self.read_variable(&self.r_val, index, num);
+                let counter = self.read_var_to_buf(&self.r_val, index, num);
                 self.input_counter.set(counter + index);
             }
             State::MathMulRDa => {
@@ -440,7 +463,7 @@ where
                 });
             }
             State::MathDivK => {
-                let counter = self.read_variable(&self.k_val, index, num);
+                let counter = self.read_var_to_buf(&self.k_val, index, num);
                 self.input_counter.set(counter + index);
             }
             _ => {}
@@ -450,7 +473,7 @@ where
 
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
         let index = self.output_counter.get();
-        let counter = self.update_variable(&self.s_val, index, output);
+        let counter = self.update_var_from_buf(&self.s_val, index, output);
         self.output_counter.set(index + counter);
         Ok(())
     }
