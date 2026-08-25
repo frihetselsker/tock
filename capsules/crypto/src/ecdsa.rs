@@ -12,7 +12,8 @@ use kernel::hil::crypto::digest::Algorithm;
 use kernel::hil::crypto::digest::Digest;
 use kernel::hil::crypto::digest::Hmac;
 use kernel::hil::crypto::elliptic_curves::ecc_constants::{Curve, NistP256Constants};
-use kernel::hil::crypto::elliptic_curves::ecc_math::{Client as EccClient, EccCryptoBase};
+use kernel::hil::crypto::elliptic_curves::ecc_math::WeierstrassEccCrypto;
+use kernel::hil::crypto::elliptic_curves::ecc_math::{Client as EccClient, EccCryptoCommon};
 use kernel::hil::crypto::modular_arithmetic::{
     BasicOperation, Client as MathClient, MathCryptoBase,
 };
@@ -37,7 +38,7 @@ enum State {
 
 pub struct EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -72,7 +73,7 @@ where
 
 impl<'a, E, M, H> EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -178,7 +179,7 @@ where
 impl<'a, E, M, H> hil::public_key_crypto::signature::SignatureSign<'a, 32, 64>
     for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -219,7 +220,7 @@ where
 
 impl<'a, E, M, H> kernel::hil::crypto::digest::Client for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -354,7 +355,7 @@ where
 
 impl<'a, E, M, H> kernel::hil::crypto::digest::HmacClient for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -368,7 +369,7 @@ where
 
 impl<'a, E, M, H> EccClient<'a> for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -419,7 +420,7 @@ where
 
 impl<'a, E, M, H> MathClient<'a> for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -512,7 +513,7 @@ where
 impl<'a, E, M, H> hil::public_key_crypto::keys::SetKeyBySlice<'a, 32>
     for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
@@ -537,7 +538,7 @@ where
 impl<'a, E, M, H> kernel::deferred_call::DeferredCallClient
     for EcdsaP256SignatureSigner<'a, E, M, H>
 where
-    E: EccCryptoBase<'a>,
+    E: EccCryptoCommon<'a> + WeierstrassEccCrypto<'a>,
     M: MathCryptoBase<'a>,
     H: Digest + Hmac,
 {
