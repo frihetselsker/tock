@@ -2,7 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-//! Hash Userspace Driver
+//! Syscall driver for digest HIL.
+//!
+//! # System call interface
+//!
+//! ## `subscribe_num`
+//!
+//! - `0`: operation completion. Callback arguments are `(status, 0, 0)`.
+//!
+//! ## Read-only allow buffers
+//!
+//! - `0`: input
+//!
+//! ## Read-write allow buffers
+//!
+//! - `0`: digest output
+//!
+//! ## Commands
+//!
+//! - `0`: existence check
+//! - `1`: perform a hashing operation. `data1` is the algorithm.
+//!
+//! Mode values are `0 = Md5`, `1 = Sha1`, `2 = Sha224`, `3 = Sha256`, `4 = Sha384`, `5 = Sha512`, `6 = Sha512-224`, and `7 = Sha512-256`.
+//! Operation value is `0 = calculate digest`.
 
 use core::cell::Cell;
 
@@ -22,7 +44,7 @@ use kernel::{ErrorCode, ProcessId};
 /// Syscall driver number.
 pub const DRIVER_NUM: usize = driver::NUM::Hash as usize;
 
-/// Upcalls for SHA operations completing.
+/// Upcalls for hashing operations completing.
 mod upcall {
     pub const DONE: usize = 0;
     pub const COUNT: u8 = 1;
@@ -89,11 +111,9 @@ fn readwrite_buffer_len(
 }
 
 pub struct Hash<H: crypto::digest::Digest + 'static> {
-    /// Underlying hasher to use for the SHA operations.
     hash_mutex: &'static DriverMutex<H>,
     hash_handle: OptionalCell<DriverMutexHandle>,
     hash: MapCell<DriverMutexRef<H>>,
-    /// Virtualized capsule that supports a single operation per app.
     apps: Grant<
         (),
         UpcallCount<{ upcall::COUNT }>,
@@ -259,10 +279,8 @@ impl<H: crypto::digest::Digest> Hash<H> {
             State::Waiting { processid, .. } | State::Active { processid, .. } => processid,
             State::Idle => return,
         };
-        let output_len = self.output_offset.get();
         let _ = self.apps.enter(processid, |_, kernel_data| {
-            let _ =
-                kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), output_len, 0));
+            let _ = kernel_data.schedule_upcall(upcall::DONE, (into_statuscode(result), 0, 0));
         });
     }
 }
@@ -310,25 +328,6 @@ impl<H: crypto::digest::Digest> Client for Hash<H> {
 }
 
 impl<H: crypto::digest::Digest> SyscallDriver for Hash<H> {
-    /// Setup and run a SHA hash.
-    ///
-    /// We expect userspace to setup buffers for the data, and either the
-    /// generated hash or a hash to compare with. These buffers must be
-    /// allocated and specified to the kernel with allow calls.
-    ///
-    /// We expect userspace not to change the value while running. If userspace
-    /// changes the value we have no guarantee of what is passed to the
-    /// hardware. This isn't a security issue, it will just provide the requesting
-    /// app with invalid data.
-    ///
-    /// The driver will take care of clearing data from the underlying
-    /// implementation by calling the `clear_data()` function when the
-    /// `hash_complete()` callback is called or if an error is encountered.
-    ///
-    /// ### `command_num`
-    ///
-    /// - `0`: driver check
-    /// - `1`: hash
     fn command(
         &self,
         command_num: usize,
@@ -337,16 +336,12 @@ impl<H: crypto::digest::Digest> SyscallDriver for Hash<H> {
         processid: ProcessId,
     ) -> CommandReturn {
         match command_num {
-            // check if present
             0 => CommandReturn::success(),
 
-            // start hash operation
             1 => match self.start_operation(processid, data1) {
                 Ok(()) => CommandReturn::success(),
                 Err(e) => CommandReturn::failure(e),
             },
-
-            // default
             _ => CommandReturn::failure(ErrorCode::NOSUPPORT),
         }
     }

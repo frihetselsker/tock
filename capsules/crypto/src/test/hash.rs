@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-//! Test the implementation of Hash driver by performing a hash
+//! Test the implementation of Hash driver by performing a hashing operation
 //! and checking it against the expected hash value.
 
 use core::cell::Cell;
@@ -76,7 +76,6 @@ impl<H: crypto::digest::Digest> TestHash<H> {
     }
 
     fn write_output(&self, source: &[u8]) -> Result<(), ErrorCode> {
-        // The correct hash value will be checked here.
         self.output_buffer
             .map_or(Err(ErrorCode::FAIL), |destination| {
                 let offset = self.output_offset.get();
@@ -84,12 +83,12 @@ impl<H: crypto::digest::Digest> TestHash<H> {
                 if end > destination.len() {
                     panic!("HashTest: offset got bigger than the actual size of output buffer, offset: {}, input size: {}", offset, destination.len());
                 }
-                for i in 0..source.len() {
-                    if destination[offset + i] != source[i] {
+                for (idx, (dest, src)) in destination[offset..].iter().zip(source).enumerate() {
+                    if *src != *dest {
                         panic!(
                             "HashTest: Verification failed at byte 0x{:02x}, index {}",
-                            destination[offset + i],
-                            offset + i
+                            dest,
+                            offset + idx
                         );
                     }
                 }
