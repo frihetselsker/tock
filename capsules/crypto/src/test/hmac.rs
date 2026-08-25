@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-//! Test the implementation of Hmac driver by performing a hash
+//! Test the implementation of HMAC driver by performing an HMAC operation
 //! and checking it against the expected hash value.
 
 use core::cell::Cell;
@@ -102,7 +102,6 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
     }
 
     fn write_output(&self, source: &[u8]) -> Result<(), ErrorCode> {
-        // The correct hash value will be checked here.
         self.output_buffer
             .map_or(Err(ErrorCode::FAIL), |destination| {
                 let offset = self.output_offset.get();
@@ -110,12 +109,12 @@ impl<H: crypto::digest::Hmac> TestHmac<H> {
                 if end > destination.len() {
                     panic!("HmacTest: offset got bigger than the actual size of output buffer, offset: {}, input size: {}", offset, destination.len());
                 }
-                for i in 0..source.len() {
-                    if destination[offset + i] != source[i] {
+                for (idx, (dest, src)) in destination[offset..].iter().zip(source).enumerate() {
+                    if *src != *dest {
                         panic!(
                             "HmacTest: Verification failed at byte 0x{:02x}, index {}",
-                            destination[offset + i],
-                            offset + i
+                            dest,
+                            offset + idx
                         );
                     }
                 }
