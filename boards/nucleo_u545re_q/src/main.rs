@@ -516,10 +516,12 @@ unsafe fn start() -> (
     )
     .finalize(components::gpio_component_static!(GpioHw));
 
+    // Mutex for the hashing peripheral
     let hash_mutex = components::driver_mutex::DriverMutexComponent::new(&periphs.hash).finalize(
         components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 2),
     );
 
+    // Hash capsule
     let hash = components::crypto::hash::HashComponent::new(
         board_kernel,
         capsules_crypto::hash::DRIVER_NUM,
@@ -530,10 +532,12 @@ unsafe fn start() -> (
         stm32u545::hash::hash::Hash<'static>,
     ));
 
+    // Register hashing capsule into the mutex
     if hash.register().is_err() {
-        panic!("Unable to register hash capsule into the mutex");
+        panic!("Failed to register hash capsule into the mutex");
     }
 
+    // HMAC capsule
     let hmac = components::crypto::hmac::HmacComponent::new(
         board_kernel,
         capsules_crypto::hmac::DRIVER_NUM,
@@ -544,8 +548,9 @@ unsafe fn start() -> (
         stm32u545::hash::hash::Hash<'static>,
     ));
 
+    // Register HMAC capsule into the mutex
     if hmac.register().is_err() {
-        panic!("Unable to register hmac capsule into the mutex");
+        panic!("Failed to register hmac capsule into the mutex");
     }
 
     let crc = components::crc::CrcComponent::new(
