@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright OxidOS Automotive 2026.
 
-//! HASH core computing unit performing digest calculations for various modes.
+//! HASH core computing unit performing digest calculations for various algorithms.
 
 use core::cell::Cell;
-use core::cmp::min;
 
 use crate::dma::{ChannelId, Dma};
 use crate::hash::regs::HashRegisters;
@@ -13,6 +12,7 @@ use crate::hash::regs::{CR, IMR, SR, STR};
 use crate::hash::utils::{DataType, HashClient, Leftover, State, TransferMode};
 
 use cortexm33::dma_fence::CortexMDmaFence;
+use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
 use kernel::hil::crypto::digest::{Algorithm, Client, Digest, Hmac, HmacClient};
 use kernel::utilities::StaticRef;
@@ -21,7 +21,6 @@ use kernel::utilities::dma_slice::DmaSubSliceMut;
 use kernel::utilities::leasable_buffer::SubSliceMut;
 use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
-use kernel::{ErrorCode, debug};
 
 const LONG_HMAC_KEY_LEN: usize = 64;
 const FIFO_SIZE: usize = 17 * 4;
@@ -70,8 +69,6 @@ impl<'a> Hash<'a> {
         let ptr = dma_slice.as_mut_ptr() as u32;
         let len = dma_slice.len() as u32;
 
-        // debug!("DMA: current length of dma slice - {}", len);
-
         // Save DmaSlice in the peripheral struct
         self.dma_buffer.replace(dma_slice);
         dma.setup(dma_channel, crate::dma::DmaPeripheral::Hash, ptr, len);
@@ -111,7 +108,6 @@ impl Hash<'_> {
         // (if FIFO is not empty) PreRun -> Run -> HmacPostAuth -> HmacFinalize -> Callback
 
         let regs = self.regs;
-        debug!("INTERRUPT");
         // Disable all the interrupts
         regs.imr.modify(IMR::DCIE::CLEAR + IMR::DINIE::CLEAR);
         if let Some(client) = self.client.get() {
@@ -121,7 +117,6 @@ impl Hash<'_> {
                 if let Some(state) = self.state.get() {
                     // Is final digest ready?
                     if regs.sr.is_set(SR::DCIS) {
-                        debug!("Is final digest ready? - {:?}", state);
                         match state {
                             State::Run(true, DataType::Input)
                             | State::Run(true, DataType::OuterKey) => {
@@ -132,7 +127,6 @@ impl Hash<'_> {
                     }
                     // Is FIFO ready?
                     else if regs.sr.is_set(SR::DINIS) {
-                        debug!("Is FIFO ready? - {:?}", state);
                         match state {
                             State::Run(true, DataType::InnerKey) => {
                                 self.state.set(state.update(Some(self.data_length.get())));
@@ -205,7 +199,6 @@ impl Hash<'_> {
     pub(crate) fn handle_dma_interrupt(&self) {
         let regs = self.regs;
         // Disable the DMA trigger to release the channel
-        debug!("Dma interrupt received");
         regs.cr.modify(CR::DMAE::CLEAR);
         if let (Some(dma_slice), Some(client)) = (self.dma_buffer.take(), self.client.get()) {
             let fence = unsafe { CortexMDmaFence::new() };
@@ -227,9 +220,7 @@ impl Hash<'_> {
         if let (Some(algo), Some(client)) = (self.algorithm.get(), self.client.get()) {
             for i in 0..(algo.get_digest_len() / 4) {
                 let d = regs.hr[i].get().to_be_bytes();
-                let result = [d[0], d[1], d[2], d[3]];
-                debug!("Received: {:02x?}", result);
-                client.write_output(&result)?;
+                client.write_output(&d)?;
             }
             Ok(())
         } else {
@@ -253,10 +244,9 @@ impl Hash<'_> {
                 let fifo_space = (self.regs.sr.read(SR::NBWE) * 4) as usize;
                 let space_limit = fifo_space.min(FIFO_SIZE);
                 let bytes_read = read_from_client(&mut buffer[..space_limit])?;
-                Ok((self.write_data_cpu(&buffer, bytes_read), true))
+                Ok((self.write_data_cpu(&buffer[..bytes_read]), true))
             }
             _ => {
-                // debug!("Starting with DMA transfer");
                 let mut dma_buffer = self.data_buffer.take().ok_or(ErrorCode::FAIL)?;
                 dma_buffer.reset();
                 let bytes_read = read_from_client(dma_buffer.as_mut_slice())?;
@@ -264,12 +254,9 @@ impl Hash<'_> {
 
                 if let (Some(dma), Some(dma_channel)) = (self.dma.get(), self.dma_channel.get()) {
                     if !self.leftover.is_empty() {
-                        debug!("Leftover is not empty, we need to fill it with bytes");
                         if self.trim_dma_subslice(&mut dma_buffer) {
                             if dma_buffer.len() == 0 {
-                                debug!(
-                                    "Already finished with everything, no need for DMA transfer"
-                                );
+                                // Already finished with everything, no need for DMA transfer
                                 return Ok((bytes_read, true));
                             }
                         } else {
@@ -278,15 +265,12 @@ impl Hash<'_> {
                         }
                     }
                     if !dma_buffer.len().is_multiple_of(4) {
-                        debug!("Dma buffer is not multiple of 4, truncate");
                         self.truncate_dma_subslice(&mut dma_buffer);
                         if dma_buffer.len() == 0 {
-                            debug!("Already finished with everything, no need for DMA transfer");
                             return Ok((bytes_read, true));
                         }
                     }
                     self.start_dma_transfer(dma, dma_channel, dma_buffer);
-                    debug!("Dma request sent");
                     Ok((bytes_read, true))
                 } else {
                     Err(ErrorCode::NODEVICE)
@@ -295,13 +279,12 @@ impl Hash<'_> {
         }
     }
 
-    fn write_data_cpu(&self, buffer: &[u8], bytes_read: usize) -> usize {
+    fn write_data_cpu(&self, buffer: &[u8]) -> usize {
         let regs = self.regs;
         let mut offset = 0;
         if !self.leftover.is_empty() {
-            let bytes_to_accept = min(bytes_read, self.leftover.bytes_left());
+            let bytes_to_accept = buffer.len().min(self.leftover.bytes_left());
             for data in buffer[..bytes_to_accept].iter() {
-                debug!("Adding to thr leftover 0x{:02x}", *data);
                 self.leftover.add(*data);
             }
             offset += bytes_to_accept;
@@ -312,28 +295,20 @@ impl Hash<'_> {
             }
         }
 
-        let (words_to_load, leftover_to_load) =
-            ((bytes_read - offset) / 4, (bytes_read - offset) % 4);
+        let (words_to_load, leftover_to_load) = buffer[offset..].as_chunks::<4>();
 
         // Send the 32-bit wordss
-        for data in buffer[offset..offset + (words_to_load * 4)]
-            .as_chunks::<4>()
-            .0
-        {
-            let d = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
-            debug!("W: 0x{:02x}", d);
+        for data in words_to_load {
+            let d = u32::from_le_bytes(*data);
             regs.din.set(d);
         }
 
-        offset += words_to_load * 4;
-
-        for data in buffer[offset..offset + leftover_to_load].iter() {
-            debug!("R: 0x{:02x}", *data);
+        for data in leftover_to_load {
             // Accumulate leftover bytes
             self.leftover.add(*data);
         }
 
-        bytes_read
+        buffer.len()
     }
 
     /// Trim the subslice to get rid of the old leftover bytes.
@@ -343,8 +318,7 @@ impl Hash<'_> {
     /// if the write operation was successful and there is no need to wait for the interrupt
     /// when the FIFO is free.
     fn trim_dma_subslice(&self, dma_buffer: &mut SubSliceMut<'_, u8>) -> bool {
-        let bytes_to_write = min(self.leftover.bytes_left(), dma_buffer.len());
-        debug!("Trim: bytes to write - {}", bytes_to_write);
+        let bytes_to_write = self.leftover.bytes_left().min(dma_buffer.len());
         for data_idx in 0..bytes_to_write {
             self.leftover.add(dma_buffer[data_idx]);
         }
@@ -356,10 +330,8 @@ impl Hash<'_> {
             if regs.sr.read(SR::NBWE) == 0 {
                 // New data cannot be written at the moment
                 // Wait for an interrupt when FIFO is empty
-                debug!("Trim: busy, try at the interrupt");
                 return false;
             } else {
-                debug!("Writing the leftover to the register");
                 regs.din.set(self.leftover.to_le());
                 // Leftover was written successfully
                 return true;
@@ -374,13 +346,8 @@ impl Hash<'_> {
     /// Return the number of bytes written.
     fn truncate_dma_subslice(&self, dma_buffer: &mut SubSliceMut<'_, u8>) {
         let bytes_written = dma_buffer.len() % 4;
-        // debug!("Truncate: bytes written - {}", bytes_written);
         for i in 0..bytes_written {
             let data_idx = (dma_buffer.len() - bytes_written) + i;
-            // debug!(
-            //     "Truncate: Adding to the leftover - 0x{:02}",
-            //     dma_buffer[data_idx]
-            // );
             self.leftover.add(dma_buffer[data_idx]);
         }
         dma_buffer.slice(..dma_buffer.len() - bytes_written);
@@ -398,12 +365,7 @@ impl Hash<'_> {
 
         if !self.leftover.is_empty() {
             if !regs.sr.is_set(SR::BUSY) {
-                let leftover_content = self.leftover.to_le();
-                debug!(
-                    "There is leftover, we need to load it - 0x{:02x}",
-                    leftover_content
-                );
-                regs.din.set(leftover_content);
+                regs.din.set(self.leftover.to_le());
             } else {
                 return Ok(false);
             }
@@ -434,7 +396,6 @@ impl Hash<'_> {
                 self.key_length.get() as u32
             }
         };
-        debug!("Mask for starting: {}", (data_length % 4) * 8);
         regs.str.modify(STR::NBLW.val((data_length % 4) * 8));
         regs.str.modify(STR::DCAL::SET);
 
@@ -447,10 +408,7 @@ impl Hash<'_> {
             Algorithm::Sha1 => Ok(CR::ALGO::SHA_1),
             Algorithm::Sha224 => Ok(CR::ALGO::SHA2_224),
             Algorithm::Sha256 => Ok(CR::ALGO::SHA2_256),
-            Algorithm::Sha384
-            | Algorithm::Sha512_224
-            | Algorithm::Sha512_256
-            | Algorithm::Sha512 => Err(ErrorCode::NOSUPPORT),
+            _ => Err(ErrorCode::NOSUPPORT),
         }
     }
 
@@ -474,16 +432,16 @@ impl DeferredCallClient for Hash<'_> {
     fn handle_deferred_call(&self) {
         if let (Some(state), Some(client)) = (self.state.get(), self.client.get()) {
             if !self.cancelled.take() {
-                debug!("DC - {:?}", state);
                 let result = (|| {
                     match state {
                         State::Add(left, data_type) => {
                             let (bytes_loaded, is_dma_ready) = self.load_data(client, data_type)?;
                             let updated_length =
                                 left.checked_sub(bytes_loaded).ok_or(ErrorCode::FAIL)?;
-                            self.transfer_mode.set(TransferMode::Dma(is_dma_ready));
+                            if matches!(self.transfer_mode.get(), TransferMode::Dma(_)) {
+                                self.transfer_mode.set(TransferMode::Dma(is_dma_ready));
+                            }
                             self.state.set(state.update(Some(updated_length)));
-                            debug!("New: {:?}", self.state.get());
                             match (self.transfer_mode.get(), data_type) {
                                 (TransferMode::DirectStream, _)
                                 | (_, DataType::InnerKey | DataType::OuterKey) => {
@@ -497,7 +455,6 @@ impl DeferredCallClient for Hash<'_> {
                                     self.regs.imr.modify(IMR::DINIE::SET);
                                 }
                                 (TransferMode::Dma(true), DataType::Input) => {
-                                    debug!("DMA is loaded, waiting for the interrupt");
                                     // Do nothing, wait for an interrupt from DMA
                                 }
                             }
@@ -546,10 +503,8 @@ impl Digest for Hash<'_> {
         );
 
         if self.dma.is_some() && self.dma_channel.get().is_some() {
-            debug!("Hash: Setting DMA mode");
             self.transfer_mode.set(TransferMode::Dma(false));
         } else {
-            debug!("Hash: Setting direct stream mode");
             self.transfer_mode.set(TransferMode::DirectStream);
         }
         self.deferred_call.set();
