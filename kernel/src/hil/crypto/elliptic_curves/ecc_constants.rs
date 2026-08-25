@@ -2,11 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright OxidOS Automotive 2026
 
+//! Curve constants for elliptic-curve cryptography, split by curve family
+//! since Weierstrass and Edwards curves carry different equation
+//! parameters (a,b vs a,d) and support different point-arithmetic ops.
+
+/// Constants common to any elliptic curve, regardless of family.
 pub trait Curve<const P_SIZE: usize> {
+    /// Base point (generator) as (x, y).
     const GENERATOR: ([u8; P_SIZE], [u8; P_SIZE]);
+    /// Field prime.
     const P: [u8; P_SIZE];
+    /// Order of the generator's subgroup.
     const N: [u8; P_SIZE];
+    /// Cofactor.
     const H: u32;
+}
+
+/// y² = x³ + ax + b.
+pub trait WeierstrassCurve<const P_SIZE: usize>: Curve<P_SIZE> {
+    /// Equation parameters (a, b).
+    const EQ_PARAMS: ([u8; P_SIZE], [u8; P_SIZE]);
+}
+
+/// ax² + y² = 1 + dx²y² (twisted Edwards form).
+pub trait EdwardsCurve<const P_SIZE: usize>: Curve<P_SIZE> {
+    /// Equation parameters (a, d).
     const EQ_PARAMS: ([u8; P_SIZE], [u8; P_SIZE]);
 }
 
@@ -30,15 +50,15 @@ impl Curve<32> for NistP256Constants {
         0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff,
     ];
-
     const N: [u8; 32] = [
         0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xbc, 0xe6, 0xfa, 0xad, 0xa7, 0x17, 0x9e, 0x84, 0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63,
         0x25, 0x51,
     ];
-
     const H: u32 = 0x01;
+}
 
+impl WeierstrassCurve<32> for NistP256Constants {
     const EQ_PARAMS: ([u8; 32], [u8; 32]) = (
         [
             0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
