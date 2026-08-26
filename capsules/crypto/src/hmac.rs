@@ -78,6 +78,21 @@ enum State {
     },
 }
 
+#[derive(Clone, Copy)]
+enum KeyState {
+    InnerKey,
+    OuterKey,
+}
+
+impl KeyState {
+    pub fn update(self) -> Option<Self> {
+        match self {
+            KeyState::InnerKey => Some(KeyState::OuterKey),
+            KeyState::OuterKey => None,
+        }
+    }
+}
+
 fn parse_algorithm(value: usize) -> Result<Algorithm, ErrorCode> {
     match value {
         0 => Ok(Algorithm::Md5),
@@ -123,6 +138,7 @@ pub struct Hmac<H: crypto::digest::Hmac + 'static> {
         AllowRwCount<{ rw_allow::COUNT }>,
     >,
     state: Cell<State>,
+    key_state: OptionalCell<KeyState>,
     input_len: Cell<usize>,
     output_len: Cell<usize>,
     key_len: Cell<usize>,
@@ -147,6 +163,7 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
             hmac: MapCell::empty(),
             apps,
             state: Cell::new(State::Idle),
+            key_state: OptionalCell::empty(),
             input_len: Cell::new(0),
             output_len: Cell::new(0),
             key_len: Cell::new(0),
@@ -208,15 +225,20 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
     }
 
     fn read_key(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
-        let offset = self.key_offset.get();
-        let read = self.read_at(ro_allow::KEY, offset, destination)?;
-        let updated_offset = offset + read;
-        if updated_offset == self.key_len.get() {
-            self.key_offset.take();
+        if self.key_state.is_some() {
+            let offset = self.key_offset.get();
+            let read = self.read_at(ro_allow::KEY, offset, destination)?;
+            let updated_offset = offset + read;
+            if updated_offset == self.key_len.get() {
+                self.key_offset.take();
+            } else {
+                self.key_offset.set(updated_offset);
+            }
+            self.key_state.map_or(None, |key_state| key_state.update());
+            Ok(read)
         } else {
-            self.key_offset.set(updated_offset);
+            Err(ErrorCode::ALREADY)
         }
-        Ok(read)
     }
 
     fn write_at(&self, allow_number: usize, offset: usize, source: &[u8]) -> Result<(), ErrorCode> {
@@ -279,6 +301,7 @@ impl<H: crypto::digest::Hmac> Hmac<H> {
         self.input_offset.set(0);
         self.output_offset.set(0);
         self.key_offset.set(0);
+        self.key_state.set(KeyState::InnerKey);
         self.state.set(State::Waiting {
             processid,
             algorithm,
