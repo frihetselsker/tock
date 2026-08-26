@@ -1,6 +1,3 @@
-// Licensed under the Apache License, Version 2.0 or the MIT License.
-// SPDX-License-Identifier: Apache-2.0 OR MIT
-// Copyright OxidOS Automotive 2026
 use crate::{
     ErrorCode,
     hil::crypto::elliptic_curves::ecc_constants::{EdwardsCurve, WeierstrassCurve},
