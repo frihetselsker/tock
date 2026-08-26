@@ -1,11 +1,3 @@
-// Licensed under the Apache License, Version 2.0 or the MIT License.
-// SPDX-License-Identifier: Apache-2.0 OR MIT
-// Copyright OxidOS Automotive 2026
-
-//! Curve constants for elliptic-curve cryptography, split by curve family
-//! since Weierstrass and Edwards curves carry different equation
-//! parameters (a,b vs a,d) and support different point-arithmetic ops.
-
 /// Constants common to any elliptic curve, regardless of family.
 pub trait Curve<const P_SIZE: usize> {
     /// Base point (generator) as (x, y).
