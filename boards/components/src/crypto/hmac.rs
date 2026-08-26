@@ -2,6 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
+//! Component for initializing Hmac instances.
+//!
+//! Usage
+//! -----
+//! ```rust
+//! let hash_mutex = components::driver_mutex::DriverMutexComponent::new(hash).finalize(
+//!     components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>),
+//! );
+//!
+//! let hmac = components::crypto::hmac::HmacComponent::new(
+//!     board_kernel,
+//!     capsules_crypto::hmac::DRIVER_NUM,
+//!     hash_mutex,
+//!     create_capability!(capabilities::MemoryAllocationCapability),
+//! )
+//! .finalize(components::hmac_crypto_component_static!(
+//!     stm32u545::hash::hash::Hash<'static>,
+//! ));
+//! ```
+
 use capsules_core::driver_mutex::DriverMutex;
 use capsules_crypto::hmac::Hmac;
 use core::mem::MaybeUninit;
@@ -9,7 +29,11 @@ use kernel::capabilities::MemoryAllocationCapability;
 use kernel::component::Component;
 use kernel::hil::crypto::digest;
 
+/// Statically allocates the storage needed to finalize a [`HmacComponent`].
+///
+/// `$H` is the concrete type of Hmac implementer.
 #[macro_export]
+// TODO: Rename it into `hmac_component_static!`
 macro_rules! hmac_crypto_component_static {
     ($H:ty $(,)?) => {{ kernel::static_buf!(capsules_crypto::hmac::Hmac<$H>) }};
 }
@@ -21,6 +45,7 @@ pub struct HmacComponent<H: 'static + digest::Hmac, CAP: MemoryAllocationCapabil
     mem_cap: CAP,
 }
 
+/// Component helper interface used to initialize a [`Hmac`] instance.
 impl<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> HmacComponent<H, CAP> {
     pub fn new(
         board_kernel: &'static kernel::Kernel,
