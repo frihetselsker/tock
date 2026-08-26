@@ -17,6 +17,7 @@ use kernel::utilities::single_thread_value::SingleThreadValue;
 use kernel::{create_capability, static_init};
 
 use stm32u545::gpio::PinId;
+use stm32u545::hash::hash::FIFO_SIZE;
 use stm32u545::rng::RNG_BASE;
 
 pub mod io;
@@ -294,7 +295,7 @@ unsafe fn start() -> (
     periphs.rcc.enable_trng();
 
     // Initialize DMA buffer for hash peripheral
-    let hash_dma_buf = static_init!([u8; 17 * 4], [0u8; 17 * 4]);
+    let hash_dma_buf = static_init!([u8; FIFO_SIZE], [0u8; FIFO_SIZE]);
 
     // Initialize wiring (DMA, clocks)
     periphs.init(hash_dma_buf);
