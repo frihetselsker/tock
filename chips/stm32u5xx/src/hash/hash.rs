@@ -454,7 +454,8 @@ impl DeferredCallClient for Hash<'_> {
                             if matches!(self.transfer_mode.get(), TransferMode::Dma(_)) {
                                 self.transfer_mode.set(TransferMode::Dma(is_dma_ready));
                             }
-                            self.state.set(state.update(Some(updated_length)));
+                            let new_state = state.update(Some(updated_length));
+                            self.state.set(new_state);
                             match (self.transfer_mode.get(), data_type) {
                                 (TransferMode::DirectStream, _)
                                 | (_, DataType::InnerKey | DataType::OuterKey) => {
@@ -468,7 +469,9 @@ impl DeferredCallClient for Hash<'_> {
                                     self.regs.imr.modify(IMR::DINIE::SET);
                                 }
                                 (TransferMode::Dma(true), DataType::Input) => {
-                                    // Do nothing, wait for an interrupt from DMA
+                                    if let Some(State::Run(_, _)) = new_state {
+                                        self.deferred_call.set();
+                                    }
                                 }
                             }
 
