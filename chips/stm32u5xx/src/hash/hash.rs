@@ -23,7 +23,7 @@ use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
 
 const LONG_HMAC_KEY_LEN: usize = 64;
-const FIFO_SIZE: usize = 17 * 4;
+pub const FIFO_SIZE: usize = 17 * 4;
 
 pub struct Hash<'a> {
     regs: StaticRef<HashRegisters>,
@@ -204,6 +204,7 @@ impl Hash<'_> {
             let fence = unsafe { CortexMDmaFence::new() };
             let mut subslice = unsafe { dma_slice.take(fence) };
             subslice.reset();
+            // Reset DMA readiness for new operations
             self.transfer_mode.set(TransferMode::Dma(false));
             self.data_buffer.put(subslice);
             if self.cancelled.take() {
@@ -214,13 +215,15 @@ impl Hash<'_> {
         }
     }
 
-    // Write digest back
+    /// Write digest back to client.
+    ///
+    /// Called when the final digest is ready.
     fn get_digest(&self) -> Result<(), ErrorCode> {
         let regs = self.regs;
         if let (Some(algo), Some(client)) = (self.algorithm.get(), self.client.get()) {
-            for i in 0..(algo.get_digest_len() / 4) {
-                let d = regs.hr[i].get().to_be_bytes();
-                client.write_output(&d)?;
+            for digest_reg in regs.hr[..algo.get_digest_len() / 4].iter() {
+                let data = digest_reg.get().to_be_bytes();
+                client.write_output(&data)?;
             }
             Ok(())
         } else {
@@ -228,6 +231,9 @@ impl Hash<'_> {
         }
     }
 
+    /// Load data into the accelerator.
+    ///
+    /// Handles both DMA and Direct Stream operations.
     fn load_data(
         &self,
         client: HashClient<'_>,
@@ -244,7 +250,8 @@ impl Hash<'_> {
                 let fifo_space = (self.regs.sr.read(SR::NBWE) * 4) as usize;
                 let space_limit = fifo_space.min(FIFO_SIZE);
                 let bytes_read = read_from_client(&mut buffer[..space_limit])?;
-                Ok((self.write_data_cpu(&buffer[..bytes_read]), true))
+                self.write_data_cpu(&buffer[..bytes_read]);
+                Ok((bytes_read, true))
             }
             _ => {
                 let mut dma_buffer = self.data_buffer.take().ok_or(ErrorCode::FAIL)?;
@@ -254,16 +261,21 @@ impl Hash<'_> {
 
                 if let (Some(dma), Some(dma_channel)) = (self.dma.get(), self.dma_channel.get()) {
                     if !self.leftover.is_empty() {
+                        // If the leftover is not empty, it has to be filled first and written to the accelerator
                         if self.trim_dma_subslice(&mut dma_buffer) {
                             if dma_buffer.len() == 0 {
                                 // Already finished with everything, no need for DMA transfer
                                 return Ok((bytes_read, true));
                             }
                         } else {
+                            // Failed to write, accelerator is busy
+                            // Try to write later
                             self.data_buffer.put(dma_buffer);
                             return Ok((bytes_read, false));
                         }
                     }
+                    // As DMA slice can be of arbitrary size whereas DMA can send only 32-bit words,
+                    // it has to be ensured that DMA buffer contains only 32-bit words
                     if !dma_buffer.len().is_multiple_of(4) {
                         self.truncate_dma_subslice(&mut dma_buffer);
                         if dma_buffer.len() == 0 {
@@ -279,48 +291,41 @@ impl Hash<'_> {
         }
     }
 
-    fn write_data_cpu(&self, buffer: &[u8]) -> usize {
+    /// Write data using CPU.
+    ///
+    /// Usually writes only words into the accelerator.
+    ///
+    /// Only the last iteration accumulates bytes into leftover.
+    fn write_data_cpu(&self, buffer: &[u8]) {
         let regs = self.regs;
-        let mut offset = 0;
-        if !self.leftover.is_empty() {
-            let bytes_to_accept = buffer.len().min(self.leftover.bytes_left());
-            for data in buffer[..bytes_to_accept].iter() {
-                self.leftover.add(*data);
-            }
-            offset += bytes_to_accept;
-            if !self.regs.sr.is_set(SR::BUSY) && self.leftover.is_full() {
-                self.regs.din.set(self.leftover.to_le());
-            } else {
-                return bytes_to_accept;
-            }
-        }
+        let (words_to_load, leftover_to_load) = buffer.as_chunks::<4>();
 
-        let (words_to_load, leftover_to_load) = buffer[offset..].as_chunks::<4>();
-
-        // Send the 32-bit wordss
+        // Write 32-bit words
         for data in words_to_load {
             let d = u32::from_le_bytes(*data);
             regs.din.set(d);
         }
 
+        // Accumulate leftover bytes
+        // This code is invoked only in at the last iteration of reading data from client
+        // Driver sends buffers fitting 32-bit words to the client
         for data in leftover_to_load {
-            // Accumulate leftover bytes
             self.leftover.add(*data);
         }
-
-        buffer.len()
     }
 
     /// Trim the subslice to get rid of the old leftover bytes.
     ///
     /// Fill the leftover buffer with bytes from the beginning of subslice.
-    /// Return the tuple of number of bytes written and boolean values showing
-    /// if the write operation was successful and there is no need to wait for the interrupt
+    /// Return boolean value showing if the write operation was successful
+    /// and there is no need to wait for the interrupt
     /// when the FIFO is free.
+    ///
+    /// Slice the passed subslice respectively.
     fn trim_dma_subslice(&self, dma_buffer: &mut SubSliceMut<'_, u8>) -> bool {
         let bytes_to_write = self.leftover.bytes_left().min(dma_buffer.len());
-        for data_idx in 0..bytes_to_write {
-            self.leftover.add(dma_buffer[data_idx]);
+        for data in dma_buffer[..bytes_to_write].iter() {
+            self.leftover.add(*data);
         }
         dma_buffer.slice(bytes_to_write..);
 
@@ -343,19 +348,18 @@ impl Hash<'_> {
     /// Truncate the subslice to make its size divisible by 4.
     ///
     /// Fill the leftover buffer with bytes from the end of subslice.
-    /// Return the number of bytes written.
+    /// Slice the passed subslice respectively.
     fn truncate_dma_subslice(&self, dma_buffer: &mut SubSliceMut<'_, u8>) {
         let bytes_written = dma_buffer.len() % 4;
-        for i in 0..bytes_written {
-            let data_idx = (dma_buffer.len() - bytes_written) + i;
-            self.leftover.add(dma_buffer[data_idx]);
+        for data in dma_buffer[dma_buffer.len() - bytes_written..].iter() {
+            self.leftover.add(*data);
         }
         dma_buffer.slice(..dma_buffer.len() - bytes_written);
     }
 
     /// Starts the final digest computation.
     ///
-    /// Responsible only for starting the calculation
+    /// Responsible for writing the leftover and starting the computation.
     fn run(&self, data_type: DataType) -> Result<bool, ErrorCode> {
         // No computations without the algorithm set
         if self.algorithm.get().is_none() {
@@ -363,10 +367,15 @@ impl Hash<'_> {
         }
         let regs = self.regs;
 
+        // If the leftover is not empty, write it right now
         if !self.leftover.is_empty() {
+            // Check if it is possible to write it at the moment
+            //
+            // There might be some computations in action
             if !regs.sr.is_set(SR::BUSY) {
                 regs.din.set(self.leftover.to_le());
             } else {
+                // Final digest calculation hasn't started, wait for the
                 return Ok(false);
             }
         }
@@ -402,6 +411,7 @@ impl Hash<'_> {
         Ok(true)
     }
 
+    /// Helper function for validating requested algorithms and returning the corresponding register value.
     fn parse_algo(&self, algorithm: Algorithm) -> Result<FieldValue<u32, CR::Register>, ErrorCode> {
         match algorithm {
             Algorithm::Md5 => Ok(CR::ALGO::MD5),
@@ -412,6 +422,9 @@ impl Hash<'_> {
         }
     }
 
+    /// Finish the hashing / HMAC operation.
+    ///
+    /// Called to signal the client that the operation is done regardless of its result.
     fn finish(&self, result: Result<(), ErrorCode>, client: HashClient<'_>) {
         self.state.take();
         client.hash_done(result);
