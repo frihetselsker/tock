@@ -9,5 +9,6 @@ pub mod test;
 
 pub mod aes;
 pub mod hash;
+pub mod hkdf;
 pub mod hmac;
 pub mod sw;
