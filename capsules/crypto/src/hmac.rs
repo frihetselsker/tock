@@ -24,8 +24,7 @@
 //! - `0`: existence check
 //! - `1`: perform an HMAC calculation. `data1` is the algorithm.
 //!
-//! Mode values are `0 = Md5`, `1 = Sha1`, `2 = Sha224`, `3 = Sha256`, `4 = Sha384`, `5 = Sha512`, `6 = Sha512-224`, and `7 = Sha512-256`.
-//! Operation value is `0 = calculate HMAC`.
+//! Algorithm values are `0 = Md5`, `1 = Sha1`, `2 = Sha224`, `3 = Sha256`, `4 = Sha384`, `5 = Sha512`, `6 = Sha512-224`, and `7 = Sha512-256`.
 
 use core::cell::Cell;
 
@@ -45,7 +44,7 @@ use kernel::{ErrorCode, ProcessId};
 /// Syscall driver number.
 pub const DRIVER_NUM: usize = driver::NUM::Hmac as usize;
 
-/// Upcalls for SHA operations completing.
+/// Upcalls for HMAC operations completing.
 mod upcall {
     pub const DONE: usize = 0;
     pub const COUNT: u8 = 1;
