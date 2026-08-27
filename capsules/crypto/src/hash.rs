@@ -23,8 +23,7 @@
 //! - `0`: existence check
 //! - `1`: perform a hashing operation. `data1` is the algorithm.
 //!
-//! Mode values are `0 = Md5`, `1 = Sha1`, `2 = Sha224`, `3 = Sha256`, `4 = Sha384`, `5 = Sha512`, `6 = Sha512-224`, and `7 = Sha512-256`.
-//! Operation value is `0 = calculate digest`.
+//! Algorithm values are `0 = Md5`, `1 = Sha1`, `2 = Sha224`, `3 = Sha256`, `4 = Sha384`, `5 = Sha512`, `6 = Sha512-224`, and `7 = Sha512-256`.
 
 use core::cell::Cell;
 
