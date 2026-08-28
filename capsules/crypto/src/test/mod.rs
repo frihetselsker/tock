@@ -3,4 +3,5 @@
 // Copyright Tock Contributors 2026.
 
 pub mod hash;
+pub mod hkdf;
 pub mod hmac;
