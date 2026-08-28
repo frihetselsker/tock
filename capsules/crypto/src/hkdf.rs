@@ -4,6 +4,59 @@
 
 //! Syscall driver for HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
 //!
+//! # Algorithm
+//!
+//! HKDF is specified in [IETF RFC 5869], section 2.
+//!
+//! ## Step 1: Extract (section 2.2)
+//!
+//! HKDF-Extract(salt, IKM) -> PRK
+//!    Options:
+//!       - Hash = a hash function; HashLen denotes the length of the hash function output in octets
+//!
+//!    Inputs:
+//!       - salt = optional salt value (a non-secret random value); if not provided, it is set to a string of HashLen zeros.
+//!       - IKM = input keying material
+//!    Output:
+//!       - PRK = a pseudorandom key (of HashLen octets)
+//!
+//!    The output PRK is calculated as follows:
+//!    PRK = HMAC-Hash(salt, IKM)
+//!
+//! ## Step 2: Expand (section 2.3)
+//!
+//! HKDF-Expand(PRK, info, L) -> OKM
+//!
+//!    Options:
+//!       - Hash = a hash function; HashLen denotes the length of the hash function output in octets
+//!
+//!    Inputs:
+//!       - PRK = a pseudorandom key of at least HashLen octets (usually, the output from the extract step)
+//!       - info = optional context and application specific information (can be a zero-length string)
+//!       - L = length of output keying material in octets (<= 255*HashLen)
+//!
+//!    Output:
+//!      - OKM = output keying material (of L octets)
+//!
+//!      The output OKM is calculated as follows:
+//!
+//!      N = ceil(L/HashLen)
+//!      T = T(1) | T(2) | T(3) | ... | T(N)
+//!      OKM = first L octets of T
+//!
+//!      where:
+//!          - T(0) = empty string (zero length)
+//!          - T(1) = HMAC-Hash(PRK, T(0) | info | 0x01)
+//!          - T(2) = HMAC-Hash(PRK, T(1) | info | 0x02)
+//!          - T(3) = HMAC-Hash(PRK, T(2) | info | 0x03)
+//!           ...
+//!
+//!          (where the constant concatenated to the end of each T(n) is a
+//!           single octet.)
+//!
+//!
+//! [IETF RFC 5869]: https://www.rfc-editor.org/info/rfc5869/
+//!
 //! # System call interface
 //!
 //! ## `subscribe_num`
@@ -13,13 +66,13 @@
 //! ## Read-only allow buffers
 //!
 //! - `0`: salt
-//! - `1`: initial key material (ikm)
+//! - `1`: input keying material (IKM)
 //! - `2`: info
 //!
 //! ## Read-write allow buffers
 //!
-//! - `0`: pseudorandom key (prk)
-//! - `1`: output keying material (okm)
+//! - `0`: pseudorandom key (PRK)
+//! - `1`: output keying material (OKM)
 //!
 //! ## Commands
 //!
@@ -54,8 +107,11 @@ mod upcall {
 
 /// Ids for read-only allow buffers
 mod ro_allow {
+    /// Optional salt value
     pub const SALT: usize = 0;
+    /// Input Keying Material
     pub const IKM: usize = 1;
+    /// Info
     pub const INFO: usize = 2;
     /// The number of allow buffers the kernel stores for this grant
     pub const COUNT: u8 = 3;
@@ -63,7 +119,11 @@ mod ro_allow {
 
 /// Ids for read-write allow buffers
 mod rw_allow {
+    /// Pseudorandom key
     pub const PRK: usize = 0;
+    /// Output Keying Material
+    ///
+    /// Used both for T and OKM
     pub const OKM: usize = 1;
     /// The number of allow buffers the kernel stores for this grant
     pub const COUNT: u8 = 1;
@@ -98,6 +158,12 @@ enum Substage {
     T,
     Info,
     Index,
+}
+
+#[derive(Clone, Copy)]
+enum SaltStatus {
+    NotPresent,
+    Present,
 }
 
 #[derive(Clone, Copy)]
@@ -166,6 +232,7 @@ pub struct Hkdf<H: crypto::digest::Hmac + 'static> {
     >,
     state: Cell<State>,
     key_state: OptionalCell<KeyState>,
+    salt_status: Cell<SaltStatus>,
     num_of_iterations: Cell<usize>,
     ikm_len: Cell<usize>,
     salt_len: Cell<usize>,
@@ -196,6 +263,7 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
             apps,
             state: Cell::new(State::Idle),
             key_state: OptionalCell::empty(),
+            salt_status: Cell::new(SaltStatus::Present),
             num_of_iterations: Cell::new(0),
             ikm_len: Cell::new(0),
             salt_len: Cell::new(0),
@@ -282,7 +350,20 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
     fn read_salt(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
         if self.key_state.is_some() {
             let offset = self.salt_offset.get();
-            let read = self.read_at(ro_allow::SALT, BufferType::ReadOnly, offset, destination)?;
+            let read = match self.salt_status.get() {
+                SaltStatus::NotPresent => {
+                    // Fill the buffer with zeros
+                    let bytes_to_load = (self.salt_len.get() - offset).min(destination.len());
+                    destination[..bytes_to_load]
+                        .iter_mut()
+                        .for_each(|byte| *byte = 0u8);
+                    bytes_to_load
+                }
+                SaltStatus::Present => {
+                    // Read salt from the app
+                    self.read_at(ro_allow::SALT, BufferType::ReadOnly, offset, destination)?
+                }
+            };
             let updated_offset = offset + read;
             if updated_offset == self.salt_len.get() {
                 self.salt_offset.take();
@@ -400,6 +481,12 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
             },
         )??;
 
+        let (salt_len, salt_status) = if salt_len == 0 {
+            (algorithm.get_digest_len(), SaltStatus::NotPresent)
+        } else {
+            (salt_len, SaltStatus::Present)
+        };
+
         self.salt_len.set(salt_len);
         self.ikm_len.set(ikm_len);
         self.prk_len.set(prk_len);
@@ -410,9 +497,9 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
         self.prk_offset.set(0);
         self.info_offset.set(0);
         self.okm_offset.set(0);
-        //  N = ceil(L / HashLen)
         self.num_of_iterations.set(okm_len.div_ceil(prk_len));
         self.key_state.set(KeyState::InnerKey);
+        self.salt_status.set(salt_status);
         self.state.set(State::Waiting {
             processid,
             algorithm,
@@ -481,7 +568,12 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for Hkdf<H> {
 
 impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
-        if let State::Active { stage, .. } = self.state.get() {
+        if let State::Active {
+            stage,
+            processid,
+            algorithm,
+        } = self.state.get()
+        {
             match stage {
                 Stage::Extract => self.read_ikm(input),
                 Stage::Expand {
@@ -519,7 +611,16 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                             }
                         }
                     }
-                    self.okm_offset.set(offset);
+                    self.state.set(State::Active {
+                        processid,
+                        algorithm,
+                        stage: Stage::Expand {
+                            iteration,
+                            t_len,
+                            substage,
+                        },
+                    });
+                    self.okm_offset.update(|okm_offset| okm_offset + offset);
                     Ok(offset)
                 }
             }
@@ -581,22 +682,33 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                         iteration, t_len, ..
                     } => {
                         self.reset_expand_offsets();
+                        let new_t_len = t_len + self.prk_len.get();
                         self.state.set(State::Active {
                             stage: Stage::Expand {
                                 iteration: iteration + 1,
-                                t_len: t_len + self.prk_len.get(),
+                                t_len: new_t_len,
                                 substage: Substage::T,
                             },
                             processid,
                             algorithm,
                         });
+                        let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
+                            hmac.authenticate(
+                                algorithm,
+                                // T(N-1) | info | N
+                                new_t_len + self.info_len.get() + 1,
+                                self.prk_len.get(),
+                            )
+                        });
+                        if result.is_err() {
+                            self.finish(result);
+                        }
                     }
                 }
             }
         } else {
             unreachable!()
         }
-        self.finish(result)
     }
 }
 
