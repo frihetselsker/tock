@@ -126,7 +126,7 @@ mod rw_allow {
     /// Used both for T and OKM
     pub const OKM: usize = 1;
     /// The number of allow buffers the kernel stores for this grant
-    pub const COUNT: u8 = 1;
+    pub const COUNT: u8 = 2;
 }
 
 #[derive(Clone, Copy)]
@@ -148,12 +148,11 @@ enum Stage {
     Extract,
     Expand {
         iteration: usize,
-        t_len: usize,
         substage: Substage,
     },
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Substage {
     T,
     Info,
@@ -295,9 +294,11 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
         }
     }
 
-    fn reset_expand_offsets(&self) {
+    fn reset_expand_offsets(&self, t_len: usize) {
         self.info_offset.take();
-        self.okm_offset.take();
+        self.okm_offset
+            .update(|offset| offset.saturating_sub(t_len));
+        self.prk_offset.take();
         self.key_state.set(KeyState::InnerKey);
     }
 
@@ -497,7 +498,8 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
         self.prk_offset.set(0);
         self.info_offset.set(0);
         self.okm_offset.set(0);
-        self.num_of_iterations.set(okm_len.div_ceil(prk_len));
+        self.num_of_iterations
+            .set(okm_len.div_ceil(algorithm.get_digest_len()));
         self.key_state.set(KeyState::InnerKey);
         self.salt_status.set(salt_status);
         self.state.set(State::Waiting {
@@ -550,11 +552,7 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for Hkdf<H> {
                 hmac.set_client(self);
                 self.hmac.put(hmac);
                 self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-                    if self.salt_len.get() == 0 {
-                        hmac.hash(algorithm, self.ikm_len.get())
-                    } else {
-                        hmac.authenticate(algorithm, self.ikm_len.get(), self.salt_len.get())
-                    }
+                    hmac.authenticate(algorithm, self.ikm_len.get(), self.salt_len.get())
                 })
             }
             Err(_) => Err(ErrorCode::INVAL),
@@ -578,28 +576,36 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                 Stage::Extract => self.read_ikm(input),
                 Stage::Expand {
                     iteration,
-                    t_len,
                     substage,
                 } => {
-                    // Try your best to write all the data packed in `input`
+                    // Do your best to write all the data packed in `input`
                     let mut offset = 0;
-                    let mut substage = substage;
+                    let mut current_substage = substage;
                     loop {
-                        match substage {
+                        match current_substage {
                             Substage::T => {
-                                let ceil = input.len().min(t_len);
-                                self.read_okm(&mut input[..ceil])?;
-                                substage = Substage::Info;
-                                offset += ceil;
+                                let ceil = algorithm.get_digest_len()
+                                    - (self.okm_offset.get() % algorithm.get_digest_len());
+                                let read = self.read_okm(&mut input[..ceil])?;
+                                offset += read;
+                                if self.okm_offset.get() % algorithm.get_digest_len() == 0 {
+                                    current_substage = if self.info_len.get() == 0 {
+                                        Substage::Index
+                                    } else {
+                                        Substage::Info
+                                    };
+                                }
                                 if offset == input.len() {
                                     break;
                                 }
                             }
                             Substage::Info => {
-                                let ceil = (input.len() - offset).min(self.info_len.get());
-                                self.read_info(&mut input[offset..ceil])?;
-                                offset += ceil;
-                                substage = Substage::Index;
+                                let read = self.read_info(&mut input[offset..])?;
+                                offset += read;
+                                if self.info_offset.get() == self.info_len.get() {
+                                    current_substage = Substage::Index;
+                                }
+
                                 if offset == input.len() {
                                     break;
                                 }
@@ -611,16 +617,16 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                             }
                         }
                     }
-                    self.state.set(State::Active {
-                        processid,
-                        algorithm,
-                        stage: Stage::Expand {
-                            iteration,
-                            t_len,
-                            substage,
-                        },
-                    });
-                    self.okm_offset.update(|okm_offset| okm_offset + offset);
+                    if substage != current_substage {
+                        self.state.set(State::Active {
+                            processid,
+                            algorithm,
+                            stage: Stage::Expand {
+                                iteration,
+                                substage: current_substage,
+                            },
+                        });
+                    }
                     Ok(offset)
                 }
             }
@@ -652,11 +658,10 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
             } else {
                 match stage {
                     Stage::Extract => {
-                        self.reset_expand_offsets();
+                        self.prk_offset.take();
                         self.state.set(State::Active {
                             stage: Stage::Expand {
                                 iteration: 1,
-                                t_len: 0,
                                 substage: Substage::Info,
                             },
                             processid,
@@ -678,15 +683,11 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                     {
                         self.finish(result)
                     }
-                    Stage::Expand {
-                        iteration, t_len, ..
-                    } => {
-                        self.reset_expand_offsets();
-                        let new_t_len = t_len + self.prk_len.get();
+                    Stage::Expand { iteration, .. } => {
+                        self.reset_expand_offsets(algorithm.get_digest_len());
                         self.state.set(State::Active {
                             stage: Stage::Expand {
                                 iteration: iteration + 1,
-                                t_len: new_t_len,
                                 substage: Substage::T,
                             },
                             processid,
@@ -696,7 +697,7 @@ impl<H: crypto::digest::Hmac> Client for Hkdf<H> {
                             hmac.authenticate(
                                 algorithm,
                                 // T(N-1) | info | N
-                                new_t_len + self.info_len.get() + 1,
+                                algorithm.get_digest_len() + self.info_len.get() + 1,
                                 self.prk_len.get(),
                             )
                         });

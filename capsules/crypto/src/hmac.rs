@@ -344,7 +344,7 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for Hmac<H> {
 
         let result = match resource.downcast::<H>() {
             Ok(hmac) => {
-                hmac.set_client(self);
+                hmac.set_hmac_client(self);
                 self.hmac.put(hmac);
                 self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
                     hmac.authenticate(algorithm, self.input_len.get(), self.key_len.get())
