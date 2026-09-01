@@ -80,12 +80,11 @@ enum Stage {
     Extract,
     Expand {
         iteration: usize,
-        t_len: usize,
         substage: Substage,
     },
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Substage {
     T,
     Info,
@@ -142,13 +141,17 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
         ikm_buffer: &'static mut [u8],
         salt_buffer: Option<&'static mut [u8]>,
         prk_buffer: &'static mut [u8],
-        info_buffer: &'static mut [u8],
+        info_buffer: Option<&'static mut [u8]>,
         okm_buffer: &'static mut [u8],
         correct_buffer: &'static mut [u8],
     ) -> TestHkdf<H> {
         let (salt_buffer, salt_status) = match salt_buffer {
             Some(buffer) => (TakeCell::new(buffer), Cell::new(SaltStatus::Present)),
             None => (TakeCell::empty(), Cell::new(SaltStatus::NotPresent)),
+        };
+        let info_buffer = match info_buffer {
+            Some(buffer) => TakeCell::new(buffer),
+            None => TakeCell::empty(),
         };
         TestHkdf {
             hmac_mutex,
@@ -162,7 +165,7 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
             salt_buffer,
             salt_status,
             prk_buffer: TakeCell::new(prk_buffer),
-            info_buffer: TakeCell::new(info_buffer),
+            info_buffer,
             okm_buffer: TakeCell::new(okm_buffer),
             correct_buffer: TakeCell::new(correct_buffer),
             ikm_len: Cell::new(0),
@@ -217,7 +220,9 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
 
     fn reset_expand_offsets(&self) {
         self.info_offset.take();
-        self.okm_offset.take();
+        self.okm_offset
+            .update(|offset| offset.saturating_sub(self.algorithm.get().get_digest_len()));
+        self.prk_offset.take();
         self.key_state.set(KeyState::InnerKey);
     }
 
@@ -233,7 +238,6 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
     fn read_salt(&self, destination: &mut [u8]) -> Result<usize, ErrorCode> {
         if self.key_state.is_some() {
             let offset = self.salt_offset.get();
-
             let read = match self.salt_status.get() {
                 SaltStatus::NotPresent => {
                     let bytes_to_load = (self.salt_len.get() - offset).min(destination.len());
@@ -364,13 +368,9 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
         if r.is_err() {
             panic!("TestHKDF: Pseudorandom key buffer is empty");
         }
-        let r = self.info_buffer.map_or(Err(ErrorCode::FAIL), |buf| {
+        self.info_buffer.map(|buf| {
             self.info_len.set(buf.len());
-            Ok(())
         });
-        if r.is_err() {
-            panic!("TestHKDF: Info is empty");
-        }
 
         let r = self.okm_buffer.map_or(Err(ErrorCode::FAIL), |buf| {
             self.okm_len.set(buf.len());
@@ -385,8 +385,11 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
         self.prk_offset.set(0);
         self.info_offset.set(0);
         self.okm_offset.set(0);
-        self.num_of_iterations
-            .set(self.okm_len.get().div_ceil(self.prk_len.get()));
+        self.num_of_iterations.set(
+            self.okm_len
+                .get()
+                .div_ceil(self.algorithm.get().get_digest_len()),
+        );
         self.key_state.set(KeyState::InnerKey);
 
         if let Err(error) = self.hmac_handle.map_or(Err(ErrorCode::OFF), |handle| {
@@ -434,18 +437,14 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for TestHkdf<H> {
         self.stage.set(Stage::Extract);
         let result = match resource.downcast::<H>() {
             Ok(hmac) => {
-                hmac.set_client(self);
+                hmac.set_hmac_client(self);
                 self.hmac.put(hmac);
                 self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-                    if self.salt_len.get() == 0 {
-                        hmac.hash(self.algorithm.get(), self.ikm_len.get())
-                    } else {
-                        hmac.authenticate(
-                            self.algorithm.get(),
-                            self.ikm_len.get(),
-                            self.salt_len.get(),
-                        )
-                    }
+                    hmac.authenticate(
+                        self.algorithm.get(),
+                        self.ikm_len.get(),
+                        self.salt_len.get(),
+                    )
                 })
             }
             Err(_) => Err(ErrorCode::INVAL),
@@ -463,27 +462,35 @@ impl<H: crypto::digest::Hmac> Client for TestHkdf<H> {
             Stage::Extract => self.read_ikm(input),
             Stage::Expand {
                 iteration,
-                t_len,
                 substage,
             } => {
                 let mut offset = 0;
-                let mut substage = substage;
+                let mut current_substage = substage;
                 loop {
-                    match substage {
+                    match current_substage {
                         Substage::T => {
-                            let ceil = input.len().min(t_len);
-                            self.read_okm(&mut input[..ceil])?;
-                            substage = Substage::Info;
-                            offset += ceil;
+                            let ceil = self.algorithm.get().get_digest_len()
+                                - (self.okm_offset.get() % self.algorithm.get().get_digest_len());
+                            let read = self.read_okm(&mut input[..ceil])?;
+                            offset += read;
+                            if self.okm_offset.get() % self.algorithm.get().get_digest_len() == 0 {
+                                current_substage = if self.info_len.get() == 0 {
+                                    Substage::Index
+                                } else {
+                                    Substage::Info
+                                };
+                            }
                             if offset == input.len() {
                                 break;
                             }
                         }
                         Substage::Info => {
-                            let ceil = (input.len() - offset).min(self.info_len.get());
-                            self.read_info(&mut input[offset..ceil])?;
-                            offset += ceil;
-                            substage = Substage::Index;
+                            let read = self.read_info(&mut input[offset..])?;
+                            offset += read;
+                            if self.info_offset.get() == self.info_len.get() {
+                                current_substage = Substage::Index;
+                            }
+
                             if offset == input.len() {
                                 break;
                             }
@@ -495,12 +502,12 @@ impl<H: crypto::digest::Hmac> Client for TestHkdf<H> {
                         }
                     }
                 }
-                self.stage.set(Stage::Expand {
-                    iteration,
-                    t_len,
-                    substage,
-                });
-                self.okm_offset.update(|okm_offset| okm_offset + offset);
+                if substage != current_substage {
+                    self.stage.set(Stage::Expand {
+                        iteration,
+                        substage: current_substage,
+                    });
+                }
                 Ok(offset)
             }
         }
@@ -519,11 +526,14 @@ impl<H: crypto::digest::Hmac> Client for TestHkdf<H> {
         } else {
             match self.stage.get() {
                 Stage::Extract => {
-                    self.reset_expand_offsets();
+                    self.prk_offset.take();
                     self.stage.set(Stage::Expand {
                         iteration: 1,
-                        t_len: 0,
-                        substage: Substage::Info,
+                        substage: if self.info_len.get() == 0 {
+                            Substage::Index
+                        } else {
+                            Substage::Info
+                        },
                     });
                     let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
                         hmac.authenticate(
@@ -539,20 +549,16 @@ impl<H: crypto::digest::Hmac> Client for TestHkdf<H> {
                 Stage::Expand { iteration, .. } if iteration == self.num_of_iterations.get() => {
                     self.finish(result)
                 }
-                Stage::Expand {
-                    iteration, t_len, ..
-                } => {
+                Stage::Expand { iteration, .. } => {
                     self.reset_expand_offsets();
-                    let new_t_len = t_len + self.prk_len.get();
                     self.stage.set(Stage::Expand {
                         iteration: iteration + 1,
-                        t_len: t_len + self.prk_len.get(),
                         substage: Substage::T,
                     });
                     let result = self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
                         hmac.authenticate(
                             self.algorithm.get(),
-                            new_t_len + self.info_len.get() + 1,
+                            self.algorithm.get().get_digest_len() + self.info_len.get() + 1,
                             self.prk_len.get(),
                         )
                     });
