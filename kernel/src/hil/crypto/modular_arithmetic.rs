@@ -7,7 +7,7 @@
 use crate::ErrorCode;
 
 /// Upcall from the `MathCryptoBase` trait.
-pub trait Client<'a> {
+pub trait MathClient<'a> {
     fn read_modulus(&self, modulus: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_number(&self, num: &mut [u8]) -> Result<(), ErrorCode>;
     fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode>;
@@ -16,7 +16,7 @@ pub trait Client<'a> {
 
 pub trait MathCryptoBase<'a> {
     /// Set the `Client` client to be called on completion.
-    fn set_client(&'a self, client: &'a dyn Client<'a>);
+    fn set_client(&'a self, client: &'a dyn MathClient<'a>);
     /// Clear any confidential data.
     fn clear_data(&self);
     fn start_chain(&self, modulus_len: usize) -> Result<(), ErrorCode>;

@@ -1,9 +1,9 @@
-use crate::{
-    ErrorCode,
-    hil::crypto::elliptic_curves::ecc_constants::{EdwardsCurve, WeierstrassCurve},
-};
+// Licensed under the Apache License, Version 2.0 or the MIT License.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright OxidOS Automotive 2026
+use crate::{ErrorCode, hil::crypto::elliptic_curves::ecc_constants::Curve};
 
-pub trait Client<'a> {
+pub trait EccClient<'a> {
     fn read_scalar(&self, scalar: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_point(&self, point: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_second_point(&self, point: &mut [u8]) -> Result<(), ErrorCode>;
@@ -11,36 +11,12 @@ pub trait Client<'a> {
     fn operation_done(&self, result: Result<(), ErrorCode>);
 }
 
-pub trait EccCryptoCommon<'a> {
-    fn set_client(&'a self, client: &'a dyn Client<'a>);
+pub trait EccCrypto<'a, const P_SIZE: usize, C: Curve<P_SIZE>> {
+    fn set_client(&'a self, client: &'a dyn EccClient<'a>);
     fn clear_data(&self);
-}
+    fn point_doubling(&self) -> Result<(), ErrorCode>;
 
-/// Implemented by peripherals whose hardware performs Weierstrass-form
-/// (y² = x³ + ax + b) point arithmetic — e.g. NIST P-256, P-384.
-pub trait WeierstrassEccCrypto<'a> {
-    fn point_doubling<const P_SIZE: usize, C: WeierstrassCurve<P_SIZE>>(
-        &self,
-    ) -> Result<(), ErrorCode>;
+    fn point_addition(&self) -> Result<(), ErrorCode>;
 
-    fn point_addition<const P_SIZE: usize, C: WeierstrassCurve<P_SIZE>>(
-        &self,
-    ) -> Result<(), ErrorCode>;
-
-    fn scalar_multiplication<const P_SIZE: usize, C: WeierstrassCurve<P_SIZE>>(
-        &self,
-        use_curve_generator: bool,
-    ) -> Result<(), ErrorCode>;
-}
-
-/// Implemented by peripherals whose hardware performs twisted-Edwards-form
-/// (ax² + y² = 1 + dx²y²) point arithmetic — e.g. Ed25519.
-pub trait EdwardsEccCrypto<'a> {
-    fn point_addition<const P_SIZE: usize, C: EdwardsCurve<P_SIZE>>(&self)
-    -> Result<(), ErrorCode>;
-
-    fn scalar_multiplication<const P_SIZE: usize, C: EdwardsCurve<P_SIZE>>(
-        &self,
-        use_curve_generator: bool,
-    ) -> Result<(), ErrorCode>;
+    fn scalar_multiplication(&self, use_curve_generator: bool) -> Result<(), ErrorCode>;
 }
