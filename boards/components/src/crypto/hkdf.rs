@@ -34,7 +34,7 @@ use kernel::hil::crypto::digest;
 /// `$H` is the concrete type of HMAC implementer.
 #[macro_export]
 macro_rules! hkdf_component_static {
-    ($H:ty $(,)?) => {{ kernel::static_buf!(capsules_crypto::hmac::Hmac<$H>) }};
+    ($H:ty $(,)?) => {{ kernel::static_buf!(capsules_crypto::hkdf::Hkdf<$H>) }};
 }
 
 pub struct HkdfComponent<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> {
