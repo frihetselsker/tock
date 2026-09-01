@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright Tock Contributors 2026.
 
-//! Component for initializing HMAC instances.
+//! Component for initializing HKDF instances.
 //!
 //! Usage
 //! -----
@@ -11,34 +11,33 @@
 //!     components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>),
 //! );
 //!
-//! let hmac = components::crypto::hmac::HmacComponent::new(
+//! let hkdf = components::crypto::hkdf::HkdfComponent::new(
 //!     board_kernel,
-//!     capsules_crypto::hmac::DRIVER_NUM,
+//!     capsules_crypto::hkdf::DRIVER_NUM,
 //!     hash_mutex,
 //!     create_capability!(capabilities::MemoryAllocationCapability),
 //! )
-//! .finalize(components::hmac_crypto_component_static!(
+//! .finalize(components::hkdf_component_static!(
 //!     stm32u545::hash::hash::Hash<'static>,
 //! ));
 //! ```
 
 use capsules_core::driver_mutex::DriverMutex;
-use capsules_crypto::hmac::Hmac;
+use capsules_crypto::hkdf::Hkdf;
 use core::mem::MaybeUninit;
 use kernel::capabilities::MemoryAllocationCapability;
 use kernel::component::Component;
 use kernel::hil::crypto::digest;
 
-/// Statically allocates the storage needed to finalize a [`HmacComponent`].
+/// Statically allocates the storage needed to finalize a [`HkdfComponent`].
 ///
 /// `$H` is the concrete type of HMAC implementer.
 #[macro_export]
-// TODO: Rename it into `hmac_component_static!`
-macro_rules! hmac_crypto_component_static {
+macro_rules! hkdf_component_static {
     ($H:ty $(,)?) => {{ kernel::static_buf!(capsules_crypto::hmac::Hmac<$H>) }};
 }
 
-pub struct HmacComponent<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> {
+pub struct HkdfComponent<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> {
     board_kernel: &'static kernel::Kernel,
     driver_num: usize,
     hmac: &'static DriverMutex<H>,
@@ -46,7 +45,7 @@ pub struct HmacComponent<H: 'static + digest::Hmac, CAP: MemoryAllocationCapabil
 }
 
 /// Component helper interface used to initialize a [`Hmac`] instance.
-impl<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> HmacComponent<H, CAP> {
+impl<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> HkdfComponent<H, CAP> {
     pub fn new(
         board_kernel: &'static kernel::Kernel,
         driver_num: usize,
@@ -63,14 +62,14 @@ impl<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> HmacC
 }
 
 impl<H: 'static + digest::Hmac, CAP: MemoryAllocationCapability + 'static> Component
-    for HmacComponent<H, CAP>
+    for HkdfComponent<H, CAP>
 {
-    type StaticInput = &'static mut MaybeUninit<Hmac<H>>;
+    type StaticInput = &'static mut MaybeUninit<Hkdf<H>>;
 
-    type Output = &'static Hmac<H>;
+    type Output = &'static Hkdf<H>;
 
     fn finalize(self, s: Self::StaticInput) -> Self::Output {
-        s.write(Hmac::new(
+        s.write(Hkdf::new(
             self.hmac,
             self.board_kernel
                 .create_grant(self.driver_num, &self.mem_cap),
