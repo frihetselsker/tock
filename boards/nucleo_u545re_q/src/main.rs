@@ -65,6 +65,7 @@ struct NucleoU545RE {
     crc: &'static capsules_extra::crc::CrcDriver<'static, stm32u545::crc::CRC<'static>>,
     hash: &'static capsules_crypto::hash::Hash<stm32u545::hash::hash::Hash<'static>>,
     hmac: &'static capsules_crypto::hmac::Hmac<stm32u545::hash::hash::Hash<'static>>,
+    hkdf: &'static capsules_crypto::hkdf::Hkdf<stm32u545::hash::hash::Hash<'static>>,
     aes: &'static capsules_extra::symmetric_encryption::aes::AesDriver<
         'static,
         stm32u545::aes::ecb::Aes<'static, AES256>,
@@ -99,6 +100,7 @@ impl SyscallDriverLookup for NucleoU545RE {
             capsules_extra::crc::DRIVER_NUM => f(Some(self.crc)),
             capsules_crypto::hash::DRIVER_NUM => f(Some(self.hash)),
             capsules_crypto::hmac::DRIVER_NUM => f(Some(self.hmac)),
+            capsules_crypto::hkdf::DRIVER_NUM => f(Some(self.hkdf)),
             capsules_extra::symmetric_encryption::aes::DRIVER_NUM => f(Some(self.aes)),
             capsules_core::spi_controller::DRIVER_NUM => f(Some(self.spi)),
             capsules_core::i2c_master::DRIVER_NUM => f(Some(self.i2c)),
@@ -519,7 +521,7 @@ unsafe fn start() -> (
 
     // Mutex for the hashing peripheral
     let hash_mutex = components::driver_mutex::DriverMutexComponent::new(&periphs.hash).finalize(
-        components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 2),
+        components::driver_mutex_component_static!(stm32u545::hash::hash::Hash<'static>, 3),
     );
 
     // Hash capsule
@@ -552,6 +554,22 @@ unsafe fn start() -> (
     // Register HMAC capsule into the mutex
     if hmac.register().is_err() {
         panic!("Failed to register hmac capsule into the mutex");
+    }
+
+    // HKDF
+    let hkdf = components::crypto::hkdf::HkdfComponent::new(
+        board_kernel,
+        capsules_crypto::hkdf::DRIVER_NUM,
+        hash_mutex,
+        create_capability!(capabilities::MemoryAllocationCapability),
+    )
+    .finalize(components::hkdf_component_static!(
+        stm32u545::hash::hash::Hash<'static>
+    ));
+
+    // Register HKDF capsule into the mutex
+    if hkdf.register().is_err() {
+        panic!("Failed to register hkdf capsule into the mutex");
     }
 
     let crc = components::crc::CrcComponent::new(
@@ -593,6 +611,7 @@ unsafe fn start() -> (
             crc,
             hash,
             hmac,
+            hkdf,
             aes: aes_driver,
             spi,
             date_time,

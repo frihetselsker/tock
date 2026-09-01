@@ -97,7 +97,7 @@ use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::{ErrorCode, ProcessId};
 
 /// Syscall driver number.
-pub const DRIVER_NUM: usize = driver::NUM::Hmac as usize;
+pub const DRIVER_NUM: usize = driver::NUM::Hkdf as usize;
 
 /// Upcalls for HKDF operation completing.
 mod upcall {

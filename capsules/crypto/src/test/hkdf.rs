@@ -313,9 +313,14 @@ impl<H: crypto::digest::Hmac> TestHkdf<H> {
         if offset < self.okm_len.get() {
             self.okm_buffer
                 .map_or(Err(ErrorCode::FAIL), |destination| {
-                    TestHkdf::<H>::write_at(source, offset, destination)
+                    TestHkdf::<H>::write_at(
+                        &source[..source.len().min(self.okm_len.get() - offset)],
+                        offset,
+                        destination,
+                    )
                 })?;
-            self.okm_offset.set(offset + source.len());
+            self.okm_offset
+                .set(offset + source.len().min(self.okm_len.get() - offset));
         }
         Ok(())
     }
