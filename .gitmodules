@@ -1,0 +1,3 @@
+[submodule "apps/libtock-c"]
+	path = apps/libtock-c
+	url = https://github.com/tock/libtock-c.git
