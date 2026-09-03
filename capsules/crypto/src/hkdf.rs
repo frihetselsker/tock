@@ -441,7 +441,11 @@ impl<H: crypto::digest::Hmac> Hkdf<H> {
     fn write_okm(&self, source: &[u8]) -> Result<(), ErrorCode> {
         let offset = self.okm_offset.get();
         if offset < self.okm_len.get() {
-            self.write_at(rw_allow::OKM, offset, source)?;
+            self.write_at(
+                rw_allow::OKM,
+                offset,
+                &source[..source.len().min(self.okm_len.get() - offset)],
+            )?;
             self.okm_offset.set(offset + source.len());
         }
         Ok(())
@@ -549,7 +553,7 @@ impl<H: crypto::digest::Hmac> DriverMutexClient for Hkdf<H> {
 
         let result = match resource.downcast::<H>() {
             Ok(hmac) => {
-                hmac.set_client(self);
+                hmac.set_hmac_client(self);
                 self.hmac.put(hmac);
                 self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
                     hmac.authenticate(algorithm, self.ikm_len.get(), self.salt_len.get())
