@@ -9,23 +9,30 @@ use capsules_core::driver_mutex::DriverMutexClient;
 use capsules_core::driver_mutex::DriverMutexHandle;
 use capsules_core::driver_mutex::DriverMutexRef;
 use core::cell::Cell;
+use core::marker::PhantomData;
 use kernel::ErrorCode;
-use kernel::debug;
 use kernel::hil;
 use kernel::hil::crypto::digest::Algorithm;
-use kernel::hil::crypto::digest::Digest;
 use kernel::hil::crypto::digest::Hmac;
 use kernel::hil::crypto::elliptic_curves::ecc_constants::{Curve, NistP256Constants};
 use kernel::hil::crypto::elliptic_curves::ecc_math::{EccClient, EccCrypto};
-use kernel::hil::crypto::modular_arithmetic::Addition;
-use kernel::hil::crypto::modular_arithmetic::Division;
-use kernel::hil::crypto::modular_arithmetic::Multiplication;
+use kernel::hil::crypto::modular_arithmetic::OpAddition;
+use kernel::hil::crypto::modular_arithmetic::OpDivision;
+use kernel::hil::crypto::modular_arithmetic::OpModulo;
+use kernel::hil::crypto::modular_arithmetic::OpMultiplication;
 use kernel::hil::crypto::modular_arithmetic::{MathClient, MathCryptoBase};
 use kernel::hil::public_key_crypto::keys::SetKeyBySliceClient;
+use kernel::hil::public_key_crypto::signature::ClientSign;
 use kernel::utilities::cells::MapCell;
 use kernel::utilities::cells::{OptionalCell, TakeCell};
 
 const P_LEN: usize = NistP256Constants::N.len();
+
+#[derive(Clone, Copy, PartialEq)]
+enum Operand {
+    First,
+    Second,
+}
 
 #[derive(Clone, Copy, PartialEq)]
 enum State {
@@ -38,26 +45,31 @@ enum State {
     HmacGeneratingK,
     HmacGetNewK,
     EccCalculatingR,
-    MathWriteR,
-    MathMulRDa,
-    MathAddH,
-    MathDivK,
+    InvalidR,
+    MathRDaMul(Operand),
+    MathResHAdd(Operand),
+    MathResKDiv(Operand),
     ChangingKey,
 }
 
-pub struct EcdsaP256SignatureSigner<'a, E, M, H>
+pub struct EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
-    E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac + 'static,
+    E: EccCrypto<'a, 32, NistP256Constants> + 'static,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op> + 'static,
+    H: Hmac + 'static,
 {
     // Clients
-    client: OptionalCell<&'a dyn hil::public_key_crypto::signature::ClientSign<P_LEN, 64>>,
-    client_key_set: OptionalCell<&'a dyn hil::public_key_crypto::keys::SetKeyBySliceClient<32>>,
+    client: OptionalCell<&'a dyn ClientSign<P_LEN, 64>>,
+    client_key_set: OptionalCell<&'a dyn SetKeyBySliceClient<32>>,
 
     // Hardware support
-    ecc_hw: &'a E,
-    math_hw: &'a M,
+    ecc_mutex: &'a DriverMutex<E>,
+    ecc: MapCell<DriverMutexRef<E>>,
+    ecc_handle: OptionalCell<DriverMutexHandle>,
+    math_mutex: &'a DriverMutex<M>,
+    math: MapCell<DriverMutexRef<M>>,
+    math_handle: OptionalCell<DriverMutexHandle>,
     hmac_mutex: &'a DriverMutex<H>,
     hmac: MapCell<DriverMutexRef<H>>,
     hmac_handle: OptionalCell<DriverMutexHandle>,
@@ -81,25 +93,31 @@ where
     state: Cell<State>,
     deferred_call: kernel::deferred_call::DeferredCall,
     new_key_buffer: TakeCell<'static, [u8; 32]>,
+    _phantom: PhantomData<Op>,
 }
 
-impl<'a, E, M, H> EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     pub fn new(
         signing_key: &'static mut [u8; P_LEN],
-        ecc_hw: &'a E,
-        math_hw: &'a M,
+        ecc_mutex: &'a DriverMutex<E>,
+        math_mutex: &'a DriverMutex<M>,
         hmac_mutex: &'a DriverMutex<H>,
     ) -> Self {
         Self {
             client: OptionalCell::empty(),
             client_key_set: OptionalCell::empty(),
-            ecc_hw,
-            math_hw,
+            ecc_mutex,
+            ecc: MapCell::empty(),
+            ecc_handle: OptionalCell::empty(),
+            math_mutex,
+            math: MapCell::empty(),
+            math_handle: OptionalCell::empty(),
             hmac_mutex,
             hmac: MapCell::empty(),
             hmac_handle: OptionalCell::empty(),
@@ -117,6 +135,7 @@ where
             state: Cell::new(State::Idle),
             deferred_call: kernel::deferred_call::DeferredCall::new(),
             new_key_buffer: TakeCell::empty(),
+            _phantom: PhantomData::<Op>,
         }
     }
 
@@ -130,17 +149,36 @@ where
         Ok(())
     }
 
-    fn request_hmac(&self, size: usize) -> Result<(), ErrorCode> {
-        self.hmac.map_or(Err(ErrorCode::FAIL), |hmac| {
-            hmac.authenticate(Algorithm::Sha256, size, 32)
-        })
+    pub fn register_ecc(&'static self) -> Result<(), ErrorCode> {
+        if self.ecc_handle.is_some() {
+            return Err(ErrorCode::ALREADY);
+        }
+
+        let ecc_handle = self.ecc_mutex.add_client(self).ok_or(ErrorCode::NOMEM)?;
+        self.ecc_handle.set(ecc_handle);
+        Ok(())
+    }
+
+    pub fn register_math(&'static self) -> Result<(), ErrorCode> {
+        if self.math_handle.is_some() {
+            return Err(ErrorCode::ALREADY);
+        }
+
+        let math_handle = self.math_mutex.add_client(self).ok_or(ErrorCode::NOMEM)?;
+        self.math_handle.set(math_handle);
+        Ok(())
+    }
+
+    fn request_hmac(&self, size: usize) {
+        self.hmac
+            .map(|hmac| hmac.authenticate(Algorithm::Sha256, size, 32));
     }
 
     fn complete_signature(&self, result: Result<(), ErrorCode>) {
         self.state.set(State::Idle);
-        self.ecc_hw.clear_data();
-        self.math_hw.clear_data();
-        self.hmac.map(|hmac| hmac.clear_data());
+        self.ecc.take();
+        self.math.take();
+        self.hmac.take();
         self.client.map(|client| {
             if let (Some(h), Some(s)) = (self.hash_storage.take(), self.signature_storage.take()) {
                 // Populate the signature buffer with [r, s]
@@ -220,12 +258,13 @@ where
     }
 }
 
-impl<'a, E, M, H> hil::public_key_crypto::signature::SignatureSign<'a, P_LEN, 64>
-    for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> hil::public_key_crypto::signature::SignatureSign<'a, P_LEN, 64>
+    for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn set_sign_client(
         &self,
@@ -247,20 +286,21 @@ where
         // RFC 6979 step c: Set K to 0x00...00
         self.k_val.set([0x00; 32]);
 
+        // clear counters
+        self.input_counter.set(0);
+        self.output_counter.set(0);
+        self.key_counter.set(0);
+
         if *hash < NistP256Constants::N {
             self.state.set(State::HmacDerivingK1);
-            self.input_counter.set(0);
-            self.output_counter.set(0);
-            self.key_counter.set(0);
             self.hmac_handle
                 .map(|handle| self.hmac_mutex.request(handle));
         } else {
-            let _ = self.math_hw.start_chain(P_LEN);
-            let _ = self.math_hw.start_operation();
+            // if hash is bigger than the group order, we need to take modulo of it
+            // this is part of the bits2octets
+            self.math_handle
+                .map(|handle| self.math_mutex.request(handle));
             self.state.set(State::ModHash);
-            self.input_counter.set(0);
-            self.output_counter.set(0);
-            self.key_counter.set(0);
         }
         self.hash_storage.replace(hash);
         self.signature_storage.replace(signature);
@@ -268,53 +308,82 @@ where
     }
 }
 
-impl<'a, E, M, H> DriverMutexClient for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> DriverMutexClient for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn ready(&'static self, resource: capsules_core::driver_mutex::DriverMutexAny) {
         match self.state.get() {
             State::HmacDerivingK1 => {
-                let result = match resource.downcast::<H>() {
+                match resource.downcast::<H>() {
                     Ok(hmac) => {
                         hmac.set_hmac_client(self);
                         self.hmac.put(hmac);
-                        self.request_hmac(32 + 1 + P_LEN * 2)
+                        //  K = HMAC_K(V || 0x00 || int2octets(x) || bits2octets(h1))
+                        self.request_hmac(32 + 1 + P_LEN + P_LEN);
                     }
-                    Err(_) => Err(ErrorCode::INVAL),
+                    Err(_) => return,
                 };
-
-                if let Err(error) = result {
-                    panic!("HmacTest: operation didn't start, error: {:?}", error);
-                }
             }
-            State::EccCalculatingR => {
-                let result = match resource.downcast::<H>() {
+            State::ModHash => {
+                match resource.downcast::<M>() {
+                    Ok(math) => {
+                        math.set_client(self);
+                        self.math.put(math);
+                        self.math
+                            .map(|math| math.start_computation(P_LEN, OpModulo::modulo()))
+                    }
+                    Err(_) => return,
+                };
+            }
+            State::InvalidR => {
+                match resource.downcast::<H>() {
                     Ok(hmac) => {
                         hmac.set_hmac_client(self);
                         self.hmac.put(hmac);
                         self.state.set(State::HmacGetNewK);
-                        self.request_hmac(33)
+                        self.request_hmac(33);
                     }
-                    Err(_) => Err(ErrorCode::INVAL),
+                    Err(_) => return,
                 };
-
-                if let Err(error) = result {
-                    panic!("HmacTest: operation didn't start, error: {:?}", error);
-                }
+            }
+            State::EccCalculatingR => {
+                match resource.downcast::<E>() {
+                    Ok(ecc) => {
+                        ecc.set_client(self);
+                        self.ecc.put(ecc);
+                        self.ecc.map(|ecc| ecc.scalar_multiplication(true))
+                    }
+                    Err(_) => return,
+                };
+            }
+            State::MathRDaMul(_) => {
+                match resource.downcast::<M>() {
+                    Ok(math) => {
+                        math.set_client(self);
+                        self.math.put(math);
+                        self.math.map(|math| {
+                            math.start_computation(P_LEN, OpMultiplication::multiplication())
+                        })
+                    }
+                    Err(_) => return,
+                };
             }
             _ => {}
         }
     }
 }
 
-impl<'a, E, M, H> kernel::hil::crypto::digest::Client for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> kernel::hil::crypto::digest::Client
+    for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
         let state = self.state.get();
@@ -406,27 +475,19 @@ where
 
         match self.state.get() {
             State::HmacDerivingK1 => {
-                if let Err(e) = self.request_hmac(32) {
-                    self.complete_signature(Err(e));
-                }
+                self.request_hmac(32);
                 self.state.set(State::HmacDerivingV1);
             }
             State::HmacDerivingV1 => {
-                if let Err(e) = self.request_hmac(32 + 1 + P_LEN * 2) {
-                    self.complete_signature(Err(e));
-                }
+                self.request_hmac(32 + 1 + P_LEN * 2);
                 self.state.set(State::HmacDerivingK2);
             }
             State::HmacDerivingK2 => {
-                if let Err(e) = self.request_hmac(32) {
-                    self.complete_signature(Err(e));
-                }
+                self.request_hmac(32);
                 self.state.set(State::HmacDerivingV2);
             }
             State::HmacDerivingV2 => {
-                if let Err(e) = self.request_hmac(32) {
-                    self.complete_signature(Err(e));
-                }
+                self.request_hmac(32);
                 self.state.set(State::HmacGeneratingK);
             }
             State::HmacGeneratingK => {
@@ -437,21 +498,14 @@ where
                     self.hmac.take();
                     // Move to ECC Math: Calculate R = k * G
                     self.state.set(State::EccCalculatingR);
-                    if let Err(e) = self.ecc_hw.scalar_multiplication(true) {
-                        self.complete_signature(Err(e));
-                        return;
-                    }
+                    self.ecc_handle.map(|handle| self.ecc_mutex.request(handle));
                 } else {
-                    if let Err(e) = self.request_hmac(33) {
-                        self.complete_signature(Err(e));
-                    }
+                    self.request_hmac(33);
                     self.state.set(State::HmacGetNewK);
                 }
             }
             State::HmacGetNewK => {
-                if let Err(e) = self.request_hmac(32) {
-                    self.complete_signature(Err(e));
-                }
+                self.request_hmac(32);
                 self.state.set(State::HmacDerivingV2);
             }
             _ => {
@@ -461,11 +515,13 @@ where
     }
 }
 
-impl<'a, E, M, H> kernel::hil::crypto::digest::HmacClient for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> kernel::hil::crypto::digest::HmacClient
+    for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
         let index = self.key_counter.get();
@@ -475,11 +531,12 @@ where
     }
 }
 
-impl<'a, E, M, H> EccClient<'a> for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> EccClient for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn read_scalar(&self, scalar: &mut [u8]) -> Result<(), ErrorCode> {
         if self.state.get() == State::EccCalculatingR {
@@ -512,6 +569,7 @@ where
     }
 
     fn operation_done(&self, result: Result<(), ErrorCode>) {
+        self.ecc.take();
         self.input_counter.set(0);
         self.output_counter.set(0);
         if result.is_err() {
@@ -520,26 +578,25 @@ where
         }
 
         if !self.check_r() {
+            self.state.set(State::InvalidR);
             self.hmac_handle
                 .map(|handle| self.hmac_mutex.request(handle));
             return;
         }
 
-        self.state.set(State::MathWriteR);
+        self.state.set(State::MathRDaMul(Operand::First));
         //  (a * b + c ) / d
-        let _ = self.math_hw.start_chain(32);
-        self.math_hw.chain_multiplication();
-        self.math_hw.chain_addition();
-        self.math_hw.chain_division();
-        let _ = self.math_hw.start_operation();
+        self.math_handle
+            .map(|handle| self.math_mutex.request(handle));
     }
 }
 
-impl<'a, E, M, H> MathClient<'a> for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> MathClient<Op> for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn read_modulus(&self, modulus: &mut [u8]) -> Result<(), ErrorCode> {
         let index = self.key_counter.get();
@@ -549,27 +606,36 @@ where
         Ok(())
     }
 
-    fn read_number(&self, num: &mut [u8]) -> Result<(), ErrorCode> {
+    fn read_number(&self, num: &mut [u8]) {
         let index = self.input_counter.get();
         match self.state.get() {
             State::ModHash => {
-                let counter = self.read_var_to_buf(&self.r_val, index, num);
+                let counter = self.hash_storage.map_or(0, |hash| {
+                    let mut counter = 0;
+                    num.iter_mut().zip(hash.iter().skip(index)).for_each(
+                        |(driver_byte, hash_byte)| {
+                            *driver_byte = *hash_byte;
+                            counter += 1;
+                        },
+                    );
+                    counter
+                });
                 if counter + index < P_LEN {
                     self.input_counter.set(counter + index);
                 } else {
                     self.input_counter.set(0);
                 }
             }
-            State::MathWriteR => {
+            State::MathRDaMul(Operand::First) => {
                 let counter = self.read_var_to_buf(&self.r_val, index, num);
                 if counter + index < 32 {
                     self.input_counter.set(counter + index);
                 } else {
-                    self.state.set(State::MathMulRDa);
+                    self.state.set(State::MathRDaMul(Operand::Second));
                     self.input_counter.set(0);
                 }
             }
-            State::MathMulRDa => {
+            State::MathRDaMul(Operand::Second) => {
                 self.signing_key.map(|key| {
                     let mut counter = 0;
                     key.iter().skip(index).zip(num.iter_mut()).for_each(
@@ -581,12 +647,25 @@ where
                     if counter + index < 32 {
                         self.input_counter.set(counter + index);
                     } else {
-                        self.state.set(State::MathAddH);
+                        self.state.set(State::MathResHAdd(Operand::First));
                         self.input_counter.set(0);
                     }
                 });
             }
-            State::MathAddH => {
+            State::MathResHAdd(Operand::First) | State::MathResKDiv(Operand::First) => {
+                let counter = self.read_var_to_buf(&self.s_val, index, num);
+                if counter + index < 32 {
+                    self.input_counter.set(counter + index);
+                } else {
+                    if matches!(self.state.get(), State::MathResHAdd(_)) {
+                        self.state.set(State::MathResHAdd(Operand::Second));
+                    } else {
+                        self.state.set(State::MathResKDiv(Operand::Second));
+                    }
+                    self.input_counter.set(0);
+                }
+            }
+            State::MathResHAdd(Operand::Second) => {
                 self.hash_storage.map(|hash| {
                     let mut counter = 0;
                     hash.iter().skip(index).zip(num.iter_mut()).for_each(
@@ -598,42 +677,42 @@ where
                     if counter + index < 32 {
                         self.input_counter.set(counter + index);
                     } else {
-                        self.state.set(State::MathDivK);
+                        self.state.set(State::MathResKDiv(Operand::First));
                         self.input_counter.set(0);
                     }
                 });
             }
-            State::MathDivK => {
+            State::MathResKDiv(Operand::Second) => {
                 let counter = self.read_var_to_buf(&self.k_val, index, num);
                 self.input_counter.set(counter + index);
             }
             _ => {}
         }
-        Ok(())
     }
 
-    fn write_output(&self, output: &[u8]) -> Result<(), ErrorCode> {
+    fn write_number(&self, num: &[u8]) -> Result<(), ErrorCode> {
         match self.state.get() {
             State::ModHash => {
                 let index = self.output_counter.get();
-                let end_index = (index + output.len()).min(P_LEN);
+                let end_index = (index + num.len()).min(P_LEN);
                 self.hash_storage.map(|hash| {
-                    hash[index..end_index].copy_from_slice(output);
+                    hash[index..end_index].copy_from_slice(num);
                 });
                 self.output_counter.set(end_index);
             }
             _ => {
                 let index = self.output_counter.get();
-                let counter = self.update_var_from_buf(&self.s_val, index, output);
+                let counter = self.update_var_from_buf(&self.s_val, index, num);
                 self.output_counter.set(index + counter);
             }
         }
         Ok(())
     }
 
-    fn operation_done(&self, result: Result<(), ErrorCode>) {
+    fn computation_completed(&self, result: Result<(), ErrorCode>) {
         match self.state.get() {
             State::ModHash => {
+                self.math.take();
                 self.state.set(State::HmacDerivingK1);
                 self.input_counter.set(0);
                 self.output_counter.set(0);
@@ -641,19 +720,29 @@ where
                 self.hmac_handle
                     .map(|handle| self.hmac_mutex.request(handle));
             }
+            State::MathRDaMul(_) => {
+                self.math
+                    .map(|math| math.start_computation(P_LEN, OpAddition::addition()));
+            }
+            State::MathResHAdd(_) => {
+                self.math
+                    .map(|math| math.start_computation(P_LEN, OpDivision::division()));
+            }
             _ => {
+                self.math.take();
                 self.complete_signature(result);
             }
         }
     }
 }
 
-impl<'a, E, M, H> hil::public_key_crypto::keys::SetKeyBySlice<'a, 32>
-    for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> hil::public_key_crypto::keys::SetKeyBySlice<'a, 32>
+    for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn set_key(
         &self,
@@ -673,12 +762,13 @@ where
     }
 }
 
-impl<'a, E, M, H> kernel::deferred_call::DeferredCallClient
-    for EcdsaP256SignatureSigner<'a, E, M, H>
+impl<'a, E, Op, M, H> kernel::deferred_call::DeferredCallClient
+    for EcdsaP256SignatureSigner<'a, E, Op, M, H>
 where
     E: EccCrypto<'a, 32, NistP256Constants>,
-    M: MathCryptoBase<'a> + Addition + Multiplication + Division,
-    H: Digest + Hmac,
+    Op: OpAddition + OpMultiplication + OpDivision + OpModulo,
+    M: MathCryptoBase<'a, Op>,
+    H: Hmac,
 {
     fn handle_deferred_call(&self) {
         match self.state.get() {
