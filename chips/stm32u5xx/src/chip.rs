@@ -24,7 +24,7 @@ use crate::rtc;
 use crate::spi;
 use crate::tim;
 use crate::usart;
-use crate::{aes, dac, exti, rsa};
+use crate::{aes, dac, exti, pka};
 
 use core::fmt::Write;
 use kernel::deferred_call::DeferredCallClient;
@@ -55,7 +55,7 @@ pub struct Stm32u5xxDefaultPeripherals<'a> {
     pub gpio_a: gpio::Port<'a>,
     pub gpio_b: gpio::Port<'a>,
     pub gpio_c: gpio::Port<'a>,
-    pub pka: rsa::Pka<'a>,
+    pub pka: pka::Pka<'a>,
     pub dac: dac::Dac,
     pub crc: crc::CRC<'a>,
     pub hash: hash::hash::Hash<'a>,
@@ -97,7 +97,7 @@ impl<'a> Stm32u5xxDefaultPeripherals<'a> {
             gpio_a: gpio::Port::new(gpio::GPIO_A_BASE, exti, gpio::GpioPort::PortA),
             gpio_b: gpio::Port::new(gpio::GPIO_B_BASE, exti, gpio::GpioPort::PortB),
             gpio_c: gpio::Port::new(gpio::GPIO_C_BASE, exti, gpio::GpioPort::PortC),
-            pka: rsa::Pka::new(),
+            pka: pka::Pka::new(),
             dac: dac::Dac::new(dac::DAC_BASE, enable_dac1_clock),
             crc: crc::CRC::new(CRC_BASE),
             hash: hash::hash::Hash::new(hash::regs::HASH_BASE),
