@@ -1,6 +1,9 @@
-use kernel::utilities::{
-    StaticRef,
-    registers::{ReadOnly, ReadWrite, WriteOnly, register_bitfields, register_structs},
+use kernel::{
+    hil::crypto::modular_arithmetic::{OpAddition, OpDivision, OpMultiplication},
+    utilities::{
+        StaticRef,
+        registers::{ReadOnly, ReadWrite, WriteOnly, register_bitfields, register_structs},
+    },
 };
 
 register_structs! {
@@ -174,7 +177,7 @@ const PRIME_ORDER_LEN_ADDR: usize = 0x400;
 /// Curve modulus length address
 const CURVE_MODULUS_LEN_ADDR: usize = 0x408;
 /// Curve coefficient a sign address
-const CURVE_A_SIGN_LEN_ADDR: usize = 0x410;
+const CURVE_A_SIGN_ADDR: usize = 0x410;
 /// Curve coefficient a absolute value address
 const CURVE_A_ADDR: usize = 0x418;
 /// Curve coefficient b address
@@ -199,6 +202,23 @@ const ERR_CHECK_ADDR: usize = 0x5D0;
 const ERRORS_OCCURED: usize = 0xCBC9;
 /// No Errors occured
 const NO_ERRORS_OCCURED: usize = 0xD60D;
+const MONTGOMERY_R2_ADDR: usize = 0x4C8;
+
+/// Addresses for ECC complete addition mode
+const ADD_CURVE_MODULUS_ADDR: usize = 0x470;
+const ADD_P_X_ADDR: usize = 0x628;
+const ADD_P_Y_ADDR: usize = 0x680;
+const ADD_P_Z_ADDR: usize = 0x6D8;
+const ADD_Q_X_ADDR: usize = 0x730;
+const ADD_Q_Y_ADDR: usize = 0x788;
+const ADD_Q_Z_ADDR: usize = 0x7E0;
+const ADD_RESULT_X_ADDR: usize = 0xD60;
+const ADD_RESULT_Y_ADDR: usize = 0xDB8;
+/// Output address for integer arithmetic operations
+const MATH_RESULT_ADDR: usize = 0xE78;
+
+/// Operand A for modular/arithmetic functions
+const ARITH_OP_A_ADDR: usize = 0xA50;
 
 /// RAM array mapping
 /// We need to compute the offset from the RAM start, and divide by the size of u32 to obtain its index in the RAM array
@@ -212,9 +232,10 @@ pub(crate) const OP_A_IDX: usize = calc_idx(OP_A_ADDR);
 pub(crate) const EXP_IDX: usize = calc_idx(EXP_ADDR);
 pub(crate) const MOD_VALUE_IDX: usize = calc_idx(MOD_VALUE_ADDR);
 pub(crate) const RESULT_IDX: usize = calc_idx(RESULT_ADDR);
+
 pub(crate) const PRIME_ORDER_LEN_IDX: usize = calc_idx(PRIME_ORDER_LEN_ADDR);
 pub(crate) const CURVE_MODULUS_LEN_IDX: usize = calc_idx(CURVE_MODULUS_LEN_ADDR);
-pub(crate) const CURVE_A_SIGN_LEN_IDX: usize = calc_idx(CURVE_A_SIGN_LEN_ADDR);
+pub(crate) const CURVE_A_SIGN_IDX: usize = calc_idx(CURVE_A_SIGN_ADDR);
 pub(crate) const CURVE_A_IDX: usize = calc_idx(CURVE_A_ADDR);
 pub(crate) const CURVE_B_IDX: usize = calc_idx(CURVE_B_ADDR);
 pub(crate) const CURVE_MODULUS_IDX: usize = calc_idx(CURVE_MODULUS_ADDR);
@@ -225,3 +246,46 @@ pub(crate) const PRIME_ORDER_IDX: usize = calc_idx(PRIME_ORDER_ADDR);
 pub(crate) const RESULT_X_IDX: usize = calc_idx(RESULT_X_ADDR);
 pub(crate) const RESULT_Y_IDX: usize = calc_idx(RESULT_Y_ADDR);
 pub(crate) const ERR_CHECK_IDX: usize = calc_idx(ERR_CHECK_ADDR);
+
+pub(crate) const ADD_CURVE_MODULUS_IDX: usize = calc_idx(ADD_CURVE_MODULUS_ADDR);
+pub(crate) const ADD_P_X_IDX: usize = calc_idx(ADD_P_X_ADDR);
+pub(crate) const ADD_P_Y_IDX: usize = calc_idx(ADD_P_Y_ADDR);
+pub(crate) const ADD_P_Z_IDX: usize = calc_idx(ADD_P_Z_ADDR);
+pub(crate) const ADD_Q_X_IDX: usize = calc_idx(ADD_Q_X_ADDR);
+pub(crate) const ADD_Q_Y_IDX: usize = calc_idx(ADD_Q_Y_ADDR);
+pub(crate) const ADD_Q_Z_IDX: usize = calc_idx(ADD_Q_Z_ADDR);
+pub(crate) const ADD_RESULT_X_IDX: usize = calc_idx(ADD_RESULT_X_ADDR);
+pub(crate) const ADD_RESULT_Y_IDX: usize = calc_idx(ADD_RESULT_Y_ADDR);
+pub(crate) const MONTGOMERY_R2_IDX: usize = calc_idx(MONTGOMERY_R2_ADDR);
+pub(crate) const R2_MOD_P: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xef, 0xff, 0xff, 0xff, 0xbf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+];
+
+pub(crate) const ARITH_OP_A_IDX: usize = calc_idx(ARITH_OP_A_ADDR);
+pub(crate) const MATH_RESULT_IDX: usize = calc_idx(MATH_RESULT_ADDR);
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum SupportedOp {
+    Addition,
+    Multiplication,
+    Division,
+}
+
+impl OpAddition for SupportedOp {
+    fn addition() -> Self {
+        SupportedOp::Addition
+    }
+}
+
+impl OpMultiplication for SupportedOp {
+    fn multiplication() -> Self {
+        SupportedOp::Multiplication
+    }
+}
+
+impl OpDivision for SupportedOp {
+    fn division() -> Self {
+        SupportedOp::Division
+    }
+}

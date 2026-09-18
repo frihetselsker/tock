@@ -25,5 +25,5 @@ pub trait EccCrypto<'a, const P_SIZE: usize, C: Curve<P_SIZE>> {
 pub trait VerifyEccPoint<'a, const P_SIZE: usize, C: Curve<P_SIZE>>:
     EccCrypto<'a, P_SIZE, C>
 {
-    fn verify_point() -> Result<(), ErrorCode>;
+    fn verify_point(&self) -> Result<(), ErrorCode>;
 }

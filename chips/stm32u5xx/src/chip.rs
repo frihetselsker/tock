@@ -24,7 +24,7 @@ use crate::rtc;
 use crate::spi;
 use crate::tim;
 use crate::usart;
-use crate::{aes, dac, exti, pka};
+use crate::{aes, dac, exti, pkc::pka};
 
 use core::fmt::Write;
 use kernel::deferred_call::DeferredCallClient;
