@@ -6,9 +6,12 @@
 #![no_std]
 #![no_main]
 
+use core::cell::Cell;
 use kernel::capabilities::{self, MemoryAllocationCapability};
 use kernel::component::Component;
+use kernel::debug;
 use kernel::debug::PanicResources;
+use kernel::hil::crypto::elliptic_curves::ecc_math::{EccClient, EccCrypto};
 use kernel::hil::gpio::{Configure, Output};
 use kernel::hil::symmetric_encryption::AES256;
 use kernel::platform::chip::Chip;
@@ -18,9 +21,44 @@ use kernel::{create_capability, static_init};
 
 use stm32u545::gpio::PinId;
 use stm32u545::hash::hash::FIFO_SIZE;
+use stm32u545::pkc;
 use stm32u545::rng::RNG_BASE;
 
+use kernel::hil::crypto::modular_arithmetic::{MathClient, MathCryptoBase};
+use stm32u545::pkc::constants::SupportedOp;
+
 pub mod io;
+
+// ==============================================================================
+// TEST VARIABLES FOR PKA
+// Modify these variables to test different operations. They are placed here
+// for obvious visibility and easy modification.
+// ==============================================================================
+
+/// Hardcoded scalar to multiply the doubled point (k = 3)
+const TEST_ECC_SCALAR: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+];
+
+/// Modulus for modular arithmetic (Math tests)
+const TEST_MATH_MODULUS: [u8; 32] = [
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFD,
+];
+
+/// Operand A for modular arithmetic
+const TEST_MATH_A: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+];
+
+/// Operand B for modular arithmetic
+const TEST_MATH_B: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07,
+];
+// ==============================================================================
 
 extern "C" {
     static _sappmem: u8;
@@ -40,6 +78,188 @@ static PANIC_RESOURCES: SingleThreadValue<PanicResources<ChipHw, ProcessPrinterI
     SingleThreadValue::new();
 
 kernel::stack_size! {0x2000}
+
+#[derive(Copy, Clone, PartialEq)]
+enum TestState {
+    EccWaitDoubling,
+    EccWaitMul,
+    EccWaitAdd,
+    MathWaitAdd,
+    MathWaitMul,
+    MathWaitDiv,
+    Done,
+}
+
+struct PkaTester<'a> {
+    pka: &'a pkc::pka::Pka<'a>,
+    state: Cell<TestState>,
+
+    // ECC variables
+    point_doubled: Cell<[u8; 64]>,
+    point_mul: Cell<[u8; 64]>,
+    ecc_output: Cell<[u8; 64]>,
+    out_done: Cell<usize>,
+
+    // Math variables
+    math_output: Cell<[u8; 32]>,
+    math_read_count: Cell<u8>,
+}
+
+impl<'a> PkaTester<'a> {
+    fn new(pka: &'a pkc::pka::Pka<'a>) -> Self {
+        PkaTester {
+            pka,
+            state: Cell::new(TestState::EccWaitDoubling),
+            point_doubled: Cell::new([0; 64]),
+            point_mul: Cell::new([0; 64]),
+            ecc_output: Cell::new([0; 64]),
+            out_done: Cell::new(0),
+            math_output: Cell::new([0; 32]),
+            math_read_count: Cell::new(0),
+        }
+    }
+
+    fn start(&self) {
+        debug!("--- Starting ECC Chain ---");
+        self.state.set(TestState::EccWaitDoubling);
+        // Step 1: Double the generator
+        self.pka.point_doubling(true).unwrap();
+    }
+}
+
+impl<'a> EccClient for PkaTester<'a> {
+    fn read_scalar(&self, scalar: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read scalar");
+        scalar.copy_from_slice(&TEST_ECC_SCALAR);
+        Ok(())
+    }
+
+    fn read_point(&self, point: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read point");
+        match self.state.get() {
+            TestState::EccWaitMul | TestState::EccWaitAdd => {
+                // Supply the doubled point to both operations
+                point.copy_from_slice(&self.point_doubled.get());
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn read_second_point(&self, point: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read second point");
+        if self.state.get() == TestState::EccWaitAdd {
+            // Supply the multiplied point as the second operand for addition
+            point.copy_from_slice(&self.point_mul.get());
+        }
+        Ok(())
+    }
+
+    fn write_point(&self, point: &[u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Wrote point");
+        let mut buf = self.ecc_output.get();
+        let idx = self.out_done.get();
+        buf[idx..idx + point.len()].copy_from_slice(point);
+        self.out_done.set(idx + point.len());
+        self.ecc_output.set(buf);
+        Ok(())
+    }
+
+    fn operation_done(&self, result: Result<(), kernel::ErrorCode>) {
+        debug!("operation_done: {:02x?}", self.ecc_output.get());
+        self.out_done.set(0);
+        if result.is_err() {
+            debug!("ECC Hardware Error");
+            return;
+        }
+
+        match self.state.get() {
+            TestState::EccWaitDoubling => {
+                self.point_doubled.set(self.ecc_output.get());
+                self.ecc_output.set([0; 64]);
+                self.state.set(TestState::EccWaitMul);
+                // Step 2: Multiply the doubled point by the scalar
+                self.pka.scalar_multiplication(false).unwrap();
+            }
+            TestState::EccWaitMul => {
+                self.point_mul.set(self.ecc_output.get());
+                self.ecc_output.set([0; 64]);
+                self.state.set(TestState::EccWaitAdd);
+                // Step 3: Add the doubled point to the multiplied point
+                self.pka.point_addition(false).unwrap();
+            }
+            TestState::EccWaitAdd => {
+                debug!("ECC complete addition success!");
+
+                debug!("--- Starting Math Chain ---");
+                self.state.set(TestState::MathWaitAdd);
+                self.math_read_count.set(0);
+
+                self.ecc_output.set([0; 64]);
+                // Step 4: Start Math Addition
+                MathCryptoBase::start_computation(self.pka, 32, SupportedOp::Addition).unwrap();
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> MathClient<SupportedOp> for PkaTester<'a> {
+    fn read_modulus(&self, modulus: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        modulus.copy_from_slice(&TEST_MATH_MODULUS);
+        Ok(())
+    }
+
+    fn read_number(&self, num: &mut [u8]) {
+        let count = self.math_read_count.get();
+        if count == 0 {
+            num.copy_from_slice(&TEST_MATH_A);
+            self.math_read_count.set(1);
+        } else {
+            num.copy_from_slice(&TEST_MATH_B);
+            self.math_read_count.set(0); // Reset for the next operation
+        }
+    }
+
+    fn write_number(&self, num: &[u8]) -> Result<(), kernel::ErrorCode> {
+        let mut buf = [0u8; 32];
+        buf.copy_from_slice(&num[0..32]);
+        self.math_output.set(buf);
+        Ok(())
+    }
+
+    fn computation_completed(&self, result: Result<(), kernel::ErrorCode>) {
+        debug!("computation_completed: {:02x?}", self.math_output.get());
+        if result.is_err() {
+            debug!("Math Hardware Error");
+            return;
+        }
+
+        match self.state.get() {
+            TestState::MathWaitAdd => {
+                debug!("Math Addition Success!");
+                self.state.set(TestState::MathWaitMul);
+                self.math_read_count.set(0);
+                // Step 5: Start Math Multiplication
+                MathCryptoBase::start_computation(self.pka, 32, SupportedOp::Multiplication)
+                    .unwrap();
+            }
+            TestState::MathWaitMul => {
+                debug!("Math Multiplication Success!");
+                self.state.set(TestState::MathWaitDiv);
+                self.math_read_count.set(0);
+                // Step 6: Start Math Division
+                MathCryptoBase::start_computation(self.pka, 32, SupportedOp::Division).unwrap();
+            }
+            TestState::MathWaitDiv => {
+                debug!("Math Division Success!");
+                self.state.set(TestState::Done);
+                debug!("--- All PKA Operations Finished ---");
+            }
+            _ => {}
+        }
+    }
+}
 
 struct NucleoU545RE {
     console: &'static capsules_core::console::Console<'static>,
@@ -157,18 +377,6 @@ unsafe fn set_pin_primary_functions(periphs: &stm32u545::chip::Stm32u5xxDefaultP
     pin10.set_speed_high();
 
     // I2C1 Pins (PB6/PB7)
-    //
-    // Both pins are supposed to be open-drain
-    //      SCL for multi-master
-    //      SDA (intrinsically) such that the slave can use it as well
-    // Both pins are supposed to have AF4 as alternate function
-    //      as written in the STM32U5 Datasheet, Chapter 4.3 or page 138
-    // I2C specification states that both pins should be pulled up
-    //
-    // And in order to make I2C Fast-mode Plus work, we need to set them as high speed
-    //
-    // As for the choice of pin assigments, I want to keep the implementation
-    // consistent with the silkscreen on the board.
     let pin_scl = periphs.gpio_b.pin(PinId::Pin06);
     let pin_sda = periphs.gpio_b.pin(PinId::Pin07);
 
@@ -184,10 +392,6 @@ unsafe fn set_pin_primary_functions(periphs: &stm32u545::chip::Stm32u5xxDefaultP
     pin_sda.set_floating_state(kernel::hil::gpio::FloatingState::PullUp);
     pin_sda.set_speed_high();
 
-    // Warning: PA5 is shared between SPI_CLOCK and the builtin LED.
-    // By default we route SPI_CLOCK to PB3 to keep the LED functionality
-    // To use PA5 for SPI instead, swap the commented blocks below
-
     // Default Config
     // LED Pin (PA5)
     periphs.gpio_a.pin(PinId::Pin05).make_output();
@@ -197,13 +401,6 @@ unsafe fn set_pin_primary_functions(periphs: &stm32u545::chip::Stm32u5xxDefaultP
     spi1_sck.set_mode(stm32u545::gpio::Mode::AlternateFunction);
     spi1_sck.set_alternate_function(5);
     spi1_sck.set_speed_high();
-
-    // Alternative Config
-    // SPI_CLOCK (PA5) and no LED support
-    // let spi1_sck = periphs.gpio_a.pin(PinId::Pin05);
-    // spi1_sck.set_mode(stm32u545::gpio::Mode::AlternateFunction);
-    // spi1_sck.set_alternate_function(5);
-    // spi1_sck.set_speed_high();
 
     // SPI_MISO (PA6)
     let spi1_miso = periphs.gpio_a.pin(PinId::Pin06);
@@ -581,6 +778,11 @@ unsafe fn start() -> (
     .finalize(components::crc_component_static!(
         stm32u545::crc::CRC<'static>
     ));
+
+    let test = static_init!(PkaTester<'static>, PkaTester::new(&periphs.pka));
+    MathCryptoBase::set_client(&periphs.pka, test);
+    EccCrypto::set_client(&periphs.pka, test);
+    test.start();
 
     let i2c = components::i2c::I2CMasterDriverComponent::new(
         board_kernel,
