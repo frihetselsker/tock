@@ -60,4 +60,3 @@ impl Curve<P_256_P_SIZE> for NistP256Constants {
         ],
     );
 }
-

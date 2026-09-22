@@ -33,9 +33,10 @@ enum State {
     ProjToAffinePass3,
     VerifyPoint,
     MathAddition,
-    MathMultiplication,
     MathDivisionInvert,
-    MathDivisionMultiply,
+    MathComputeR2,
+    MathComputeAR,
+    MathComputeAB,
 }
 
 pub struct Pka<'a> {
@@ -176,7 +177,7 @@ impl<'a> Pka<'a> {
             false
         };
 
-        debug!("interrupt gotten");
+        debug!("interrupt gotten in state: {:?}", self.state.get());
         match self.state.get() {
             State::Idle => {}
             State::Rsa => {
@@ -184,6 +185,7 @@ impl<'a> Pka<'a> {
                 let exponent = self.exponent.take().unwrap();
                 let message = self.message.take().unwrap();
                 let result = self.result.take().unwrap();
+                self.state.set(State::Idle);
 
                 if success {
                     self.read_slice(RESULT_IDX, result);
@@ -201,7 +203,6 @@ impl<'a> Pka<'a> {
                         );
                     });
                 }
-                self.state.set(State::Idle);
             }
             State::ScalarMul => {
                 let mut errs = [0u8; 8];
@@ -214,43 +215,44 @@ impl<'a> Pka<'a> {
                 let mut res = [0u8; 2 * P_256_P_SIZE];
                 self.read_slice(RESULT_X_IDX, &mut res[0..P_256_P_SIZE]);
                 self.read_slice(RESULT_Y_IDX, &mut res[P_256_P_SIZE..]);
+                self.state.set(State::Idle);
                 self.ecc_client.map(|client| {
-                    client.write_point(&res);
+                    let _ = client.write_point(&res);
                     client.operation_done(Ok(()));
                 });
-                self.state.set(State::Idle);
             }
             State::PointAddition => {
                 if success {
                     self.state.set(State::ProjToAffinePass1);
                     self.start_projective_to_affine();
                 } else {
+                    self.state.set(State::Idle);
                     self.ecc_client
                         .map(|client| client.operation_done(Err(ErrorCode::FAIL)));
-                    self.state.set(State::Idle);
                 }
             }
             State::ProjToAffinePass1 => {
-                self.feed_affine_to_projective();
                 self.state.set(State::ProjToAffinePass2);
+                self.feed_affine_to_projective();
                 self.start_projective_to_affine();
             }
             State::ProjToAffinePass2 => {
+                self.state.set(State::ProjToAffinePass3);
                 let (x_out, _) = self.feed_affine_to_projective();
                 self.ecc_client.map(|client| client.write_point(&x_out));
-                self.state.set(State::ProjToAffinePass3);
                 self.start_projective_to_affine();
             }
             State::ProjToAffinePass3 => {
+                self.state.set(State::Idle);
                 let mut y_out = [0u8; P_256_P_SIZE];
                 self.read_slice(RESULT_Y_IDX, &mut y_out);
                 self.ecc_client.map(|client| {
-                    client.write_point(&y_out);
+                    let _ = client.write_point(&y_out);
                     client.operation_done(Ok(()));
                 });
-                self.state.set(State::Idle);
             }
             State::VerifyPoint => {
+                self.state.set(State::Idle);
                 if let Some(ram_cell) = self.registers.ram.get(ADD_P_Y_IDX) {
                     let result_code = ram_cell.get();
                     let result = if result_code == 0xD60D {
@@ -260,9 +262,9 @@ impl<'a> Pka<'a> {
                     };
                     self.ecc_client.map(|client| client.operation_done(result));
                 }
-                self.state.set(State::Idle);
             }
-            State::MathAddition | State::MathMultiplication | State::MathDivisionMultiply => {
+            State::MathAddition => {
+                self.state.set(State::Idle);
                 if success {
                     let len = self.math_len.get();
                     let mut buf = [0u8; 512];
@@ -278,7 +280,6 @@ impl<'a> Pka<'a> {
                     self.math_client
                         .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
                 }
-                self.state.set(State::Idle);
             }
             State::MathDivisionInvert => {
                 if success {
@@ -286,16 +287,78 @@ impl<'a> Pka<'a> {
                     let mut buf = [0u8; 512];
                     let buf_slice = &mut buf[0..len];
 
+                    // Result of inversion is B^-1. Save it to EXP_IDX temporarily.
                     self.read_slice(MATH_RESULT_IDX, buf_slice);
+                    self.write_slice(EXP_IDX, buf_slice);
 
+                    self.state.set(State::MathComputeR2);
+
+                    // Modulus length and value are already prepared at RAM@0x408 and RAM@0x1088 respectively[cite: 2].
+                    // Trigger Montgomery parameter computation with MODE[5:0] set to 0x01[cite: 2].
+                    self.start_operation(CR::MODE::MontgomeryOnly);
+                } else {
+                    self.state.set(State::Idle);
+                    self.math_client
+                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+                }
+            }
+            State::MathComputeR2 => {
+                if success {
+                    let len = self.math_len.get();
+                    let mut buf = [0u8; 512];
+                    let buf_slice = &mut buf[0..len];
+
+                    // Read the resulting Montgomery parameter (R^2 mod n) from RAM@0x620[cite: 2].
+                    self.read_slice(MATH_RESULT_IDX, buf_slice);
                     self.write_slice(ARITH_OP_A_IDX, buf_slice);
 
-                    self.state.set(State::MathDivisionMultiply);
+                    // Compute AR = A * r2modn mod n. The output is in the Montgomery domain[cite: 1].
+                    self.state.set(State::MathComputeAR);
                     self.start_operation(CR::MODE::MontgomeryMultiplication);
+                } else {
+                    self.state.set(State::Idle);
+                    self.math_client
+                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+                }
+            }
+            State::MathComputeAR => {
+                if success {
+                    let len = self.math_len.get();
+                    let mut buf = [0u8; 512];
+                    let buf_slice = &mut buf[0..len];
+
+                    self.read_slice(MATH_RESULT_IDX, buf_slice);
+                    self.write_slice(OP_A_IDX, buf_slice);
+
+                    // Retrieve B (or B^-1 for division) saved in EXP_IDX and place in ARITH_OP_A_IDX
+                    self.read_slice(EXP_IDX, buf_slice);
+                    self.write_slice(ARITH_OP_A_IDX, buf_slice);
+
+                    // Compute AB = AR * B mod n. The output is in the natural domain[cite: 1].
+                    self.state.set(State::MathComputeAB);
+                    self.start_operation(CR::MODE::MontgomeryMultiplication);
+                } else {
+                    self.state.set(State::Idle);
+                    self.math_client
+                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+                }
+            }
+            State::MathComputeAB => {
+                self.state.set(State::Idle);
+                if success {
+                    let len = self.math_len.get();
+                    let mut buf = [0u8; 512];
+                    let buf_slice = &mut buf[0..len];
+
+                    self.read_slice(MATH_RESULT_IDX, buf_slice);
+
+                    self.math_client.map(|client| {
+                        let _ = client.write_number(buf_slice);
+                        client.computation_completed(Ok(()));
+                    });
                 } else {
                     self.math_client
                         .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
-                    self.state.set(State::Idle);
                 }
             }
         }
@@ -531,15 +594,17 @@ impl<'a> MathCryptoBase<'a, SupportedOp> for Pka<'a> {
                 Ok(())
             }
             SupportedOp::Multiplication => {
-                self.state.set(State::MathMultiplication);
+                self.state.set(State::MathComputeR2);
                 self.math_len.set(modulus_len);
 
+                // Set the modulus length in bits at RAM@0x408[cite: 2].
                 self.registers.ram[OP_LEN_IDX].set((modulus_len as u32) * 8);
                 self.registers.ram[OP_LEN_IDX + 1].set(0);
 
                 let mut buf = [0u8; 512];
                 let buf_slice = &mut buf[0..modulus_len];
 
+                // Set the odd modulus value n at RAM@0x1088[cite: 2].
                 self.math_client.map(|client| {
                     let _ = client.read_modulus(buf_slice);
                 });
@@ -547,13 +612,14 @@ impl<'a> MathCryptoBase<'a, SupportedOp> for Pka<'a> {
 
                 buf_slice.fill(0);
                 self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(ARITH_OP_A_IDX, buf_slice);
+                self.write_slice(OP_A_IDX, buf_slice);
 
                 buf_slice.fill(0);
                 self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(OP_A_IDX, buf_slice);
+                self.write_slice(EXP_IDX, buf_slice);
 
-                self.start_operation(CR::MODE::MontgomeryMultiplication);
+                // Trigger Montgomery parameter computation with MODE[5:0] set to 0x01[cite: 2].
+                self.start_operation(CR::MODE::MontgomeryOnly);
                 Ok(())
             }
             SupportedOp::Division => {

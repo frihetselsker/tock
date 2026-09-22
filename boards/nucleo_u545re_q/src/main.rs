@@ -98,6 +98,7 @@ struct PkaTester<'a> {
     point_doubled: Cell<[u8; 64]>,
     point_mul: Cell<[u8; 64]>,
     ecc_output: Cell<[u8; 64]>,
+    out_done: Cell<usize>,
 
     // Math variables
     math_output: Cell<[u8; 32]>,
@@ -112,6 +113,7 @@ impl<'a> PkaTester<'a> {
             point_doubled: Cell::new([0; 64]),
             point_mul: Cell::new([0; 64]),
             ecc_output: Cell::new([0; 64]),
+            out_done: Cell::new(0),
             math_output: Cell::new([0; 32]),
             math_read_count: Cell::new(0),
         }
@@ -127,11 +129,13 @@ impl<'a> PkaTester<'a> {
 
 impl<'a> EccClient for PkaTester<'a> {
     fn read_scalar(&self, scalar: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read scalar");
         scalar.copy_from_slice(&TEST_ECC_SCALAR);
         Ok(())
     }
 
     fn read_point(&self, point: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read point");
         match self.state.get() {
             TestState::EccWaitMul | TestState::EccWaitAdd => {
                 // Supply the doubled point to both operations
@@ -143,6 +147,7 @@ impl<'a> EccClient for PkaTester<'a> {
     }
 
     fn read_second_point(&self, point: &mut [u8]) -> Result<(), kernel::ErrorCode> {
+        debug!("Read second point");
         if self.state.get() == TestState::EccWaitAdd {
             // Supply the multiplied point as the second operand for addition
             point.copy_from_slice(&self.point_mul.get());
@@ -151,13 +156,18 @@ impl<'a> EccClient for PkaTester<'a> {
     }
 
     fn write_point(&self, point: &[u8]) -> Result<(), kernel::ErrorCode> {
-        let mut buf = [0u8; 64];
-        buf.copy_from_slice(point);
+        debug!("Wrote point");
+        let mut buf = self.ecc_output.get();
+        let idx = self.out_done.get();
+        buf[idx..idx + point.len()].copy_from_slice(point);
+        self.out_done.set(idx + point.len());
         self.ecc_output.set(buf);
         Ok(())
     }
 
     fn operation_done(&self, result: Result<(), kernel::ErrorCode>) {
+        debug!("operation_done: {:02x?}", self.ecc_output.get());
+        self.out_done.set(0);
         if result.is_err() {
             debug!("ECC Hardware Error");
             return;
@@ -166,12 +176,14 @@ impl<'a> EccClient for PkaTester<'a> {
         match self.state.get() {
             TestState::EccWaitDoubling => {
                 self.point_doubled.set(self.ecc_output.get());
+                self.ecc_output.set([0; 64]);
                 self.state.set(TestState::EccWaitMul);
                 // Step 2: Multiply the doubled point by the scalar
                 self.pka.scalar_multiplication(false).unwrap();
             }
             TestState::EccWaitMul => {
                 self.point_mul.set(self.ecc_output.get());
+                self.ecc_output.set([0; 64]);
                 self.state.set(TestState::EccWaitAdd);
                 // Step 3: Add the doubled point to the multiplied point
                 self.pka.point_addition(false).unwrap();
@@ -183,6 +195,7 @@ impl<'a> EccClient for PkaTester<'a> {
                 self.state.set(TestState::MathWaitAdd);
                 self.math_read_count.set(0);
 
+                self.ecc_output.set([0; 64]);
                 // Step 4: Start Math Addition
                 MathCryptoBase::start_computation(self.pka, 32, SupportedOp::Addition).unwrap();
             }
@@ -216,6 +229,7 @@ impl<'a> MathClient<SupportedOp> for PkaTester<'a> {
     }
 
     fn computation_completed(&self, result: Result<(), kernel::ErrorCode>) {
+        debug!("computation_completed: {:02x?}", self.math_output.get());
         if result.is_err() {
             debug!("Math Hardware Error");
             return;
@@ -580,11 +594,6 @@ unsafe fn start() -> (
         periphs.gpio_c.pin(PinId::Pin09)
     );
 
-    let test = static_init!(PkaTester<'static>, PkaTester::new(&periphs.pka));
-    MathCryptoBase::set_client(&periphs.pka, test);
-    EccCrypto::set_client(&periphs.pka, test);
-    test.start();
-
     spi_cs.make_output();
     spi_cs.set();
 
@@ -769,6 +778,11 @@ unsafe fn start() -> (
     .finalize(components::crc_component_static!(
         stm32u545::crc::CRC<'static>
     ));
+
+    let test = static_init!(PkaTester<'static>, PkaTester::new(&periphs.pka));
+    MathCryptoBase::set_client(&periphs.pka, test);
+    EccCrypto::set_client(&periphs.pka, test);
+    test.start();
 
     let i2c = components::i2c::I2CMasterDriverComponent::new(
         board_kernel,
