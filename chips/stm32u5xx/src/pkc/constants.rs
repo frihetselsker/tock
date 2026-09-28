@@ -1,5 +1,5 @@
 use kernel::{
-    hil::crypto::modular_arithmetic::{OpAddition, OpDivision, OpMultiplication},
+    hil::crypto::modular_arithmetic::{OpAddition, OpInverse, OpModulo, OpMultiplication},
     utilities::{
         StaticRef,
         registers::{ReadOnly, ReadWrite, WriteOnly, register_bitfields, register_structs},
@@ -44,7 +44,7 @@ register_bitfields! [u32,
 
         /// PKA operation code
         MODE OFFSET(8) NUMBITS(6) [
-            /// Montogomery parameter computation then modular exponentioantion
+            /// Montgomery parameter computation then modular exponentiation
             MontgomeryModularExp = 0b000000,
 
             /// Montgomery parameter computation only
@@ -122,7 +122,7 @@ register_bitfields! [u32,
         /// Address error flag
         ADDRERRF OFFSET(20) NUMBITS(1) [],
 
-        /// PKA RAM Error flag
+        /// PKA RAM error flag
         RAMERRF OFFSET(19) NUMBITS(1) [],
 
         /// PKA end of operation flag
@@ -136,7 +136,7 @@ register_bitfields! [u32,
     ],
 
     pub(crate) CLRFR [
-        /// Clear oferation error flag
+        /// Clear operation error flag
         OPERRFC OFFSET(21) NUMBITS(1) [],
 
         /// Clear address error flag
@@ -145,7 +145,7 @@ register_bitfields! [u32,
         /// Clear PKA RAM error flag
         RAMERRFC OFFSET(19) NUMBITS(1) [],
 
-        /// Clear PKA end of op flag
+        /// Clear PKA end of operation flag
         PROCENDFC OFFSET(17) NUMBITS(1) [],
     ]
 ];
@@ -154,122 +154,157 @@ register_bitfields! [u32,
 pub(crate) const PKA_BASE: StaticRef<PkaRegisters> =
     unsafe { StaticRef::new(0x520C2000 as *const PkaRegisters) };
 
+// ---------------------------------------------------------------------------
+// PKA RAM layout
+//
+// The PKA RAM is reused by every mode, so the same offset can have a different
+// meaning depending on the operation. Constants are grouped per mode; where two
+// names share an offset, they are deliberate aliases.
+//
+// `*_ADDR` is the byte address relative to the PKA base, `*_IDX` is the index
+// into `PkaRegisters::ram` (u32 words).
+// ---------------------------------------------------------------------------
+
 /// Start of the RAM region
 const RAM_START: usize = 0x400;
 
-/// Addresses for montgomery modular exponentiation mode
-/// Exponent length address
-const EXP_LEN_ADDR: usize = 0x400;
-/// Operand length address
-const OP_LEN_ADDR: usize = 0x408;
-/// Operand A (base of exponentiation) address
-const OP_A_ADDR: usize = 0xC68;
-/// Exponent address
-const EXP_ADDR: usize = 0xE78;
-/// Modulus value address
-const MOD_VALUE_ADDR: usize = 0x1088;
-/// Result address
-const RESULT_ADDR: usize = 0x838;
-
-/// Addresses for ECC Fp scalar multiplication mode
-/// Curve prime order length
-const PRIME_ORDER_LEN_ADDR: usize = 0x400;
-/// Curve modulus length address
-const CURVE_MODULUS_LEN_ADDR: usize = 0x408;
-/// Curve coefficient a sign address
-const CURVE_A_SIGN_ADDR: usize = 0x410;
-/// Curve coefficient a absolute value address
-const CURVE_A_ADDR: usize = 0x418;
-/// Curve coefficient b address
-const CURVE_B_ADDR: usize = 0x520;
-/// Curve modulus value address
-const CURVE_MODULUS_ADDR: usize = 0x1088;
-/// Scalar multiplier address
-const K_ADDR: usize = 0x12A0;
-/// Point X coordinate address
-const X_ADDR: usize = 0x578;
-/// Point Y coordinate address
-const Y_ADDR: usize = 0x470;
-/// Curve prime order address
-const PRIME_ORDER_ADDR: usize = 0xF88;
-/// Result X coordinate address
-const RESULT_X_ADDR: usize = 0x578;
-/// Result Y coordinate address
-const RESULT_Y_ADDR: usize = 0x5D0;
-/// Error check address
-const ERR_CHECK_ADDR: usize = 0x5D0;
-/// Errors occured
-const ERRORS_OCCURED: usize = 0xCBC9;
-/// No Errors occured
-const NO_ERRORS_OCCURED: usize = 0xD60D;
-const MONTGOMERY_R2_ADDR: usize = 0x4C8;
-
-/// Addresses for ECC complete addition mode
-const ADD_CURVE_MODULUS_ADDR: usize = 0x470;
-const ADD_P_X_ADDR: usize = 0x628;
-const ADD_P_Y_ADDR: usize = 0x680;
-const ADD_P_Z_ADDR: usize = 0x6D8;
-const ADD_Q_X_ADDR: usize = 0x730;
-const ADD_Q_Y_ADDR: usize = 0x788;
-const ADD_Q_Z_ADDR: usize = 0x7E0;
-const ADD_RESULT_X_ADDR: usize = 0xD60;
-const ADD_RESULT_Y_ADDR: usize = 0xDB8;
-/// Output address for integer arithmetic operations
-const MATH_RESULT_ADDR: usize = 0xE78;
-
-/// Operand A for modular/arithmetic functions
-const ARITH_OP_A_ADDR: usize = 0xA50;
-
-/// RAM array mapping
-/// We need to compute the offset from the RAM start, and divide by the size of u32 to obtain its index in the RAM array
+/// Converts a PKA RAM address into an index in the `ram` array.
 const fn calc_idx(addr: usize) -> usize {
     (addr - RAM_START) / size_of::<u32>()
 }
 
-pub(crate) const EXP_LEN_IDX: usize = calc_idx(EXP_LEN_ADDR);
-pub(crate) const OP_LEN_IDX: usize = calc_idx(OP_LEN_ADDR);
-pub(crate) const OP_A_IDX: usize = calc_idx(OP_A_ADDR);
-pub(crate) const EXP_IDX: usize = calc_idx(EXP_ADDR);
-pub(crate) const MOD_VALUE_IDX: usize = calc_idx(MOD_VALUE_ADDR);
-pub(crate) const RESULT_IDX: usize = calc_idx(RESULT_ADDR);
+// ---- Montgomery modular exponentiation and integer/modular arithmetic ------
 
-pub(crate) const PRIME_ORDER_LEN_IDX: usize = calc_idx(PRIME_ORDER_LEN_ADDR);
-pub(crate) const CURVE_MODULUS_LEN_IDX: usize = calc_idx(CURVE_MODULUS_LEN_ADDR);
-pub(crate) const CURVE_A_SIGN_IDX: usize = calc_idx(CURVE_A_SIGN_ADDR);
-pub(crate) const CURVE_A_IDX: usize = calc_idx(CURVE_A_ADDR);
-pub(crate) const CURVE_B_IDX: usize = calc_idx(CURVE_B_ADDR);
-pub(crate) const CURVE_MODULUS_IDX: usize = calc_idx(CURVE_MODULUS_ADDR);
-pub(crate) const K_IDX: usize = calc_idx(K_ADDR);
-pub(crate) const X_IDX: usize = calc_idx(X_ADDR);
-pub(crate) const Y_IDX: usize = calc_idx(Y_ADDR);
-pub(crate) const PRIME_ORDER_IDX: usize = calc_idx(PRIME_ORDER_ADDR);
-pub(crate) const RESULT_X_IDX: usize = calc_idx(RESULT_X_ADDR);
-pub(crate) const RESULT_Y_IDX: usize = calc_idx(RESULT_Y_ADDR);
-pub(crate) const ERR_CHECK_IDX: usize = calc_idx(ERR_CHECK_ADDR);
+/// Exponent length in bits (also the modulus length for modular reduction)
+const EXP_LEN_BITS_ADDR: usize = 0x400;
+/// Operand length in bits
+const OPERAND_LEN_BITS_ADDR: usize = 0x408;
+/// First operand of integer/modular arithmetic
+const ARITH_OP1_ADDR: usize = 0xA50;
+/// Second operand of integer/modular arithmetic
+const ARITH_OP2_ADDR: usize = 0xC68;
+/// Base of the modular exponentiation (same slot as `ARITH_OP2_ADDR`)
+const MODEXP_BASE_ADDR: usize = 0xC68;
+/// Modulus for inversion and reduction (same slot as `ARITH_OP2_ADDR`)
+const INV_RED_MODULUS_ADDR: usize = 0xC68;
+/// Exponent of the modular exponentiation
+const MODEXP_EXPONENT_ADDR: usize = 0xE78;
+/// Modulus for modular exponentiation and modular addition/multiplication
+const MODULUS_ADDR: usize = 0x1088;
+/// Result of the modular exponentiation
+const MODEXP_RESULT_ADDR: usize = 0x838;
+/// Result of integer/modular arithmetic operations
+const ARITH_RESULT_ADDR: usize = 0xE78;
+/// Output of the Montgomery parameter computation (R^2 mod n)
+const MONT_R2_OUT_ADDR: usize = 0x620;
 
-pub(crate) const ADD_CURVE_MODULUS_IDX: usize = calc_idx(ADD_CURVE_MODULUS_ADDR);
-pub(crate) const ADD_P_X_IDX: usize = calc_idx(ADD_P_X_ADDR);
-pub(crate) const ADD_P_Y_IDX: usize = calc_idx(ADD_P_Y_ADDR);
-pub(crate) const ADD_P_Z_IDX: usize = calc_idx(ADD_P_Z_ADDR);
-pub(crate) const ADD_Q_X_IDX: usize = calc_idx(ADD_Q_X_ADDR);
-pub(crate) const ADD_Q_Y_IDX: usize = calc_idx(ADD_Q_Y_ADDR);
-pub(crate) const ADD_Q_Z_IDX: usize = calc_idx(ADD_Q_Z_ADDR);
-pub(crate) const ADD_RESULT_X_IDX: usize = calc_idx(ADD_RESULT_X_ADDR);
-pub(crate) const ADD_RESULT_Y_IDX: usize = calc_idx(ADD_RESULT_Y_ADDR);
-pub(crate) const MONTGOMERY_R2_IDX: usize = calc_idx(MONTGOMERY_R2_ADDR);
-pub(crate) const R2_MOD_P: [u8; 32] = [
-    0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xef, 0xff, 0xff, 0xff, 0xbf, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+pub(crate) const EXP_LEN_BITS_IDX: usize = calc_idx(EXP_LEN_BITS_ADDR);
+pub(crate) const OPERAND_LEN_BITS_IDX: usize = calc_idx(OPERAND_LEN_BITS_ADDR);
+pub(crate) const ARITH_OP1_IDX: usize = calc_idx(ARITH_OP1_ADDR);
+pub(crate) const ARITH_OP2_IDX: usize = calc_idx(ARITH_OP2_ADDR);
+pub(crate) const MODEXP_BASE_IDX: usize = calc_idx(MODEXP_BASE_ADDR);
+pub(crate) const INV_RED_MODULUS_IDX: usize = calc_idx(INV_RED_MODULUS_ADDR);
+pub(crate) const MODEXP_EXPONENT_IDX: usize = calc_idx(MODEXP_EXPONENT_ADDR);
+pub(crate) const MODULUS_IDX: usize = calc_idx(MODULUS_ADDR);
+pub(crate) const MODEXP_RESULT_IDX: usize = calc_idx(MODEXP_RESULT_ADDR);
+pub(crate) const ARITH_RESULT_IDX: usize = calc_idx(ARITH_RESULT_ADDR);
+pub(crate) const MONT_R2_OUT_IDX: usize = calc_idx(MONT_R2_OUT_ADDR);
+
+// ---- ECC Fp: curve parameters and scalar multiplication --------------------
+
+/// Length of the curve group order n, in bits
+const ECC_N_LEN_BITS_ADDR: usize = 0x400;
+/// Length of the curve field prime p, in bits
+const ECC_P_LEN_BITS_ADDR: usize = 0x408;
+/// Sign of the curve coefficient a
+const ECC_A_SIGN_ADDR: usize = 0x410;
+/// Absolute value of the curve coefficient a
+const ECC_A_ABS_ADDR: usize = 0x418;
+/// Curve coefficient b
+const ECC_B_ADDR: usize = 0x520;
+/// Curve field prime p
+const ECC_P_ADDR: usize = 0x1088;
+/// Curve group order n
+const ECC_N_ADDR: usize = 0xF88;
+/// R^2 mod p (Montgomery parameter)
+const ECC_P_R2_ADDR: usize = 0x4C8;
+/// Scalar multiplier k
+const ECC_MUL_K_ADDR: usize = 0x12A0;
+/// Input point X coordinate
+const ECC_MUL_IN_X_ADDR: usize = 0x578;
+/// Input point Y coordinate
+const ECC_MUL_IN_Y_ADDR: usize = 0x470;
+/// Output point X coordinate (also used by projective-to-affine)
+const ECC_OUT_X_ADDR: usize = 0x578;
+/// Output point Y coordinate (also used by projective-to-affine)
+const ECC_OUT_Y_ADDR: usize = 0x5D0;
+
+pub(crate) const ECC_N_LEN_BITS_IDX: usize = calc_idx(ECC_N_LEN_BITS_ADDR);
+pub(crate) const ECC_P_LEN_BITS_IDX: usize = calc_idx(ECC_P_LEN_BITS_ADDR);
+pub(crate) const ECC_A_SIGN_IDX: usize = calc_idx(ECC_A_SIGN_ADDR);
+pub(crate) const ECC_A_ABS_IDX: usize = calc_idx(ECC_A_ABS_ADDR);
+pub(crate) const ECC_B_IDX: usize = calc_idx(ECC_B_ADDR);
+pub(crate) const ECC_P_IDX: usize = calc_idx(ECC_P_ADDR);
+pub(crate) const ECC_N_IDX: usize = calc_idx(ECC_N_ADDR);
+pub(crate) const ECC_P_R2_IDX: usize = calc_idx(ECC_P_R2_ADDR);
+pub(crate) const ECC_MUL_K_IDX: usize = calc_idx(ECC_MUL_K_ADDR);
+pub(crate) const ECC_MUL_IN_X_IDX: usize = calc_idx(ECC_MUL_IN_X_ADDR);
+pub(crate) const ECC_MUL_IN_Y_IDX: usize = calc_idx(ECC_MUL_IN_Y_ADDR);
+pub(crate) const ECC_OUT_X_IDX: usize = calc_idx(ECC_OUT_X_ADDR);
+pub(crate) const ECC_OUT_Y_IDX: usize = calc_idx(ECC_OUT_Y_ADDR);
+
+/// Result code written by the PKA when an ECC operation / point check succeeded
+pub(crate) const ECC_RESULT_OK: u32 = 0xD60D;
+
+// ---- ECC complete addition -------------------------------------------------
+
+/// Curve field prime p (addition mode)
+const ECC_ADD_P_ADDR: usize = 0x470;
+/// First point P1 (projective)
+const ECC_ADD_PT1_X_ADDR: usize = 0x628;
+const ECC_ADD_PT1_Y_ADDR: usize = 0x680;
+const ECC_ADD_PT1_Z_ADDR: usize = 0x6D8;
+/// Second point P2 (projective)
+const ECC_ADD_PT2_X_ADDR: usize = 0x730;
+const ECC_ADD_PT2_Y_ADDR: usize = 0x788;
+const ECC_ADD_PT2_Z_ADDR: usize = 0x7E0;
+/// Result point
+const ECC_ADD_OUT_X_ADDR: usize = 0xD60;
+const ECC_ADD_OUT_Y_ADDR: usize = 0xDB8;
+
+pub(crate) const ECC_ADD_P_IDX: usize = calc_idx(ECC_ADD_P_ADDR);
+pub(crate) const ECC_ADD_PT1_X_IDX: usize = calc_idx(ECC_ADD_PT1_X_ADDR);
+pub(crate) const ECC_ADD_PT1_Y_IDX: usize = calc_idx(ECC_ADD_PT1_Y_ADDR);
+pub(crate) const ECC_ADD_PT1_Z_IDX: usize = calc_idx(ECC_ADD_PT1_Z_ADDR);
+pub(crate) const ECC_ADD_PT2_X_IDX: usize = calc_idx(ECC_ADD_PT2_X_ADDR);
+pub(crate) const ECC_ADD_PT2_Y_IDX: usize = calc_idx(ECC_ADD_PT2_Y_ADDR);
+pub(crate) const ECC_ADD_PT2_Z_IDX: usize = calc_idx(ECC_ADD_PT2_Z_ADDR);
+pub(crate) const ECC_ADD_OUT_X_IDX: usize = calc_idx(ECC_ADD_OUT_X_ADDR);
+pub(crate) const ECC_ADD_OUT_Y_IDX: usize = calc_idx(ECC_ADD_OUT_Y_ADDR);
+
+// ---- Point-on-curve check (FpCheck) ----------------------------------------
+// FpCheck has no slots of its own here: the driver reuses the ones below.
+
+/// Point X coordinate to check
+pub(crate) const FPCHECK_X_IDX: usize = ECC_MUL_IN_X_IDX;
+/// Point Y coordinate to check
+pub(crate) const FPCHECK_Y_IDX: usize = ECC_OUT_Y_IDX;
+/// Where the driver currently reads the check result. Verify this offset
+/// against the reference manual.
+pub(crate) const FPCHECK_RESULT_IDX: usize = ECC_ADD_PT1_Y_IDX;
+
+/// R^2 mod p for NIST P-256, big-endian
+pub(crate) const P256_R2_MOD_P: [u8; 32] = [
+    0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfc, 0xff, 0xff, 0xff, 0xfb, 0xff, 0xff, 0xff, 0xf9,
+    0xff, 0xff, 0xff, 0xfe, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x02,
 ];
-
-pub(crate) const ARITH_OP_A_IDX: usize = calc_idx(ARITH_OP_A_ADDR);
-pub(crate) const MATH_RESULT_IDX: usize = calc_idx(MATH_RESULT_ADDR);
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum SupportedOp {
     Addition,
     Multiplication,
-    Division,
+    Inverse,
+    Modulus,
 }
 
 impl OpAddition for SupportedOp {
@@ -284,8 +319,14 @@ impl OpMultiplication for SupportedOp {
     }
 }
 
-impl OpDivision for SupportedOp {
-    fn division() -> Self {
-        SupportedOp::Division
+impl OpInverse for SupportedOp {
+    fn inverse() -> Self {
+        SupportedOp::Inverse
+    }
+}
+
+impl OpModulo for SupportedOp {
+    fn modulo() -> Self {
+        SupportedOp::Modulus
     }
 }

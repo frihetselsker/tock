@@ -27,6 +27,7 @@ pub trait OpModulo {
 pub trait MathClient<Op> {
     fn read_modulus(&self, modulus: &mut [u8]) -> Result<(), ErrorCode>;
     fn read_number(&self, num: &mut [u8]);
+    fn read_second_number(&self, num: &mut [u8]);
     fn write_number(&self, num: &[u8]) -> Result<(), ErrorCode>;
     fn computation_completed(&self, result: Result<(), ErrorCode>);
 }

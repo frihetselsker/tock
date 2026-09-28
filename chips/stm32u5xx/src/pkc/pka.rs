@@ -10,17 +10,23 @@ use kernel::hil::crypto::modular_arithmetic::{MathClient, MathCryptoBase};
 use kernel::hil::public_key_crypto::rsa_math::{Client, RsaCryptoBase};
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::{OptionalCell, TakeCell};
+use kernel::utilities::registers::FieldValue;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
 use kernel::{ErrorCode, debug};
 
 use crate::pkc::constants::{
-    ADD_CURVE_MODULUS_IDX, ADD_P_X_IDX, ADD_P_Y_IDX, ADD_P_Z_IDX, ADD_Q_X_IDX, ADD_Q_Y_IDX,
-    ADD_Q_Z_IDX, ADD_RESULT_X_IDX, ADD_RESULT_Y_IDX, ARITH_OP_A_IDX, CLRFR, CR, CURVE_A_IDX,
-    CURVE_A_SIGN_IDX, CURVE_B_IDX, CURVE_MODULUS_IDX, CURVE_MODULUS_LEN_IDX, ERR_CHECK_IDX,
-    EXP_IDX, EXP_LEN_IDX, K_IDX, MATH_RESULT_IDX, MOD_VALUE_IDX, MONTGOMERY_R2_IDX, OP_A_IDX,
-    OP_LEN_IDX, PKA_BASE, PRIME_ORDER_IDX, PRIME_ORDER_LEN_IDX, PkaRegisters, R2_MOD_P, RESULT_IDX,
-    RESULT_X_IDX, RESULT_Y_IDX, SR, SupportedOp, X_IDX, Y_IDX,
+    ARITH_OP1_IDX, ARITH_OP2_IDX, ARITH_RESULT_IDX, CLRFR, CR, ECC_A_ABS_IDX, ECC_A_SIGN_IDX,
+    ECC_ADD_OUT_X_IDX, ECC_ADD_OUT_Y_IDX, ECC_ADD_P_IDX, ECC_ADD_PT1_X_IDX, ECC_ADD_PT1_Y_IDX,
+    ECC_ADD_PT1_Z_IDX, ECC_ADD_PT2_X_IDX, ECC_ADD_PT2_Y_IDX, ECC_ADD_PT2_Z_IDX, ECC_B_IDX,
+    ECC_MUL_IN_X_IDX, ECC_MUL_IN_Y_IDX, ECC_MUL_K_IDX, ECC_N_IDX, ECC_N_LEN_BITS_IDX,
+    ECC_OUT_X_IDX, ECC_OUT_Y_IDX, ECC_P_IDX, ECC_P_LEN_BITS_IDX, ECC_P_R2_IDX, ECC_RESULT_OK,
+    EXP_LEN_BITS_IDX, FPCHECK_RESULT_IDX, FPCHECK_X_IDX, FPCHECK_Y_IDX, INV_RED_MODULUS_IDX,
+    MODEXP_BASE_IDX, MODEXP_EXPONENT_IDX, MODEXP_RESULT_IDX, MODULUS_IDX, MONT_R2_OUT_IDX,
+    OPERAND_LEN_BITS_IDX, P256_R2_MOD_P, PKA_BASE, PkaRegisters, SR, SupportedOp,
 };
+
+/// Size of the chunks exchanged with the math client (bytes).
+const MATH_CHUNK: usize = 64;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum State {
@@ -33,10 +39,18 @@ enum State {
     ProjToAffinePass3,
     VerifyPoint,
     MathAddition,
-    MathDivisionInvert,
+    MathInvert,
     MathComputeR2,
     MathComputeAR,
     MathComputeAB,
+}
+
+/// Which number to request from the math client.
+#[derive(Copy, Clone)]
+enum Operand {
+    Modulus,
+    First,
+    Second,
 }
 
 pub struct Pka<'a> {
@@ -79,32 +93,46 @@ impl<'a> Pka<'a> {
     }
 
     fn write_slice(&self, idx: usize, data: &[u8]) {
-        let chunks = data.rchunks(4);
-        for (i, chunk) in chunks.enumerate() {
-            if let Some(ram_cell) = self.registers.ram.get(idx + i) {
-                let mut slice = [0u8; 4];
-                let offset = 4 - chunk.len();
-                slice[offset..].copy_from_slice(chunk);
-                let semi_word = u32::from_be_bytes(slice);
-                ram_cell.set(semi_word);
-            } else {
+        for (i, chunk) in data.rchunks(4).enumerate() {
+            let Some(cell) = self.registers.ram.get(idx + i) else {
                 break;
-            }
+            };
+            let mut word = [0u8; 4];
+            word[4 - chunk.len()..].copy_from_slice(chunk);
+            cell.set(u32::from_be_bytes(word));
         }
     }
 
     fn read_slice(&self, idx: usize, buffer: &mut [u8]) {
-        let chunks = buffer.rchunks_mut(4);
-        for (i, chunk) in chunks.enumerate() {
-            if let Some(ram_cell) = self.registers.ram.get(idx + i) {
-                let semi_word = ram_cell.get();
-                let bytes = semi_word.to_be_bytes();
-                let offset = 4 - chunk.len();
-                chunk.copy_from_slice(&bytes[offset..])
-            } else {
+        for (i, chunk) in buffer.rchunks_mut(4).enumerate() {
+            let Some(cell) = self.registers.ram.get(idx + i) else {
                 break;
-            }
+            };
+            let bytes = cell.get().to_be_bytes();
+            chunk.copy_from_slice(&bytes[4 - chunk.len()..]);
         }
+    }
+
+    fn copy_ram(&self, from: usize, to: usize, len: usize) {
+        for i in 0..len.div_ceil(4) {
+            let word = self.registers.ram[from + i].get();
+            self.registers.ram[to + i].set(word);
+        }
+    }
+
+    fn set_len(&self, idx: usize, value: u32) {
+        self.registers.ram[idx].set(value);
+        self.registers.ram[idx + 1].set(0);
+    }
+
+    fn clear_ram(&self) {
+        for cell in self.registers.ram.iter() {
+            cell.set(0);
+        }
+    }
+
+    fn wait_init_ok(&self) {
+        while !self.registers.sr.is_set(SR::INITOK) {}
     }
 
     fn enable_peripheral(&self) -> Result<(), ErrorCode> {
@@ -112,27 +140,11 @@ impl<'a> Pka<'a> {
             return Err(ErrorCode::BUSY);
         }
         self.registers.cr.modify(CR::EN::SET);
-        while !self.registers.sr.is_set(SR::INITOK) {}
+        self.wait_init_ok();
         Ok(())
     }
 
-    fn load_p256_parameters(&self) {
-        self.registers.ram[PRIME_ORDER_LEN_IDX].set((P_256_P_SIZE as u32) << 3);
-        self.registers.ram[PRIME_ORDER_LEN_IDX + 1].set(0);
-        self.registers.ram[CURVE_MODULUS_LEN_IDX].set((P_256_P_SIZE as u32) << 3);
-        self.registers.ram[CURVE_MODULUS_LEN_IDX + 1].set(0);
-        self.registers.ram[CURVE_A_SIGN_IDX].set(0);
-        self.registers.ram[CURVE_A_SIGN_IDX + 1].set(0);
-
-        self.write_slice(CURVE_A_IDX, &NistP256Constants::EQ_PARAMS.0);
-        self.write_slice(CURVE_B_IDX, &NistP256Constants::EQ_PARAMS.1);
-        self.write_slice(PRIME_ORDER_IDX, &NistP256Constants::N);
-        self.write_slice(MONTGOMERY_R2_IDX, &R2_MOD_P);
-        self.write_slice(CURVE_MODULUS_IDX, &NistP256Constants::P);
-        self.write_slice(ADD_CURVE_MODULUS_IDX, &NistP256Constants::P);
-    }
-
-    fn start_operation(&self, mode: kernel::utilities::registers::FieldValue<u32, CR::Register>) {
+    fn start_operation(&self, mode: FieldValue<u32, CR::Register>) {
         self.registers.cr.modify(
             mode + CR::PROCENDIE::SET
                 + CR::ADDERRIE::SET
@@ -143,6 +155,32 @@ impl<'a> Pka<'a> {
         self.registers.cr.modify(CR::START::SET);
     }
 
+    fn load_p256_parameters(&self) {
+        let bits = (P_256_P_SIZE as u32) << 3;
+        self.set_len(ECC_N_LEN_BITS_IDX, bits);
+        self.set_len(ECC_P_LEN_BITS_IDX, bits);
+        self.set_len(ECC_A_SIGN_IDX, 0);
+
+        self.write_slice(ECC_A_ABS_IDX, &NistP256Constants::EQ_PARAMS.0);
+        self.write_slice(ECC_B_IDX, &NistP256Constants::EQ_PARAMS.1);
+        self.write_slice(ECC_N_IDX, &NistP256Constants::N);
+        self.write_slice(ECC_P_R2_IDX, &P256_R2_MOD_P);
+        self.write_slice(ECC_P_IDX, &NistP256Constants::P);
+        self.write_slice(ECC_ADD_P_IDX, &NistP256Constants::P);
+    }
+
+    fn load_point(&self, x_idx: usize, y_idx: usize, use_curve_generator: bool) {
+        if use_curve_generator {
+            self.write_slice(x_idx, &NistP256Constants::GENERATOR.0);
+            self.write_slice(y_idx, &NistP256Constants::GENERATOR.1);
+        } else {
+            let mut point = [0u8; 2 * P_256_P_SIZE];
+            self.ecc_client.map(|client| client.read_point(&mut point));
+            self.write_slice(x_idx, &point[..P_256_P_SIZE]);
+            self.write_slice(y_idx, &point[P_256_P_SIZE..]);
+        }
+    }
+
     fn start_projective_to_affine(&self) {
         self.start_operation(CR::MODE::ECCProjectiveToAffine);
     }
@@ -151,35 +189,101 @@ impl<'a> Pka<'a> {
         let mut x = [0u8; P_256_P_SIZE];
         let mut y = [0u8; P_256_P_SIZE];
 
-        self.read_slice(RESULT_X_IDX, &mut x);
-        self.read_slice(RESULT_Y_IDX, &mut y);
-        self.write_slice(ADD_RESULT_X_IDX, &x);
-        self.write_slice(ADD_RESULT_Y_IDX, &y);
+        self.read_slice(ECC_OUT_X_IDX, &mut x);
+        self.read_slice(ECC_OUT_Y_IDX, &mut y);
+        self.write_slice(ECC_ADD_OUT_X_IDX, &x);
+        self.write_slice(ECC_ADD_OUT_Y_IDX, &y);
 
         (x, y)
     }
 
+    fn ecc_done(&self, result: Result<(), ErrorCode>) {
+        self.state.set(State::Idle);
+        self.ecc_client.map(|client| client.operation_done(result));
+    }
+
+    fn begin_math(&self, state: State, len: usize) {
+        self.state.set(state);
+        self.math_len.set(len);
+        self.set_len(OPERAND_LEN_BITS_IDX, (len as u32) * 8);
+    }
+
+    fn read_from_client(&self, which: Operand, chunk: &mut [u8]) {
+        self.math_client.map(|client| match which {
+            Operand::Modulus => {
+                let _ = client.read_modulus(chunk);
+            }
+            Operand::First => {
+                let _ = client.read_number(chunk);
+            }
+            Operand::Second => {
+                let _ = client.read_second_number(chunk);
+            }
+        });
+    }
+
+    fn load_operand(&self, idx: usize, len: usize, which: Operand) {
+        let mut buf = [0u8; MATH_CHUNK];
+        let mut offset = 0;
+        while offset < len {
+            let n = MATH_CHUNK.min(len - offset);
+            let chunk = &mut buf[..n];
+            chunk.fill(0);
+            self.read_from_client(which, chunk);
+            let word = (len - offset - n) / 4;
+            self.write_slice(idx + word, chunk);
+            offset += n;
+        }
+    }
+
+    fn math_fail(&self) {
+        self.state.set(State::Idle);
+        self.math_client
+            .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+    }
+
+    fn math_finish(&self, success: bool) {
+        if !success {
+            self.math_fail();
+            return;
+        }
+        self.state.set(State::Idle);
+
+        let len = self.math_len.get();
+        let mut buf = [0u8; MATH_CHUNK];
+        let mut offset = 0;
+        while offset < len {
+            let n = MATH_CHUNK.min(len - offset);
+            let word = (len - offset - n) / 4;
+            self.read_slice(ARITH_RESULT_IDX + word, &mut buf[..n]);
+            self.math_client.map(|client| {
+                let _ = client.write_number(&mut buf[..n]);
+            });
+            offset += n;
+        }
+        self.math_client
+            .map(|client| client.computation_completed(Ok(())));
+    }
+
     pub fn handle_interrupt(&self) {
-        if self.registers.sr.is_set(SR::OPERRF) {
+        let sr = self.registers.sr.extract();
+        if sr.is_set(SR::OPERRF) {
             self.registers.clrfr.write(CLRFR::OPERRFC::SET);
         }
-        if self.registers.sr.is_set(SR::ADDRERRF) {
+        if sr.is_set(SR::ADDRERRF) {
             self.registers.clrfr.write(CLRFR::ADDERRFC::SET);
         }
-        if self.registers.sr.is_set(SR::RAMERRF) {
+        if sr.is_set(SR::RAMERRF) {
             self.registers.clrfr.write(CLRFR::RAMERRFC::SET);
         }
-
-        let success = if self.registers.sr.is_set(SR::PROCENDF) {
+        let success = sr.is_set(SR::PROCENDF);
+        if success {
             self.registers.clrfr.write(CLRFR::PROCENDFC::SET);
-            true
-        } else {
-            false
-        };
+        }
 
-        debug!("interrupt gotten in state: {:?}", self.state.get());
         match self.state.get() {
             State::Idle => {}
+
             State::Rsa => {
                 let modulus = self.modulus.take().unwrap();
                 let exponent = self.exponent.take().unwrap();
@@ -187,193 +291,117 @@ impl<'a> Pka<'a> {
                 let result = self.result.take().unwrap();
                 self.state.set(State::Idle);
 
-                if success {
-                    self.read_slice(RESULT_IDX, result);
-                    self.rsa_client.map(|client| {
-                        client.mod_exponent_done(Ok(true), message, modulus, exponent, result)
-                    });
+                let outcome = if success {
+                    self.read_slice(MODEXP_RESULT_IDX, result);
+                    Ok(true)
                 } else {
-                    self.rsa_client.map(|client| {
-                        client.mod_exponent_done(
-                            Err(ErrorCode::FAIL),
-                            message,
-                            modulus,
-                            exponent,
-                            result,
-                        );
-                    });
-                }
+                    Err(ErrorCode::FAIL)
+                };
+                self.rsa_client.map(|client| {
+                    client.mod_exponent_done(outcome, message, modulus, exponent, result)
+                });
             }
+
             State::ScalarMul => {
-                let mut errs = [0u8; 8];
-                self.read_slice(ERR_CHECK_IDX, &mut errs);
-                debug!(
-                    "le: {:08x?}, be: {:08x?}",
-                    u64::from_le_bytes(errs),
-                    u64::from_be_bytes(errs),
-                );
+                if !success {
+                    self.ecc_done(Err(ErrorCode::FAIL));
+                    return;
+                }
                 let mut res = [0u8; 2 * P_256_P_SIZE];
-                self.read_slice(RESULT_X_IDX, &mut res[0..P_256_P_SIZE]);
-                self.read_slice(RESULT_Y_IDX, &mut res[P_256_P_SIZE..]);
+                let (x, y) = res.split_at_mut(P_256_P_SIZE);
+                self.read_slice(ECC_OUT_X_IDX, x);
+                self.read_slice(ECC_OUT_Y_IDX, y);
                 self.state.set(State::Idle);
                 self.ecc_client.map(|client| {
                     let _ = client.write_point(&res);
                     client.operation_done(Ok(()));
                 });
             }
+
             State::PointAddition => {
                 if success {
                     self.state.set(State::ProjToAffinePass1);
                     self.start_projective_to_affine();
                 } else {
-                    self.state.set(State::Idle);
-                    self.ecc_client
-                        .map(|client| client.operation_done(Err(ErrorCode::FAIL)));
+                    self.ecc_done(Err(ErrorCode::FAIL));
                 }
             }
+
             State::ProjToAffinePass1 => {
                 self.state.set(State::ProjToAffinePass2);
                 self.feed_affine_to_projective();
                 self.start_projective_to_affine();
             }
+
             State::ProjToAffinePass2 => {
                 self.state.set(State::ProjToAffinePass3);
                 let (x_out, _) = self.feed_affine_to_projective();
-                self.ecc_client.map(|client| client.write_point(&x_out));
+                self.ecc_client.map(|client| {
+                    let _ = client.write_point(&x_out);
+                });
                 self.start_projective_to_affine();
             }
+
             State::ProjToAffinePass3 => {
                 self.state.set(State::Idle);
                 let mut y_out = [0u8; P_256_P_SIZE];
-                self.read_slice(RESULT_Y_IDX, &mut y_out);
+                self.read_slice(ECC_OUT_Y_IDX, &mut y_out);
                 self.ecc_client.map(|client| {
                     let _ = client.write_point(&y_out);
                     client.operation_done(Ok(()));
                 });
             }
+
             State::VerifyPoint => {
-                self.state.set(State::Idle);
-                if let Some(ram_cell) = self.registers.ram.get(ADD_P_Y_IDX) {
-                    let result_code = ram_cell.get();
-                    let result = if result_code == 0xD60D {
-                        Ok(())
-                    } else {
-                        Err(ErrorCode::INVAL)
-                    };
-                    self.ecc_client.map(|client| client.operation_done(result));
-                }
-            }
-            State::MathAddition => {
-                self.state.set(State::Idle);
-                if success {
-                    let len = self.math_len.get();
-                    let mut buf = [0u8; 512];
-                    let buf_slice = &mut buf[0..len];
-
-                    self.read_slice(MATH_RESULT_IDX, buf_slice);
-
-                    self.math_client.map(|client| {
-                        let _ = client.write_number(buf_slice);
-                        client.computation_completed(Ok(()));
-                    });
+                let code = self.registers.ram[FPCHECK_RESULT_IDX].get();
+                debug!("GOT CODE: {:08x?}", code);
+                let result = if code == ECC_RESULT_OK {
+                    Ok(())
                 } else {
-                    self.math_client
-                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
-                }
+                    Err(ErrorCode::INVAL)
+                };
+                self.ecc_done(result);
             }
-            State::MathDivisionInvert => {
-                if success {
-                    let len = self.math_len.get();
-                    let mut buf = [0u8; 512];
-                    let buf_slice = &mut buf[0..len];
 
-                    // Result of inversion is B^-1. Save it to EXP_IDX temporarily.
-                    self.read_slice(MATH_RESULT_IDX, buf_slice);
-                    self.write_slice(EXP_IDX, buf_slice);
-
-                    self.state.set(State::MathComputeR2);
-
-                    // Modulus length and value are already prepared at RAM@0x408 and RAM@0x1088 respectively[cite: 2].
-                    // Trigger Montgomery parameter computation with MODE[5:0] set to 0x01[cite: 2].
-                    self.start_operation(CR::MODE::MontgomeryOnly);
-                } else {
-                    self.state.set(State::Idle);
-                    self.math_client
-                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
-                }
+            State::MathAddition | State::MathInvert | State::MathComputeAB => {
+                self.math_finish(success);
             }
+
             State::MathComputeR2 => {
-                if success {
-                    let len = self.math_len.get();
-                    let mut buf = [0u8; 512];
-                    let buf_slice = &mut buf[0..len];
-
-                    // Read the resulting Montgomery parameter (R^2 mod n) from RAM@0x620[cite: 2].
-                    self.read_slice(MATH_RESULT_IDX, buf_slice);
-                    self.write_slice(ARITH_OP_A_IDX, buf_slice);
-
-                    // Compute AR = A * r2modn mod n. The output is in the Montgomery domain[cite: 1].
-                    self.state.set(State::MathComputeAR);
-                    self.start_operation(CR::MODE::MontgomeryMultiplication);
-                } else {
-                    self.state.set(State::Idle);
-                    self.math_client
-                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+                if !success {
+                    self.math_fail();
+                    return;
                 }
+                let len = self.math_len.get();
+                // R^2 mod n becomes the first operand; the client's A the second.
+                self.copy_ram(MONT_R2_OUT_IDX, ARITH_OP1_IDX, len);
+                self.load_operand(ARITH_OP2_IDX, len, Operand::First);
+
+                self.state.set(State::MathComputeAR);
+                self.start_operation(CR::MODE::MontgomeryMultiplication);
             }
+
             State::MathComputeAR => {
-                if success {
-                    let len = self.math_len.get();
-                    let mut buf = [0u8; 512];
-                    let buf_slice = &mut buf[0..len];
-
-                    self.read_slice(MATH_RESULT_IDX, buf_slice);
-                    self.write_slice(OP_A_IDX, buf_slice);
-
-                    // Retrieve B (or B^-1 for division) saved in EXP_IDX and place in ARITH_OP_A_IDX
-                    self.read_slice(EXP_IDX, buf_slice);
-                    self.write_slice(ARITH_OP_A_IDX, buf_slice);
-
-                    // Compute AB = AR * B mod n. The output is in the natural domain[cite: 1].
-                    self.state.set(State::MathComputeAB);
-                    self.start_operation(CR::MODE::MontgomeryMultiplication);
-                } else {
-                    self.state.set(State::Idle);
-                    self.math_client
-                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
+                if !success {
+                    self.math_fail();
+                    return;
                 }
-            }
-            State::MathComputeAB => {
-                self.state.set(State::Idle);
-                if success {
-                    let len = self.math_len.get();
-                    let mut buf = [0u8; 512];
-                    let buf_slice = &mut buf[0..len];
+                let len = self.math_len.get();
+                // A*R becomes the second operand; the client's B the first.
+                self.copy_ram(ARITH_RESULT_IDX, ARITH_OP2_IDX, len);
+                self.load_operand(ARITH_OP1_IDX, len, Operand::Second);
 
-                    self.read_slice(MATH_RESULT_IDX, buf_slice);
-
-                    self.math_client.map(|client| {
-                        let _ = client.write_number(buf_slice);
-                        client.computation_completed(Ok(()));
-                    });
-                } else {
-                    self.math_client
-                        .map(|client| client.computation_completed(Err(ErrorCode::FAIL)));
-                }
+                self.state.set(State::MathComputeAB);
+                self.start_operation(CR::MODE::MontgomeryMultiplication);
             }
         }
     }
 }
 
 fn get_bitlen(data: &[u8]) -> u32 {
-    for (i, &byte) in data.iter().enumerate() {
-        if byte != 0 {
-            let bits = 8 - byte.leading_zeros();
-            let remained = (data.len() - 1 - i) as u32;
-            return bits + remained * 8;
-        }
-    }
-    0
+    data.iter().position(|&b| b != 0).map_or(0, |i| {
+        (8 - data[i].leading_zeros()) + ((data.len() - 1 - i) as u32) * 8
+    })
 }
 
 impl<'a> RsaCryptoBase<'a> for Pka<'a> {
@@ -382,9 +410,7 @@ impl<'a> RsaCryptoBase<'a> for Pka<'a> {
     }
 
     fn clear_data(&self) {
-        for i in 0..self.registers.ram.len() {
-            self.registers.ram[i].set(0);
-        }
+        self.clear_ram();
     }
 
     fn mod_exponent(
@@ -419,20 +445,17 @@ impl<'a> RsaCryptoBase<'a> for Pka<'a> {
         }
 
         self.registers.cr.modify(CR::EN::SET);
-        while !self.registers.sr.is_set(SR::INITOK) {}
+        self.wait_init_ok();
 
         self.state.set(State::Rsa);
+        self.clear_ram();
 
-        RsaCryptoBase::clear_data(self);
+        self.set_len(EXP_LEN_BITS_IDX, exp_bits);
+        self.set_len(OPERAND_LEN_BITS_IDX, op_bits);
 
-        self.registers.ram[EXP_LEN_IDX].set(exp_bits);
-        self.registers.ram[EXP_LEN_IDX + 1].set(0);
-        self.registers.ram[OP_LEN_IDX].set(op_bits);
-        self.registers.ram[OP_LEN_IDX + 1].set(0);
-
-        self.write_slice(EXP_IDX, exponent);
-        self.write_slice(MOD_VALUE_IDX, modulus);
-        self.write_slice(OP_A_IDX, message);
+        self.write_slice(MODEXP_EXPONENT_IDX, exponent);
+        self.write_slice(MODULUS_IDX, modulus);
+        self.write_slice(MODEXP_BASE_IDX, message);
 
         self.message.replace(message);
         self.modulus.set(modulus);
@@ -440,23 +463,17 @@ impl<'a> RsaCryptoBase<'a> for Pka<'a> {
         self.result.replace(result);
 
         self.start_operation(CR::MODE::MontgomeryModularExp);
-
         Ok(())
     }
 }
 
 impl<'a> EccCrypto<'a, P_256_P_SIZE, NistP256Constants> for Pka<'a> {
-    fn set_client(
-        &self,
-        client: &'a dyn kernel::hil::crypto::elliptic_curves::ecc_math::EccClient,
-    ) {
+    fn set_client(&self, client: &'a dyn EccClient) {
         self.ecc_client.replace(client);
     }
 
     fn clear_data(&self) {
-        for i in 0..self.registers.ram.len() {
-            self.registers.ram[i].set(0);
-        }
+        self.clear_ram();
     }
 
     fn point_doubling(&self, use_curve_generator: bool) -> Result<(), ErrorCode> {
@@ -466,17 +483,9 @@ impl<'a> EccCrypto<'a, P_256_P_SIZE, NistP256Constants> for Pka<'a> {
 
         let mut scalar = [0u8; P_256_P_SIZE];
         scalar[P_256_P_SIZE - 1] = 2;
-        self.write_slice(K_IDX, &scalar);
+        self.write_slice(ECC_MUL_K_IDX, &scalar);
 
-        if !use_curve_generator {
-            let mut point = [0u8; 2 * P_256_P_SIZE];
-            self.ecc_client.map(|client| client.read_point(&mut point));
-            self.write_slice(X_IDX, &point[0..P_256_P_SIZE]);
-            self.write_slice(Y_IDX, &point[P_256_P_SIZE..]);
-        } else {
-            self.write_slice(X_IDX, &NistP256Constants::GENERATOR.0);
-            self.write_slice(Y_IDX, &NistP256Constants::GENERATOR.1);
-        }
+        self.load_point(ECC_MUL_IN_X_IDX, ECC_MUL_IN_Y_IDX, use_curve_generator);
 
         self.start_operation(CR::MODE::MontgomeryECC);
         Ok(())
@@ -490,23 +499,15 @@ impl<'a> EccCrypto<'a, P_256_P_SIZE, NistP256Constants> for Pka<'a> {
         let mut z_coord = [0u8; P_256_P_SIZE];
         z_coord[P_256_P_SIZE - 1] = 1;
 
-        if !use_curve_generator {
-            let mut point = [0u8; 2 * P_256_P_SIZE];
-            self.ecc_client.map(|client| client.read_point(&mut point));
-            self.write_slice(ADD_P_X_IDX, &point[0..P_256_P_SIZE]);
-            self.write_slice(ADD_P_Y_IDX, &point[P_256_P_SIZE..]);
-        } else {
-            self.write_slice(ADD_P_X_IDX, &NistP256Constants::GENERATOR.0);
-            self.write_slice(ADD_P_Y_IDX, &NistP256Constants::GENERATOR.1);
-        }
-        self.write_slice(ADD_P_Z_IDX, &z_coord);
+        self.load_point(ECC_ADD_PT1_X_IDX, ECC_ADD_PT1_Y_IDX, use_curve_generator);
+        self.write_slice(ECC_ADD_PT1_Z_IDX, &z_coord);
 
         let mut point_q = [0u8; 2 * P_256_P_SIZE];
         self.ecc_client
             .map(|client| client.read_second_point(&mut point_q));
-        self.write_slice(ADD_Q_X_IDX, &point_q[0..P_256_P_SIZE]);
-        self.write_slice(ADD_Q_Y_IDX, &point_q[P_256_P_SIZE..]);
-        self.write_slice(ADD_Q_Z_IDX, &z_coord);
+        self.write_slice(ECC_ADD_PT2_X_IDX, &point_q[..P_256_P_SIZE]);
+        self.write_slice(ECC_ADD_PT2_Y_IDX, &point_q[P_256_P_SIZE..]);
+        self.write_slice(ECC_ADD_PT2_Z_IDX, &z_coord);
 
         self.start_operation(CR::MODE::ECCCompleteAddition);
         Ok(())
@@ -520,17 +521,9 @@ impl<'a> EccCrypto<'a, P_256_P_SIZE, NistP256Constants> for Pka<'a> {
         let mut scalar = [0u8; P_256_P_SIZE];
         self.ecc_client
             .map(|client| client.read_scalar(&mut scalar));
-        self.write_slice(K_IDX, &scalar);
+        self.write_slice(ECC_MUL_K_IDX, &scalar);
 
-        if !use_curve_generator {
-            let mut point = [0u8; 2 * P_256_P_SIZE];
-            self.ecc_client.map(|client| client.read_point(&mut point));
-            self.write_slice(X_IDX, &point[0..P_256_P_SIZE]);
-            self.write_slice(Y_IDX, &point[P_256_P_SIZE..]);
-        } else {
-            self.write_slice(X_IDX, &NistP256Constants::GENERATOR.0);
-            self.write_slice(Y_IDX, &NistP256Constants::GENERATOR.1);
-        }
+        self.load_point(ECC_MUL_IN_X_IDX, ECC_MUL_IN_Y_IDX, use_curve_generator);
 
         self.start_operation(CR::MODE::MontgomeryECC);
         Ok(())
@@ -542,12 +535,7 @@ impl<'a> VerifyEccPoint<'a, P_256_P_SIZE, NistP256Constants> for Pka<'a> {
         self.enable_peripheral()?;
         self.state.set(State::VerifyPoint);
         self.load_p256_parameters();
-
-        let mut point = [0u8; 2 * P_256_P_SIZE];
-        self.ecc_client.map(|client| client.read_point(&mut point));
-
-        self.write_slice(X_IDX, &point[0..P_256_P_SIZE]);
-        self.write_slice(RESULT_Y_IDX, &point[P_256_P_SIZE..]);
+        self.load_point(FPCHECK_X_IDX, FPCHECK_Y_IDX, false);
 
         self.start_operation(CR::MODE::FpCheck);
         Ok(())
@@ -564,96 +552,43 @@ impl<'a> MathCryptoBase<'a, SupportedOp> for Pka<'a> {
         modulus_len: usize,
         operation: SupportedOp,
     ) -> Result<(), ErrorCode> {
+        if modulus_len == 0 || modulus_len % 4 != 0 {
+            return Err(ErrorCode::SIZE);
+        }
         self.enable_peripheral()?;
 
+        let len = modulus_len;
         match operation {
             SupportedOp::Addition => {
-                self.state.set(State::MathAddition);
-                self.math_len.set(modulus_len);
-
-                self.registers.ram[OP_LEN_IDX].set((modulus_len as u32) * 8);
-                self.registers.ram[OP_LEN_IDX + 1].set(0);
-
-                let mut buf = [0u8; 512];
-                let buf_slice = &mut buf[0..modulus_len];
-
-                self.math_client.map(|client| {
-                    let _ = client.read_modulus(buf_slice);
-                });
-                self.write_slice(MOD_VALUE_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(ARITH_OP_A_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(OP_A_IDX, buf_slice);
-
+                self.begin_math(State::MathAddition, len);
+                self.load_operand(MODULUS_IDX, len, Operand::Modulus);
+                self.load_operand(ARITH_OP1_IDX, len, Operand::First);
+                self.load_operand(ARITH_OP2_IDX, len, Operand::Second);
                 self.start_operation(CR::MODE::ModularAddition);
-                Ok(())
             }
             SupportedOp::Multiplication => {
-                self.state.set(State::MathComputeR2);
-                self.math_len.set(modulus_len);
-
-                // Set the modulus length in bits at RAM@0x408[cite: 2].
-                self.registers.ram[OP_LEN_IDX].set((modulus_len as u32) * 8);
-                self.registers.ram[OP_LEN_IDX + 1].set(0);
-
-                let mut buf = [0u8; 512];
-                let buf_slice = &mut buf[0..modulus_len];
-
-                // Set the odd modulus value n at RAM@0x1088[cite: 2].
-                self.math_client.map(|client| {
-                    let _ = client.read_modulus(buf_slice);
-                });
-                self.write_slice(MOD_VALUE_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(OP_A_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(EXP_IDX, buf_slice);
-
-                // Trigger Montgomery parameter computation with MODE[5:0] set to 0x01[cite: 2].
+                self.begin_math(State::MathComputeR2, len);
+                self.load_operand(MODULUS_IDX, len, Operand::Modulus);
                 self.start_operation(CR::MODE::MontgomeryOnly);
-                Ok(())
             }
-            SupportedOp::Division => {
-                self.state.set(State::MathDivisionInvert);
-                self.math_len.set(modulus_len);
-
-                self.registers.ram[OP_LEN_IDX].set((modulus_len as u32) * 8);
-                self.registers.ram[OP_LEN_IDX + 1].set(0);
-
-                let mut buf = [0u8; 512];
-                let buf_slice = &mut buf[0..modulus_len];
-
-                self.math_client.map(|client| {
-                    let _ = client.read_modulus(buf_slice);
-                });
-                self.write_slice(MOD_VALUE_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(OP_A_IDX, buf_slice);
-
-                buf_slice.fill(0);
-                self.math_client.map(|client| client.read_number(buf_slice));
-                self.write_slice(ARITH_OP_A_IDX, buf_slice);
-
+            SupportedOp::Inverse => {
+                self.begin_math(State::MathInvert, len);
+                self.load_operand(INV_RED_MODULUS_IDX, len, Operand::Modulus);
+                self.load_operand(ARITH_OP1_IDX, len, Operand::First);
                 self.start_operation(CR::MODE::ModularInversion);
-                Ok(())
+            }
+            SupportedOp::Modulus => {
+                self.begin_math(State::MathAddition, len);
+                self.set_len(EXP_LEN_BITS_IDX, (len as u32) * 8);
+                self.load_operand(INV_RED_MODULUS_IDX, len, Operand::Modulus);
+                self.load_operand(ARITH_OP1_IDX, len, Operand::First);
+                self.start_operation(CR::MODE::ModularReduction);
             }
         }
+        Ok(())
     }
 
     fn clear_data(&self) {
-        for i in 0..self.registers.ram.len() {
-            self.registers.ram[i].set(0);
-        }
+        self.clear_ram();
     }
 }

@@ -867,6 +867,10 @@ where
             }
         }
     }
+
+    fn read_second_number(&self, num: &mut [u8]) {
+        todo!()
+    }
 }
 
 impl<'a, E, Op, M, H> hil::public_key_crypto::keys::SetKeyBySlice<'a, 32>
