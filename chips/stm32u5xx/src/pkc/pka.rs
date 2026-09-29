@@ -131,16 +131,13 @@ impl<'a> Pka<'a> {
         }
     }
 
-    fn wait_init_ok(&self) {
-        while !self.registers.sr.is_set(SR::INITOK) {}
-    }
-
     fn enable_peripheral(&self) -> Result<(), ErrorCode> {
         if self.registers.sr.is_set(SR::BUSY) {
             return Err(ErrorCode::BUSY);
         }
         self.registers.cr.modify(CR::EN::SET);
-        self.wait_init_ok();
+        while !self.registers.sr.is_set(SR::INITOK) {}
+
         Ok(())
     }
 
@@ -354,7 +351,6 @@ impl<'a> Pka<'a> {
 
             State::VerifyPoint => {
                 let code = self.registers.ram[FPCHECK_RESULT_IDX].get();
-                debug!("GOT CODE: {:08x?}", code);
                 let result = if code == ECC_RESULT_OK {
                     Ok(())
                 } else {
@@ -445,7 +441,7 @@ impl<'a> RsaCryptoBase<'a> for Pka<'a> {
         }
 
         self.registers.cr.modify(CR::EN::SET);
-        self.wait_init_ok();
+        while !self.registers.sr.is_set(SR::INITOK) {}
 
         self.state.set(State::Rsa);
         self.clear_ram();
