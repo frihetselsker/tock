@@ -173,6 +173,9 @@ const fn calc_idx(addr: usize) -> usize {
     (addr - RAM_START) / size_of::<u32>()
 }
 
+// Constants have been taken from the STM32U5 Reference manual, section 53.4 PKA
+// operating modes, pages  2067-2082
+
 // ---- Montgomery modular exponentiation and integer/modular arithmetic ------
 
 /// Exponent length in bits (also the modulus length for modular reduction)
