@@ -208,13 +208,15 @@ impl<'a> Pka<'a> {
     fn read_from_client(&self, which: Operand, chunk: &mut [u8]) {
         self.math_client.map(|client| match which {
             Operand::Modulus => {
-                let _ = client.read_modulus(chunk);
+                if client.read_modulus(chunk).is_err() {
+                    self.math_fail();
+                }
             }
             Operand::First => {
-                let _ = client.read_number(chunk);
+                client.read_number(chunk);
             }
             Operand::Second => {
-                let _ = client.read_second_number(chunk);
+                client.read_second_number(chunk);
             }
         });
     }
@@ -254,7 +256,10 @@ impl<'a> Pka<'a> {
             let word = (len - offset - n) / 4;
             self.read_slice(ARITH_RESULT_IDX + word, &mut buf[..n]);
             self.math_client.map(|client| {
-                let _ = client.write_number(&mut buf[..n]);
+                if client.write_number(&mut buf[..n]).is_err() {
+                    self.math_fail();
+                    return;
+                }
             });
             offset += n;
         }
@@ -310,8 +315,7 @@ impl<'a> Pka<'a> {
                 self.read_slice(ECC_OUT_Y_IDX, y);
                 self.state.set(State::Idle);
                 self.ecc_client.map(|client| {
-                    let _ = client.write_point(&res);
-                    client.operation_done(Ok(()));
+                    client.operation_done(client.write_point(&res));
                 });
             }
 
@@ -334,7 +338,11 @@ impl<'a> Pka<'a> {
                 self.state.set(State::ProjToAffinePass3);
                 let (x_out, _) = self.feed_affine_to_projective();
                 self.ecc_client.map(|client| {
-                    let _ = client.write_point(&x_out);
+                    if client.write_point(&x_out).is_err() {
+                        self.ecc_client.map(|client| {
+                            client.operation_done(Err(ErrorCode::FAIL));
+                        });
+                    }
                 });
                 self.start_projective_to_affine();
             }
@@ -344,8 +352,7 @@ impl<'a> Pka<'a> {
                 let mut y_out = [0u8; P_256_P_SIZE];
                 self.read_slice(ECC_OUT_Y_IDX, &mut y_out);
                 self.ecc_client.map(|client| {
-                    let _ = client.write_point(&y_out);
-                    client.operation_done(Ok(()));
+                    client.operation_done(client.write_point(&y_out));
                 });
             }
 
