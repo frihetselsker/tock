@@ -8,6 +8,7 @@
 pub mod test;
 
 pub mod aes;
+pub mod ecdsa;
 pub mod hash;
 pub mod hkdf;
 pub mod hmac;
