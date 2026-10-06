@@ -1,0 +1,4 @@
+hkdf.c:8:13:hkdf_upcall	8	static
+hkdf.c:15:6:libtock_hkdf_exists	0	static
+hkdf.c:19:14:libtocksync_hkdf_compute	40	static
+hkdf.c:56:14:libtock_hkdf_compute	48	static

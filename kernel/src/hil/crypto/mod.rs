@@ -88,4 +88,5 @@
 //! }
 //! ```
 
+pub mod context;
 pub mod digest;

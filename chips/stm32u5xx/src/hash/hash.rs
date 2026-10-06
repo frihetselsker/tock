@@ -15,7 +15,10 @@ use core::cell::Cell;
 use super::regs::{CR, HashRegisters, IMR, SR, STR};
 use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
-use kernel::hil::crypto::digest::{Digest, DigestClient, Md5, Sha1, Sha224, Sha256};
+use kernel::hil::crypto::digest::InputResponse::Copied;
+use kernel::hil::crypto::digest::{
+    Digest, DigestClient, DigestOp, InputRequest, InputResponse, Md5, Sha1, Sha224, Sha256,
+};
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::OptionalCell;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
@@ -29,17 +32,23 @@ enum Client {
 }
 
 impl Client {
-    fn read_input(self, input: &mut [u8]) -> Result<usize, ErrorCode> {
-        let count = match self {
-            Self::Md5(client) => client.read_input(input),
-            Self::Sha1(client) => client.read_input(input),
-            Self::Sha224(client) => client.read_input(input),
-            Self::Sha256(client) => client.read_input(input),
+    fn read_input(self, input: &mut [u8]) -> Result<InputResponse, ErrorCode> {
+        let response = match self {
+            Self::Md5(client) => client.read_input(InputRequest::Buffer(input)),
+            Self::Sha1(client) => client.read_input(InputRequest::Buffer(input)),
+            Self::Sha224(client) => client.read_input(InputRequest::Buffer(input)),
+            Self::Sha256(client) => client.read_input(InputRequest::Buffer(input)),
         }?;
-        if count == 0 || count > input.len() {
-            Err(ErrorCode::SIZE)
-        } else {
-            Ok(count)
+
+        match response {
+            InputResponse::Copied(count) => {
+                if count == 0 || count > input.len() {
+                    Err(ErrorCode::SIZE)
+                } else {
+                    Ok(Copied(count))
+                }
+            }
+            response @ InputResponse::Dma { .. } => Ok(response),
         }
     }
 
@@ -136,27 +145,32 @@ impl Hash {
             let mut input = [0; 64];
             let available = words * 4 - self.partial_len.get();
             let requested = remaining.min(available);
-            let count = match client.read_input(&mut input[..requested]) {
+            let response = match client.read_input(&mut input[..requested]) {
                 Ok(count) => count,
                 Err(error) => {
                     self.finish(Err(error));
                     return;
                 }
             };
-            let mut partial = self.partial.get();
-            let mut partial_len = self.partial_len.get();
-            for byte in &input[..count] {
-                partial[partial_len] = *byte;
-                partial_len += 1;
-                if partial_len == 4 {
-                    self.regs.din.set(u32::from_le_bytes(partial));
-                    partial = [0; 4];
-                    partial_len = 0;
+
+            if let Copied(count) = response {
+                let mut partial = self.partial.get();
+                let mut partial_len = self.partial_len.get();
+                for byte in &input[..count] {
+                    partial[partial_len] = *byte;
+                    partial_len += 1;
+                    if partial_len == 4 {
+                        self.regs.din.set(u32::from_le_bytes(partial));
+                        partial = [0; 4];
+                        partial_len = 0;
+                    }
                 }
+                self.partial.set(partial);
+                self.partial_len.set(partial_len);
+                self.remaining.set(remaining - count);
             }
-            self.partial.set(partial);
-            self.partial_len.set(partial_len);
-            self.remaining.set(remaining - count);
+
+            // TODO: DMA
         }
 
         if self.remaining.get() == 0 {
@@ -236,7 +250,7 @@ impl DeferredCallClient for Hash {
 }
 
 impl Digest<Md5> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
+    fn digest(&self, len: usize, _op: DigestOp) -> Result<(), ErrorCode> {
         self.start(len, self.md5.get().map(Client::Md5))
     }
 
@@ -246,7 +260,7 @@ impl Digest<Md5> for Hash {
 }
 
 impl Digest<Sha1> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
+    fn digest(&self, len: usize, _op: DigestOp) -> Result<(), ErrorCode> {
         self.start(len, self.sha1.get().map(Client::Sha1))
     }
 
@@ -256,7 +270,7 @@ impl Digest<Sha1> for Hash {
 }
 
 impl Digest<Sha224> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
+    fn digest(&self, len: usize, _op: DigestOp) -> Result<(), ErrorCode> {
         self.start(len, self.sha224.get().map(Client::Sha224))
     }
 
@@ -266,7 +280,7 @@ impl Digest<Sha224> for Hash {
 }
 
 impl Digest<Sha256> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
+    fn digest(&self, len: usize, _op: DigestOp) -> Result<(), ErrorCode> {
         self.start(len, self.sha256.get().map(Client::Sha256))
     }
 

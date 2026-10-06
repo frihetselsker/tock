@@ -1,0 +1,4 @@
+hmac.c:8:13:hmac_upcall	32	static
+hmac.c:15:6:libtock_hmac_exists	0	static
+hmac.c:19:14:libtocksync_hmac_compute	64	static
+hmac.c:45:14:libtock_hmac_compute	64	static

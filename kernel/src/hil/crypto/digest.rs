@@ -8,37 +8,112 @@
 //! marker types provide the digest length and fixed-size output type, while [`Digest`] and
 //! [`DigestClient`] define the asynchronous data flow shared by digest implementations.
 
-use crate::ErrorCode;
+use core::marker::PhantomData;
+
+use crate::{ErrorCode, capabilities::DigestDriverCapability, hil::crypto::context::Session};
 
 /// Properties of a message digest algorithm.
 pub trait DigestAlgorithm {
-    /// Digest length, in bytes.
-    const DIGEST_LEN: usize;
-
     /// Fixed-size byte array containing a digest produced by this algorithm.
     ///
     /// The byte length of this type must equal [`Self::DIGEST_LEN`].
-    type Output: AsRef<[u8]> + AsMut<[u8]>;
-}
+    type Output: AsRef<[u8]> + AsMut<[u8]> + ?Sized;
 
+    type Params;
+}
 macro_rules! digest_algorithm {
-    ($name:ident, $digest_len:expr) => {
+    // Fixed-size output
+    ($name:ident, $digest_len:expr, $block_len:expr) => {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub struct $name;
+
+        impl $name {
+            pub const DIGEST_LEN: usize = $digest_len;
+        }
+
+        impl DigestAlgorithm for $name {
+            type Output = [u8; $digest_len];
+            type Params = ();
+        }
+
+        impl HmacAlgorithm for $name {
+            const BLOCK_LEN: usize = $block_len;
+        }
+    };
+    // Variable output
+    ($name:ident) => {
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         pub struct $name;
 
         impl DigestAlgorithm for $name {
-            const DIGEST_LEN: usize = $digest_len;
-            type Output = [u8; $digest_len];
+            type Output = [u8];
+            type Params = usize;
         }
     };
 }
 
-digest_algorithm!(Md5, 16);
-digest_algorithm!(Sha1, 20);
-digest_algorithm!(Sha224, 28);
-digest_algorithm!(Sha256, 32);
-digest_algorithm!(Sha384, 48);
-digest_algorithm!(Sha512, 64);
+digest_algorithm!(Md5, 16, 512 >> 3);
+digest_algorithm!(Sha1, 20, 512 >> 3);
+digest_algorithm!(Sha224, 28, 512 >> 3);
+digest_algorithm!(Sha256, 32, 512 >> 3);
+digest_algorithm!(Sha384, 48, 1024 >> 3);
+digest_algorithm!(Sha512, 64, 1024 >> 3);
+digest_algorithm!(Sha3_224, 28, 1152 >> 3);
+digest_algorithm!(Sha3_256, 32, 1088 >> 3);
+digest_algorithm!(Sha3_384, 48, 832 >> 3);
+digest_algorithm!(Sha3_512, 64, 576 >> 3);
+digest_algorithm!(Shake128);
+digest_algorithm!(Shake256);
+digest_algorithm!(Sm3, 32, 512 >> 3);
+
+/// Right to start an operation
+pub struct Idle;
+/// Right to change the state of the operation
+pub struct Active<A: DigestAlgorithm>(Idle, PhantomData<A>);
+
+impl Idle {
+    pub fn activate<A: DigestAlgorithm>(self, _cap: &dyn DigestDriverCapability) -> Active<A> {
+        Active(self, PhantomData)
+    }
+}
+
+impl<A: DigestAlgorithm> Active<A> {
+    pub fn deactivate(self, _cap: &dyn DigestDriverCapability) -> Idle {
+        self.0
+    }
+}
+
+pub enum DigestRequest<A: DigestAlgorithm> {
+    OneShot {
+        token: Idle,
+        params: A::Params,
+        len: usize,
+    },
+    Begin {
+        token: Idle,
+        params: A::Params,
+        len: usize,
+    },
+    Update {
+        token: Active<A>,
+        len: usize,
+        is_last: bool,
+    },
+    Abort {
+        token: Active<A>,
+    },
+}
+
+pub enum Next<A: DigestAlgorithm> {
+    Continue(Active<A>),
+    Done(Idle),
+}
+
+pub struct DigestSession<A>(PhantomData<A>);
+impl<A: DigestAlgorithm> Session for DigestSession<A> {
+    type IdleToken = Idle;
+    type ActiveToken = Active<A>;
+}
 
 /// Computes a message digest using algorithm `A`.
 pub trait Digest<A: DigestAlgorithm> {
@@ -52,7 +127,7 @@ pub trait Digest<A: DigestAlgorithm> {
     /// if no client is registered, or [`ErrorCode::SIZE`] if `len` exceeds an implementation
     /// limit known when this method is called. On `Ok(())`, a
     /// completion callback will occur. On `Err`, no callbacks will occur for this request.
-    fn digest(&self, len: usize) -> Result<(), ErrorCode>;
+    fn digest(&self, req: DigestRequest<A>) -> Result<(), ErrorCode>;
 
     /// Set the client that will receive callbacks for digest operations.
     fn set_client(&self, client: &'static dyn DigestClient<A>);
@@ -82,5 +157,46 @@ pub trait DigestClient<A: DigestAlgorithm> {
     /// This callback occurs exactly once after a request accepted by [`Digest::digest`]. If a data
     /// callback returns an error, the driver must immediately abort the operation and report that
     /// error through `result`.
-    fn digest_done(&self, result: Result<(), ErrorCode>);
+    fn digest_done(&self, result: Result<Next<A>, (ErrorCode, Idle)>);
+}
+
+pub trait HmacAlgorithm: DigestAlgorithm<Params = ()> {
+    const BLOCK_LEN: usize;
+}
+
+pub struct HmacSession<A>(PhantomData<A>);
+impl<A: HmacAlgorithm> Session for HmacSession<A> {
+    type IdleToken = Idle;
+    type ActiveToken = Active<A>;
+}
+
+pub enum HmacRequest<A: HmacAlgorithm> {
+    OneShot {
+        token: Idle,
+        key_len: usize,
+        len: usize,
+    },
+    Begin {
+        token: Idle,
+        key_len: usize,
+        len: usize,
+    },
+    Update {
+        token: Active<A>,
+        len: usize,
+        is_last: bool,
+    },
+    Abort {
+        token: Active<A>,
+    },
+}
+
+pub trait Hmac<A: HmacAlgorithm>: Digest<A> {
+    fn authenticate(&self, req: HmacRequest<A>) -> Result<(), ErrorCode>;
+
+    fn set_client(&self, client: &'static dyn HmacClient<A>);
+}
+
+pub trait HmacClient<A: HmacAlgorithm>: DigestClient<A> {
+    fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode>;
 }

@@ -1,0 +1,7 @@
+hmac_syscalls.c:15:6:libtock_hmac_driver_exists	8	static
+hmac_syscalls.c:19:14:libtock_hmac_set_done_upcall	32	static
+hmac_syscalls.c:24:14:libtock_hmac_set_readonly_allow_input_buffer	32	static
+hmac_syscalls.c:29:14:libtock_hmac_set_readonly_allow_key_buffer	32	static
+hmac_syscalls.c:34:14:libtock_hmac_set_readwrite_allow_output_buffer	32	static
+hmac_syscalls.c:39:14:libtock_hmac_command_start	32	static
+hmac_syscalls.c:44:14:libtocksync_hmac_yield_wait_for_done	24	static

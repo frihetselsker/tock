@@ -1,0 +1,4 @@
+hash.c:6:13:hash_upcall	8	static
+hash.c:13:6:libtock_hash_exists	8	static
+hash.c:17:14:libtocksync_hash_compute	16	static
+hash.c:38:14:libtock_hash_compute	16	static

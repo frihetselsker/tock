@@ -1,0 +1,6 @@
+hash_syscalls.c:12:6:libtock_hash_driver_exists	0	static
+hash_syscalls.c:16:14:libtock_hash_set_done_upcall	48	static
+hash_syscalls.c:21:14:libtock_hash_set_readonly_allow_input_buffer	48	static
+hash_syscalls.c:26:14:libtock_hash_set_readwrite_allow_output_buffer	48	static
+hash_syscalls.c:31:14:libtock_hash_command_start	48	static
+hash_syscalls.c:36:14:libtocksync_hash_yield_wait_for_done	32	static

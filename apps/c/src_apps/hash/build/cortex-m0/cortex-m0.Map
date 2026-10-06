@@ -1,0 +1,1671 @@
+Archive member included to satisfy reference by file (symbol)
+
+../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                              (_start)
+../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                              build/cortex-m0/hash.o (tock_status_to_returncode)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+                              build/cortex-m0/main.o (puts)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+                              build/cortex-m0/main.o (memcpy)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+                              ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o) (memset)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+                              build/cortex-m0/main.o (printf)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+                              build/cortex-m0/main.o (putchar)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o) (_vfprintf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o) (__swsetup_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+                              ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o) (exit)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o) (memchr)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o) (_impure_ptr)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o) (_printf_i)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o) (__stdio_exit_handler)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o) (_fflush_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o) (__swbuf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o) (_fwalk_sglue)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o) (_putc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o) (__sread)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o) (__smakebuf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o) (_malloc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o) (_read_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o) (_free_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o) (__sfvwrite_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o) (_close_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o) (_lseek_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o) (errno)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o) (_realloc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o) (__malloc_lock)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o) (_write_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o) (_isatty_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o) (_malloc_usable_size_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o) (memmove)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o) (_sbrk_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o) (_fstat_r)
+../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+                              ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o) (__gnu_thumb1_case_uqi)
+../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o) (__gnu_thumb1_case_shi)
+../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o) (__aeabi_uidivmod)
+../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o) (__aeabi_idiv)
+../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+                              ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o) (__aeabi_idiv0)
+../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o) (_isatty)
+../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o) (_write)
+../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+                              ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o) (libtocksync_console_write)
+../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+                              ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o) (libtocksync_console_yield_wait_for_write)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+                              ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o) (__errno)
+../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                              ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o) (libtock_console_set_read_allow)
+
+Discarded input sections
+
+ .text          0x00000000        0x0 build/cortex-m0/hash.o
+ .text.hash_upcall
+                0x00000000        0xe build/cortex-m0/hash.o
+ .text.libtock_hash_compute
+                0x00000000       0x44 build/cortex-m0/hash.o
+ .text          0x00000000        0x0 build/cortex-m0/hash_syscalls.o
+ .text.libtock_hash_set_done_upcall
+                0x00000000       0x28 build/cortex-m0/hash_syscalls.o
+ .text          0x00000000        0x0 build/cortex-m0/hkdf.o
+ .text.hkdf_upcall
+                0x00000000        0xe build/cortex-m0/hkdf.o
+ .text.libtock_hkdf_compute
+                0x00000000       0x74 build/cortex-m0/hkdf.o
+ .text          0x00000000        0x0 build/cortex-m0/hkdf_syscalls.o
+ .text.libtock_hkdf_set_done_upcall
+                0x00000000       0x28 build/cortex-m0/hkdf_syscalls.o
+ .text          0x00000000        0x0 build/cortex-m0/hmac.o
+ .text.hmac_upcall
+                0x00000000        0xe build/cortex-m0/hmac.o
+ .text.libtock_hmac_compute
+                0x00000000       0x50 build/cortex-m0/hmac.o
+ .text          0x00000000        0x0 build/cortex-m0/hmac_syscalls.o
+ .text.libtock_hmac_set_done_upcall
+                0x00000000       0x28 build/cortex-m0/hmac_syscalls.o
+ .text          0x00000000        0x0 build/cortex-m0/main.o
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .text._c_start_nopic
+                0x00000000       0x3a ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_command_return_u32_to_returncode
+                0x00000000       0x28 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_command_return_u64_to_returncode
+                0x00000000       0x30 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_command_return_u32_u32_to_returncode
+                0x00000000       0x30 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_subscribe_return_to_returncode
+                0x00000000       0x1a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_allow_userspace_r_return_to_returncode
+                0x00000000       0x1a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.yield    0x00000000        0xa ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.yield_for
+                0x00000000       0x12 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.yield_no_wait
+                0x00000000       0x12 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_restart
+                0x00000000        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.subscribe
+                0x00000000       0x36 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.allow_userspace_read
+                0x00000000       0x38 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_memory_begins_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_memory_ends_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_flash_begins_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_flash_ends_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_grant_begins_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_number_writeable_flash_regions
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_writeable_flash_region_begins_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_app_writeable_flash_region_ends_at
+                0x00000000       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .rodata.tock_strrcode.str1.1
+                0x00000000      0x1c8 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_strrcode
+                0x00000000       0xb8 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_strerr
+                0x00000000        0xc ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .rodata.tock_expect.str1.1
+                0x00000000       0x65 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text.tock_expect
+                0x00000000       0x50 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .text._printf_r
+                0x00000000       0x1a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .text._putchar_r
+                0x00000000        0xa ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .text.__sprint_r
+                0x00000000       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .text.vfprintf
+                0x00000000       0x24 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__fp_lock
+                0x00000000        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__fp_unlock
+                0x00000000        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__sfp    0x00000000       0xb0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__fp_lock_all
+                0x00000000       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__fp_unlock_all
+                0x00000000       0x24 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .text.fflush   0x00000000       0x3c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .text.__swbuf  0x00000000       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .text.putc     0x00000000       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .text.__seofread
+                0x00000000        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .text.__sfvwrite_r
+                0x00000000      0x2c0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .text._reclaim_reent
+                0x00000000       0xe0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .text._realloc_r
+                0x00000000       0x62 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .text._malloc_usable_size_r
+                0x00000000       0x10 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .text.memmove  0x00000000       0x26 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .text          0x00000000       0x14 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .text          0x00000000       0xa8 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .text._unlink  0x00000000        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .text._open    0x00000000        0xa ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .text._getpid  0x00000000        0x4 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .text._kill    0x00000000        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .text.libtocksync_console_exists
+                0x00000000        0x8 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .text.libtocksync_console_read
+                0x00000000       0x2c ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .text.libtocksync_console_yield_wait_for_read
+                0x00000000       0x20 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_write_done_set_upcall
+                0x00000000       0x22 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_read_done_set_upcall
+                0x00000000       0x22 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_set_readwrite_allow
+                0x00000000       0x22 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_driver_exists
+                0x00000000        0xa ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_command_read
+                0x00000000       0x24 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ .text.libtock_console_command_abort_read
+                0x00000000       0x22 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x80000000         0x00070000         xr
+SRAM             0x00000000         0x00020000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x00000800                        STACK_SIZE = 0x800
+                0x00000400                        APP_HEAP_SIZE = 0x400
+                0x00000400                        KERNEL_HEAP_SIZE = 0x400
+START GROUP
+LOAD build/cortex-m0/hash.o
+LOAD build/cortex-m0/hash_syscalls.o
+LOAD build/cortex-m0/hkdf.o
+LOAD build/cortex-m0/hkdf_syscalls.o
+LOAD build/cortex-m0/hmac.o
+LOAD build/cortex-m0/hmac_syscalls.o
+LOAD build/cortex-m0/main.o
+LOAD ../../libtock-c/libtock/build/cortex-m0/libtock.a
+LOAD ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a
+LOAD ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a
+LOAD ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libm.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libstdc++.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libsupc++.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a
+END GROUP
+                0x00070000                        PROG_LENGTH = 0x70000
+                0x00020000                        RAM_LENGTH = 0x20000
+
+.crt0_header    0x80000000       0x28
+                0x80000000        0x4 LONG 0x1d6c (LOADADDR (.got) - ORIGIN (FLASH))
+                0x80000004        0x4 LONG 0x800 (_got - ORIGIN (SRAM))
+                0x80000008        0x4 LONG 0xd8 SIZEOF (.got)
+                0x8000000c        0x4 LONG 0x1e44 (LOADADDR (.data) - ORIGIN (FLASH))
+                0x80000010        0x4 LONG 0x8d8 (_data - ORIGIN (SRAM))
+                0x80000014        0x4 LONG 0x5c SIZEOF (.data)
+                0x80000018        0x4 LONG 0x934 (_bss - ORIGIN (SRAM))
+                0x8000001c        0x4 LONG 0x14c SIZEOF (.bss)
+                0x80000020        0x4 LONG 0x1ea0 (LOADADDR (.endflash) - ORIGIN (FLASH))
+                0x80000024        0x4 LONG 0x800 STACK_SIZE
+
+.wfr.app_state  0x80000028        0x0
+ *(.app_state)
+                0x80000028                        . = ALIGN (0x4)
+
+.text           0x80000028     0x1d44
+                0x80000028                        . = ALIGN (0x4)
+                0x80000028                        _text = .
+ *(.start)
+ .start         0x80000028       0x3e ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                0x80000028                _start
+ *(.text*)
+ .text.libtock_hash_exists
+                0x80000066        0x8 build/cortex-m0/hash.o
+                0x80000066                libtock_hash_exists
+ .text.libtocksync_hash_compute
+                0x8000006e       0x2e build/cortex-m0/hash.o
+                0x8000006e                libtocksync_hash_compute
+ .text.libtock_hash_driver_exists
+                0x8000009c       0x10 build/cortex-m0/hash_syscalls.o
+                0x8000009c                libtock_hash_driver_exists
+ .text.libtock_hash_set_readonly_allow_input_buffer
+                0x800000ac       0x28 build/cortex-m0/hash_syscalls.o
+                0x800000ac                libtock_hash_set_readonly_allow_input_buffer
+ .text.libtock_hash_set_readwrite_allow_output_buffer
+                0x800000d4       0x28 build/cortex-m0/hash_syscalls.o
+                0x800000d4                libtock_hash_set_readwrite_allow_output_buffer
+ .text.libtock_hash_command_start
+                0x800000fc       0x28 build/cortex-m0/hash_syscalls.o
+                0x800000fc                libtock_hash_command_start
+ .text.libtocksync_hash_yield_wait_for_done
+                0x80000124       0x20 build/cortex-m0/hash_syscalls.o
+                0x80000124                libtocksync_hash_yield_wait_for_done
+ .text.libtock_hkdf_exists
+                0x80000144        0x8 build/cortex-m0/hkdf.o
+                0x80000144                libtock_hkdf_exists
+ .text.libtocksync_hkdf_compute
+                0x8000014c       0x60 build/cortex-m0/hkdf.o
+                0x8000014c                libtocksync_hkdf_compute
+ .text.libtock_hkdf_driver_exists
+                0x800001ac       0x10 build/cortex-m0/hkdf_syscalls.o
+                0x800001ac                libtock_hkdf_driver_exists
+ .text.libtock_hkdf_set_readonly_allow_ikm_buffer
+                0x800001bc       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x800001bc                libtock_hkdf_set_readonly_allow_ikm_buffer
+ .text.libtock_hkdf_set_readonly_allow_salt_buffer
+                0x800001e4       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x800001e4                libtock_hkdf_set_readonly_allow_salt_buffer
+ .text.libtock_hkdf_set_readonly_allow_info_buffer
+                0x8000020c       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x8000020c                libtock_hkdf_set_readonly_allow_info_buffer
+ .text.libtock_hkdf_set_readwrite_allow_prk_buffer
+                0x80000234       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x80000234                libtock_hkdf_set_readwrite_allow_prk_buffer
+ .text.libtock_hkdf_set_readwrite_allow_okm_buffer
+                0x8000025c       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x8000025c                libtock_hkdf_set_readwrite_allow_okm_buffer
+ .text.libtock_hkdf_command_start
+                0x80000284       0x28 build/cortex-m0/hkdf_syscalls.o
+                0x80000284                libtock_hkdf_command_start
+ .text.libtocksync_hkdf_yield_wait_for_done
+                0x800002ac       0x20 build/cortex-m0/hkdf_syscalls.o
+                0x800002ac                libtocksync_hkdf_yield_wait_for_done
+ .text.libtock_hmac_exists
+                0x800002cc        0x8 build/cortex-m0/hmac.o
+                0x800002cc                libtock_hmac_exists
+ .text.libtocksync_hmac_compute
+                0x800002d4       0x3c build/cortex-m0/hmac.o
+                0x800002d4                libtocksync_hmac_compute
+ .text.libtock_hmac_driver_exists
+                0x80000310       0x10 build/cortex-m0/hmac_syscalls.o
+                0x80000310                libtock_hmac_driver_exists
+ .text.libtock_hmac_set_readonly_allow_input_buffer
+                0x80000320       0x28 build/cortex-m0/hmac_syscalls.o
+                0x80000320                libtock_hmac_set_readonly_allow_input_buffer
+ .text.libtock_hmac_set_readonly_allow_key_buffer
+                0x80000348       0x28 build/cortex-m0/hmac_syscalls.o
+                0x80000348                libtock_hmac_set_readonly_allow_key_buffer
+ .text.libtock_hmac_set_readwrite_allow_output_buffer
+                0x80000370       0x28 build/cortex-m0/hmac_syscalls.o
+                0x80000370                libtock_hmac_set_readwrite_allow_output_buffer
+ .text.libtock_hmac_command_start
+                0x80000398       0x28 build/cortex-m0/hmac_syscalls.o
+                0x80000398                libtock_hmac_command_start
+ .text.libtocksync_hmac_yield_wait_for_done
+                0x800003c0       0x20 build/cortex-m0/hmac_syscalls.o
+                0x800003c0                libtocksync_hmac_yield_wait_for_done
+ .text.startup.main
+                0x800003e0      0x2dc build/cortex-m0/main.o
+                0x800003e0                main
+ .text._c_start_pic
+                0x800006bc       0x84 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                0x800006bc                _c_start_pic
+ .text.tock_status_to_returncode
+                0x80000740        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x80000740                tock_status_to_returncode
+ *fill*         0x80000746        0x2 ff
+ .text.tock_command_return_novalue_to_returncode
+                0x80000748       0x28 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x80000748                tock_command_return_novalue_to_returncode
+ .text.tock_allow_rw_return_to_returncode
+                0x80000770       0x1a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x80000770                tock_allow_rw_return_to_returncode
+ .text.tock_allow_ro_return_to_returncode
+                0x8000078a       0x1a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x8000078a                tock_allow_ro_return_to_returncode
+ .text.yield_wait_for
+                0x800007a4       0x10 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x800007a4                yield_wait_for
+ .text.tock_exit
+                0x800007b4        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x800007b4                tock_exit
+ .text.command  0x800007ba       0x1a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x800007ba                command
+ .text.allow_readonly
+                0x800007d4       0x36 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x800007d4                allow_readonly
+ .text.allow_readwrite
+                0x8000080a       0x36 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x8000080a                allow_readwrite
+ .text.memop    0x80000840       0x38 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x80000840                memop
+ .text.driver_exists
+                0x80000878       0x1c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                0x80000878                driver_exists
+ .text._puts_r  0x80000894       0x84 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+                0x80000894                _puts_r
+ .text.puts     0x80000918       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+                0x80000918                puts
+ .text.memcpy   0x80000934       0x12 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+                0x80000934                memcpy
+ .text.memset   0x80000946       0x10 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+                0x80000946                memset
+ *fill*         0x80000956        0x2 ff
+ .text.printf   0x80000958       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+                0x80000958                printf
+                0x80000958                iprintf
+ .text.putchar  0x80000984       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+                0x80000984                putchar
+ .text.__sfputc_r
+                0x800009a4       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .text.__sfputs_r
+                0x800009ce       0x24 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                0x800009ce                __sfputs_r
+ *fill*         0x800009f2        0x2 ff
+ .text._vfprintf_r
+                0x800009f4      0x214 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                0x800009f4                _vfiprintf_r
+                0x800009f4                _vfprintf_r
+ .text.__swsetup_r
+                0x80000c08       0xc4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+                0x80000c08                __swsetup_r
+ .text.exit     0x80000ccc       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+                0x80000ccc                exit
+ .text.memchr   0x80000d00       0x16 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+                0x80000d00                memchr
+ .text._printf_common
+                0x80000d16       0xe0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                0x80000d16                _printf_common
+ *fill*         0x80000df6        0x2 ff
+ .text._printf_i
+                0x80000df8      0x230 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                0x80000df8                _printf_i
+ .text.std      0x80001028       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.stdio_exit_handler
+                0x80001080       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.cleanup_stdio
+                0x800010a8       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.global_stdio_init.part.0
+                0x800010e8       0x4c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .text.__sfp_lock_acquire
+                0x80001134        0x2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x80001134                __sfp_lock_acquire
+ .text.__sfp_lock_release
+                0x80001136        0x2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x80001136                __sfp_lock_release
+ .text.__sinit  0x80001138       0x3c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x80001138                __sinit
+ .text.__sflush_r
+                0x80001174      0x114 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+                0x80001174                __sflush_r
+ .text._fflush_r
+                0x80001288       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+                0x80001288                _fflush_r
+ .text.__swbuf_r
+                0x800012b8       0x82 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+                0x800012b8                __swbuf_r
+ .text._fwalk_sglue
+                0x8000133a       0x3a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+                0x8000133a                _fwalk_sglue
+ .text._putc_r  0x80001374       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+                0x80001374                _putc_r
+ .text.__sread  0x800013b8       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                0x800013b8                __sread
+ .text.__swrite
+                0x800013e0       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                0x800013e0                __swrite
+ .text.__sseek  0x80001418       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                0x80001418                __sseek
+ .text.__sclose
+                0x80001444        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                0x80001444                __sclose
+ .text.__swhatbuf_r
+                0x80001450       0x54 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+                0x80001450                __swhatbuf_r
+ .text.__smakebuf_r
+                0x800014a4       0x7c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+                0x800014a4                __smakebuf_r
+ .text.sbrk_aligned
+                0x80001520       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .text._malloc_r
+                0x80001570      0x110 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                0x80001570                _malloc_r
+ .text._read_r  0x80001680       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+                0x80001680                _read_r
+ .text._free_r  0x800016b4       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+                0x800016b4                _free_r
+ .text._close_r
+                0x80001754       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+                0x80001754                _close_r
+ .text._lseek_r
+                0x80001784       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+                0x80001784                _lseek_r
+ .text.__malloc_lock
+                0x800017b8        0x2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+                0x800017b8                __malloc_lock
+ .text.__malloc_unlock
+                0x800017ba        0x2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+                0x800017ba                __malloc_unlock
+ .text._write_r
+                0x800017bc       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+                0x800017bc                _write_r
+ .text._isatty_r
+                0x800017f0       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+                0x800017f0                _isatty_r
+ .text._sbrk_r  0x80001820       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+                0x80001820                _sbrk_r
+ .text._fstat_r
+                0x80001850       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+                0x80001850                _fstat_r
+ .text          0x80001880       0x14 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+                0x80001880                __gnu_thumb1_case_shi
+ .text          0x80001894       0x8c ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+                0x80001894                __udivsi3
+                0x80001894                __aeabi_uidiv
+                0x8000190c                __aeabi_uidivmod
+ .text          0x80001920        0x4 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+                0x80001920                __aeabi_ldiv0
+                0x80001920                __aeabi_idiv0
+ .text._isatty  0x80001924        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x80001924                _isatty
+ .text._close   0x8000192a        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x8000192a                _close
+ .text._fstat   0x80001930        0xa ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x80001930                _fstat
+ .text._lseek   0x8000193a        0x4 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x8000193a                _lseek
+ .text._read    0x8000193e        0x4 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x8000193e                _read
+ .text._exit    0x80001942        0x6 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x80001942                _exit
+ .text._sbrk    0x80001948       0x28 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x80001948                _sbrk
+ .text._write   0x80001970       0x12 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+                0x80001970                _write
+ .text.libtocksync_console_write
+                0x80001982       0x2c ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+                0x80001982                libtocksync_console_write
+ .text.libtocksync_console_yield_wait_for_write
+                0x800019ae       0x20 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+                0x800019ae                libtocksync_console_yield_wait_for_write
+ *fill*         0x800019ce        0x2 ff
+ .text.__errno  0x800019d0       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+                0x800019d0                __errno
+ .text.libtock_console_set_read_allow
+                0x800019e8       0x22 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                0x800019e8                libtock_console_set_read_allow
+ .text.libtock_console_command_write
+                0x80001a0a       0x24 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                0x80001a0a                libtock_console_command_write
+ *(.rodata*)
+ .rodata.main.str1.1
+                0x80001a2e      0x307 build/cortex-m0/main.o
+                                0x2fd (size before relaxing)
+ .rodata        0x80001d35       0x37 build/cortex-m0/main.o
+ .rodata._vfprintf_r.str1.1
+                0x80001d6c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                                 0x11 (size before relaxing)
+ .rodata._printf_i.str1.1
+                0x80001d6c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                                 0x22 (size before relaxing)
+ *(.srodata*)
+ *(.syscalls)
+                0x80001d6c                        _etext = .
+ *(.ARM.extab*)
+                0x80001d6c                        . = ALIGN (0x4)
+
+.glue_7         0x80001d6c        0x0
+ .glue_7        0x80001d6c        0x0 linker stubs
+
+.glue_7t        0x80001d6c        0x0
+ .glue_7t       0x80001d6c        0x0 linker stubs
+
+.vfp11_veneer   0x80001d6c        0x0
+ .vfp11_veneer  0x80001d6c        0x0 linker stubs
+
+.v4_bx          0x80001d6c        0x0
+ .v4_bx         0x80001d6c        0x0 linker stubs
+
+.iplt           0x80001d6c        0x0
+ .iplt          0x80001d6c        0x0 build/cortex-m0/hash.o
+
+.rel.dyn        0x80001d6c        0x0
+ .rel.iplt      0x80001d6c        0x0 build/cortex-m0/hash.o
+ .rel.got       0x80001d6c        0x0 build/cortex-m0/hash.o
+
+.stack          0x00000000      0x800
+                0x00000000                        _sram_origin = .
+                0x00000000                        . = ALIGN (0x10)
+                0x00000000                        _stack = .
+                0x00000800                        . = (_stack + STACK_SIZE)
+ *fill*         0x00000000      0x800 
+                0x00000800                        . = ALIGN (0x10)
+
+.got            0x00000800       0xd8 load address 0x80001d6c
+                0x00000800                        . = ALIGN (0x4)
+                0x00000800                        _got = .
+ *(.got*)
+ .got           0x00000800       0xcc build/cortex-m0/hash.o
+ .got.plt       0x000008cc        0xc build/cortex-m0/hash.o
+                0x000008cc                _GLOBAL_OFFSET_TABLE_
+ *(.got.plt*)
+                0x000008d8                        . = ALIGN (0x4)
+
+.data           0x000008d8       0x5c load address 0x80001e44
+                0x000008d8                        . = ALIGN (0x4)
+                0x000008d8                        _data = .
+ *(.data*)
+ .data          0x000008d8        0x0 build/cortex-m0/hash.o
+ .data          0x000008d8        0x0 build/cortex-m0/hash_syscalls.o
+ .data          0x000008d8        0x0 build/cortex-m0/hkdf.o
+ .data          0x000008d8        0x0 build/cortex-m0/hkdf_syscalls.o
+ .data          0x000008d8        0x0 build/cortex-m0/hmac.o
+ .data          0x000008d8        0x0 build/cortex-m0/hmac_syscalls.o
+ .data          0x000008d8        0x0 build/cortex-m0/main.o
+ .data          0x000008d8        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .data          0x000008d8        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .data          0x000008d8        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .data.rel._impure_ptr
+                0x000008d8        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+                0x000008d8                _impure_ptr
+ .data.rel._impure_data
+                0x000008dc       0x4c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+                0x000008dc                _impure_data
+ .data          0x00000928        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .data          0x00000928        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .data.rel.__sglue
+                0x00000928        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x00000928                __sglue
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .data          0x00000934        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .data          0x00000934        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .data          0x00000934        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .data          0x00000934        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .data          0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .data          0x00000934        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ *(.sdata*)
+                0x00000934                        . = ALIGN (0x4)
+
+.igot.plt       0x00000934        0x0 load address 0x80001ea0
+ .igot.plt      0x00000934        0x0 build/cortex-m0/hash.o
+
+.bss            0x00000934      0x14c load address 0x80001ea0
+                0x00000934                        . = ALIGN (0x4)
+                0x00000934                        _bss = .
+ *(.bss*)
+ .bss           0x00000934        0x0 build/cortex-m0/hash.o
+ .bss           0x00000934        0x0 build/cortex-m0/hash_syscalls.o
+ .bss           0x00000934        0x0 build/cortex-m0/hkdf.o
+ .bss           0x00000934        0x0 build/cortex-m0/hkdf_syscalls.o
+ .bss           0x00000934        0x0 build/cortex-m0/hmac.o
+ .bss           0x00000934        0x0 build/cortex-m0/hmac_syscalls.o
+ .bss           0x00000934        0x0 build/cortex-m0/main.o
+ .bss           0x00000934        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .bss           0x00000934        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .bss           0x00000934        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .bss.__sf      0x00000934      0x138 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x00000934                __sf
+ .bss.__stdio_exit_handler
+                0x00000a6c        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                0x00000a6c                __stdio_exit_handler
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .bss           0x00000a70        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .bss.__malloc_sbrk_start
+                0x00000a70        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                0x00000a70                __malloc_sbrk_start
+ .bss.__malloc_free_list
+                0x00000a74        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                0x00000a74                __malloc_free_list
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .bss           0x00000a78        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .bss.errno     0x00000a78        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+                0x00000a78                errno
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .bss           0x00000a7c        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .bss.__dso_handle
+                0x00000a7c        0x4 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                0x00000a7c                __dso_handle
+ .bss           0x00000a80        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .bss           0x00000a80        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .bss           0x00000a80        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .bss           0x00000a80        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .bss           0x00000a80        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+ *(.sbss*)
+ *(COMMON)
+                0x00000a80                        . = ALIGN (0x4)
+
+.endflash       0x80001ea0        0x0
+                [!provide]                        PROVIDE (__exidx_start = .)
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+                [!provide]                        PROVIDE (__exidx_end = .)
+                0x00000001                        ASSERT ((_got <= _bss), 
+The GOT section must be before the BSS section for crt0 setup to be correct.)
+                0x00000001                        ASSERT ((_data <= _bss), 
+The data section must be before the BSS section for crt0 setup to be correct.)
+OUTPUT(build/cortex-m0/cortex-m0.elf elf32-littlearm)
+LOAD linker stubs
+
+.GCC.command.line
+                0x00000000       0xf1
+ .GCC.command.line
+                0x00000000       0xf1 build/cortex-m0/hash.o
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/hash_syscalls.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/hkdf.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/hkdf_syscalls.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/hmac.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/hmac_syscalls.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 build/cortex-m0/main.o
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+                                 0xf1 (size before relaxing)
+ .GCC.command.line
+                0x000000f1        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                                 0xf1 (size before relaxing)
+
+.comment        0x00000000       0x4b
+ .comment       0x00000000       0x4b build/cortex-m0/hash.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/hash_syscalls.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/hkdf.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/hkdf_syscalls.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/hmac.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/hmac_syscalls.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 build/cortex-m0/main.o
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+                                 0x24 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+                                 0x29 (size before relaxing)
+ .comment       0x0000004b        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                                 0x24 (size before relaxing)
+
+.ARM.attributes
+                0x00000000       0x2c
+ .ARM.attributes
+                0x00000000       0x2c build/cortex-m0/hash.o
+ .ARM.attributes
+                0x0000002c       0x2c build/cortex-m0/hash_syscalls.o
+ .ARM.attributes
+                0x00000058       0x2c build/cortex-m0/hkdf.o
+ .ARM.attributes
+                0x00000084       0x2c build/cortex-m0/hkdf_syscalls.o
+ .ARM.attributes
+                0x000000b0       0x2c build/cortex-m0/hmac.o
+ .ARM.attributes
+                0x000000dc       0x2c build/cortex-m0/hmac_syscalls.o
+ .ARM.attributes
+                0x00000108       0x2c build/cortex-m0/main.o
+ .ARM.attributes
+                0x00000134       0x2c ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .ARM.attributes
+                0x00000160       0x2c ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .ARM.attributes
+                0x0000018c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .ARM.attributes
+                0x000001b8       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .ARM.attributes
+                0x000001e4       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .ARM.attributes
+                0x00000210       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .ARM.attributes
+                0x0000023c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .ARM.attributes
+                0x00000268       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .ARM.attributes
+                0x00000294       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .ARM.attributes
+                0x000002c0       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .ARM.attributes
+                0x000002ec       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .ARM.attributes
+                0x00000318       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .ARM.attributes
+                0x00000344       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .ARM.attributes
+                0x00000370       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .ARM.attributes
+                0x0000039c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .ARM.attributes
+                0x000003c8       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .ARM.attributes
+                0x000003f4       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .ARM.attributes
+                0x00000420       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .ARM.attributes
+                0x0000044c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .ARM.attributes
+                0x00000478       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .ARM.attributes
+                0x000004a4       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .ARM.attributes
+                0x000004d0       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .ARM.attributes
+                0x000004fc       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .ARM.attributes
+                0x00000528       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .ARM.attributes
+                0x00000554       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .ARM.attributes
+                0x00000580       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .ARM.attributes
+                0x000005ac       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .ARM.attributes
+                0x000005d8       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .ARM.attributes
+                0x00000604       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .ARM.attributes
+                0x00000630       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .ARM.attributes
+                0x0000065c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .ARM.attributes
+                0x00000688       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .ARM.attributes
+                0x000006b4       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .ARM.attributes
+                0x000006e0       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .ARM.attributes
+                0x0000070c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .ARM.attributes
+                0x00000738       0x1e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .ARM.attributes
+                0x00000756       0x1e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .ARM.attributes
+                0x00000774       0x1e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .ARM.attributes
+                0x00000792       0x1e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .ARM.attributes
+                0x000007b0       0x1e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .ARM.attributes
+                0x000007ce       0x2c ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .ARM.attributes
+                0x000007fa       0x2c ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .ARM.attributes
+                0x00000826       0x2c ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .ARM.attributes
+                0x00000852       0x2c ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .ARM.attributes
+                0x0000087e       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .ARM.attributes
+                0x000008aa       0x2c ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_info     0x00000000    0x177f3
+ .debug_info    0x00000000      0x59d build/cortex-m0/hash.o
+ .debug_info    0x0000059d      0x829 build/cortex-m0/hash_syscalls.o
+ .debug_info    0x00000dc6      0x74f build/cortex-m0/hkdf.o
+ .debug_info    0x00001515      0xa00 build/cortex-m0/hkdf_syscalls.o
+ .debug_info    0x00001f15      0x621 build/cortex-m0/hmac.o
+ .debug_info    0x00002536      0x8c6 build/cortex-m0/hmac_syscalls.o
+ .debug_info    0x00002dfc      0x887 build/cortex-m0/main.o
+ .debug_info    0x00003683      0x67f ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_info    0x00003d02     0x149e ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_info    0x000051a0      0x914 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_info    0x00005ab4      0x120 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_info    0x00005bd4       0xe5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_info    0x00005cb9      0x83c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_info    0x000064f5      0x7c4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_info    0x00006cb9     0x104a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_info    0x00007d03      0x7b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_info    0x000084b9      0x120 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_info    0x000085d9      0x115 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_info    0x000086ee      0x710 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .debug_info    0x00008dfe      0xe05 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_info    0x00009c03      0xe49 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_info    0x0000aa4c      0x9a6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_info    0x0000b3f2      0x86f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_info    0x0000bc61      0x7d2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_info    0x0000c433      0x896 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_info    0x0000ccc9      0xa7d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_info    0x0000d746      0xb0b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_info    0x0000e251      0x9c3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_info    0x0000ec14      0x7ba ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_info    0x0000f3ce      0x845 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_info    0x0000fc13      0xb32 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_info    0x00010745      0x758 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_info    0x00010e9d      0x7a3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_info    0x00011640      0x895 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_info    0x00011ed5      0x8a7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_info    0x0001277c      0x721 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_info    0x00012e9d      0x7c0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_info    0x0001365d      0x758 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_info    0x00013db5      0x78f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_info    0x00014544      0x10e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_info    0x00014652      0x77d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_info    0x00014dcf      0x97c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_info    0x0001574b       0x31 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .debug_info    0x0001577c       0x31 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .debug_info    0x000157ad       0x3d ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .debug_info    0x000157ea       0x3e ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .debug_info    0x00015828       0x3c ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .debug_info    0x00015864      0x6d0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_info    0x00015f34      0x1ef ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_info    0x00016123      0x443 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_info    0x00016566      0x2dd ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_info    0x00016843      0x6f6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .debug_info    0x00016f39      0x8ba ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_abbrev   0x00000000     0x583b
+ .debug_abbrev  0x00000000      0x170 build/cortex-m0/hash.o
+ .debug_abbrev  0x00000170      0x192 build/cortex-m0/hash_syscalls.o
+ .debug_abbrev  0x00000302      0x170 build/cortex-m0/hkdf.o
+ .debug_abbrev  0x00000472      0x192 build/cortex-m0/hkdf_syscalls.o
+ .debug_abbrev  0x00000604      0x170 build/cortex-m0/hmac.o
+ .debug_abbrev  0x00000774      0x192 build/cortex-m0/hmac_syscalls.o
+ .debug_abbrev  0x00000906      0x16f build/cortex-m0/main.o
+ .debug_abbrev  0x00000a75      0x1fe ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_abbrev  0x00000c73      0x394 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_abbrev  0x00001007      0x286 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_abbrev  0x0000128d       0xc7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_abbrev  0x00001354       0xa4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_abbrev  0x000013f8      0x220 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_abbrev  0x00001618      0x1d3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_abbrev  0x000017eb      0x2fa ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_abbrev  0x00001ae5      0x1e8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_abbrev  0x00001ccd       0xde ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_abbrev  0x00001dab       0xb7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_abbrev  0x00001e62      0x14f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .debug_abbrev  0x00001fb1      0x29c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_abbrev  0x0000224d      0x414 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_abbrev  0x00002661      0x29e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_abbrev  0x000028ff      0x227 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_abbrev  0x00002b26      0x1a4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_abbrev  0x00002cca      0x248 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_abbrev  0x00002f12      0x20c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_abbrev  0x0000311e      0x292 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_abbrev  0x000033b0      0x247 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_abbrev  0x000035f7      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_abbrev  0x000037ad      0x239 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_abbrev  0x000039e6      0x237 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_abbrev  0x00003c1d      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_abbrev  0x00003dd3      0x1ca ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_abbrev  0x00003f9d      0x1fa ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_abbrev  0x00004197      0x20f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_abbrev  0x000043a6      0x198 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_abbrev  0x0000453e      0x1bb ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_abbrev  0x000046f9      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_abbrev  0x000048af      0x19c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_abbrev  0x00004a4b       0xb2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_abbrev  0x00004afd      0x1e0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_abbrev  0x00004cdd      0x1c9 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_abbrev  0x00004ea6       0x28 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .debug_abbrev  0x00004ece       0x28 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .debug_abbrev  0x00004ef6       0x28 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .debug_abbrev  0x00004f1e       0x28 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .debug_abbrev  0x00004f46       0x26 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .debug_abbrev  0x00004f6c      0x231 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_abbrev  0x0000519d       0xff ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_abbrev  0x0000529c      0x189 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_abbrev  0x00005425      0x12a ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_abbrev  0x0000554f      0x164 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .debug_abbrev  0x000056b3      0x188 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_loc      0x00000000     0x36c6
+ .debug_loc     0x00000000      0x38e build/cortex-m0/hash.o
+ .debug_loc     0x0000038e      0x287 build/cortex-m0/hash_syscalls.o
+ .debug_loc     0x00000615      0x403 build/cortex-m0/hkdf.o
+ .debug_loc     0x00000a18      0x45e build/cortex-m0/hkdf_syscalls.o
+ .debug_loc     0x00000e76      0x3a8 build/cortex-m0/hmac.o
+ .debug_loc     0x0000121e      0x324 build/cortex-m0/hmac_syscalls.o
+ .debug_loc     0x00001542      0x2d0 build/cortex-m0/main.o
+ .debug_loc     0x00001812      0x5a4 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_loc     0x00001db6      0xf3a ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_loc     0x00002cf0      0x227 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_loc     0x00002f17       0xc7 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_loc     0x00002fde      0x298 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_loc     0x00003276       0xc8 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_loc     0x0000333e      0x388 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_aranges  0x00000000      0xa18
+ .debug_aranges
+                0x00000000       0x38 build/cortex-m0/hash.o
+ .debug_aranges
+                0x00000038       0x48 build/cortex-m0/hash_syscalls.o
+ .debug_aranges
+                0x00000080       0x38 build/cortex-m0/hkdf.o
+ .debug_aranges
+                0x000000b8       0x60 build/cortex-m0/hkdf_syscalls.o
+ .debug_aranges
+                0x00000118       0x38 build/cortex-m0/hmac.o
+ .debug_aranges
+                0x00000150       0x50 build/cortex-m0/hmac_syscalls.o
+ .debug_aranges
+                0x000001a0       0x20 build/cortex-m0/main.o
+ .debug_aranges
+                0x000001c0       0x30 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_aranges
+                0x000001f0      0x120 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_aranges
+                0x00000310       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_aranges
+                0x00000338       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_aranges
+                0x00000358       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_aranges
+                0x00000378       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_aranges
+                0x000003a0       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_aranges
+                0x000003c8       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_aranges
+                0x00000408       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_aranges
+                0x00000428       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_aranges
+                0x00000448       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_aranges
+                0x00000468       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .debug_aranges
+                0x00000480       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_aranges
+                0x000004a8       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_aranges
+                0x00000520       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_aranges
+                0x00000550       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_aranges
+                0x00000578       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_aranges
+                0x00000598       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_aranges
+                0x000005c0       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_aranges
+                0x00000600       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_aranges
+                0x00000628       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_aranges
+                0x00000650       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_aranges
+                0x00000670       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_aranges
+                0x00000690       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_aranges
+                0x000006b0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_aranges
+                0x000006d0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_aranges
+                0x000006f0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_aranges
+                0x00000710       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_aranges
+                0x00000730       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_aranges
+                0x00000758       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_aranges
+                0x00000778       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_aranges
+                0x00000798       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_aranges
+                0x000007b8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_aranges
+                0x000007d8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_aranges
+                0x000007f8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_aranges
+                0x00000818       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .debug_aranges
+                0x00000838       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .debug_aranges
+                0x00000858       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .debug_aranges
+                0x00000878       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .debug_aranges
+                0x00000898       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .debug_aranges
+                0x000008b8       0x70 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_aranges
+                0x00000928       0x20 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_aranges
+                0x00000948       0x30 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_aranges
+                0x00000978       0x28 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_aranges
+                0x000009a0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .debug_aranges
+                0x000009c0       0x58 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_ranges   0x00000000      0x5c8
+ .debug_ranges  0x00000000       0x28 build/cortex-m0/hash.o
+ .debug_ranges  0x00000028       0x38 build/cortex-m0/hash_syscalls.o
+ .debug_ranges  0x00000060       0x28 build/cortex-m0/hkdf.o
+ .debug_ranges  0x00000088       0x50 build/cortex-m0/hkdf_syscalls.o
+ .debug_ranges  0x000000d8       0x28 build/cortex-m0/hmac.o
+ .debug_ranges  0x00000100       0x40 build/cortex-m0/hmac_syscalls.o
+ .debug_ranges  0x00000140       0xe8 build/cortex-m0/main.o
+ .debug_ranges  0x00000228      0x120 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_ranges  0x00000348      0x190 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_ranges  0x000004d8       0x60 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_ranges  0x00000538       0x10 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_ranges  0x00000548       0x20 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_ranges  0x00000568       0x18 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_ranges  0x00000580       0x48 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_line     0x00000000     0x8189
+ .debug_line    0x00000000      0x230 build/cortex-m0/hash.o
+ .debug_line    0x00000230      0x238 build/cortex-m0/hash_syscalls.o
+ .debug_line    0x00000468      0x2ce build/cortex-m0/hkdf.o
+ .debug_line    0x00000736      0x2b3 build/cortex-m0/hkdf_syscalls.o
+ .debug_line    0x000009e9      0x260 build/cortex-m0/hmac.o
+ .debug_line    0x00000c49      0x261 build/cortex-m0/hmac_syscalls.o
+ .debug_line    0x00000eaa      0x45f build/cortex-m0/main.o
+ .debug_line    0x00001309      0x492 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_line    0x0000179b      0xa27 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_line    0x000021c2      0x2b7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_line    0x00002479      0x17e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_line    0x000025f7      0x10b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_line    0x00002702      0x1dd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_line    0x000028df      0x197 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_line    0x00002a76      0x666 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_line    0x000030dc      0x27c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_line    0x00003358      0x13d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_line    0x00003495      0x17e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_line    0x00003613       0xf6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+ .debug_line    0x00003709      0x630 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_line    0x00003d39      0x550 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_line    0x00004289      0x3b5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_line    0x0000463e      0x241 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_line    0x0000487f      0x1bc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_line    0x00004a3b      0x20c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_line    0x00004c47      0x271 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_line    0x00004eb8      0x31b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_line    0x000051d3      0x47f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_line    0x00005652      0x19b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_line    0x000057ed      0x28f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_line    0x00005a7c      0x581 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_line    0x00005ffd      0x1a5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_line    0x000061a2      0x19c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_line    0x0000633e      0x272 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_line    0x000065b0      0x1fa ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_line    0x000067aa      0x16a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_line    0x00006914      0x19c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_line    0x00006ab0      0x1a6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_line    0x00006c56      0x183 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_line    0x00006dd9      0x13a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_line    0x00006f13      0x1a5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_line    0x000070b8      0x21d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_line    0x000072d5       0x52 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .debug_line    0x00007327       0x53 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+ .debug_line    0x0000737a       0x61 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .debug_line    0x000073db       0x6f ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .debug_line    0x0000744a       0x4a ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+ .debug_line    0x00007494      0x2db ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_line    0x0000776f      0x198 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_line    0x00007907      0x29a ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_line    0x00007ba1      0x1d2 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_line    0x00007d73      0x131 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .debug_line    0x00007ea4      0x2e5 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_str      0x00000000     0x2be9
+ .debug_str     0x00000000     0x2be9 build/cortex-m0/hash.o
+                                0x676 (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/hash_syscalls.o
+                                0x8ec (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/hkdf.o
+                                0x731 (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/hkdf_syscalls.o
+                                0x96b (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/hmac.o
+                                0x6b7 (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/hmac_syscalls.o
+                                0x917 (size before relaxing)
+ .debug_str     0x00002be9        0x0 build/cortex-m0/main.o
+                                0x4c8 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+                                0x334 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+                                0xb43 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+                                0x57e (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+                                0x232 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+                                0x214 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+                                0x572 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+                                0x551 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+                                0x8a4 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+                                0x568 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+                                0x23a (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+                                0x22e (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-impure.o)
+                                0x537 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+                                0x827 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+                                0x73a (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+                                0x5be (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+                                0x56d (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+                                0x547 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+                                0x572 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+                                0x5a4 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+                                0x6ca (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+                                0x618 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+                                0x53b (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+                                0x5b7 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+                                0x5e8 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+                                0x52d (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+                                0x53b (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+                                0x556 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+                                0x5ad (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+                                0x555 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+                                0x53d (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+                                0x537 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+                                0x580 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+                                0x22f (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+                                0x540 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+                                0x67f (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+                                 0xa7 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+                                 0xa7 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+                                 0xac (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+                                 0xaa (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+                                 0xad (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+                                0x562 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+                                0x34f (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+                                0x506 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+                                0x53a (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+                                0x531 (size before relaxing)
+ .debug_str     0x00002be9        0x0 ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+                                0x8f9 (size before relaxing)
+
+.debug_frame    0x00000000     0x1384
+ .debug_frame   0x00000000       0x7c build/cortex-m0/hash.o
+ .debug_frame   0x0000007c       0xb0 build/cortex-m0/hash_syscalls.o
+ .debug_frame   0x0000012c       0x7c build/cortex-m0/hkdf.o
+ .debug_frame   0x000001a8      0x104 build/cortex-m0/hkdf_syscalls.o
+ .debug_frame   0x000002ac       0x80 build/cortex-m0/hmac.o
+ .debug_frame   0x0000032c       0xcc build/cortex-m0/hmac_syscalls.o
+ .debug_frame   0x000003f8       0x38 build/cortex-m0/main.o
+ .debug_frame   0x00000430       0x5c ../../libtock-c/libtock/build/cortex-m0/libtock.a(crt0.o)
+ .debug_frame   0x0000048c      0x338 ../../libtock-c/libtock/build/cortex-m0/libtock.a(tock.o)
+ .debug_frame   0x000007c4       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_frame   0x00000808       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_frame   0x00000830       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_frame   0x00000850       0x4c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_frame   0x0000089c       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_frame   0x000008dc       0xa8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_frame   0x00000984       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_frame   0x000009b4       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_frame   0x000009e4       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_frame   0x00000a04       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_frame   0x00000a5c      0x144 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_frame   0x00000ba0       0x64 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_frame   0x00000c04       0x48 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_frame   0x00000c4c       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_frame   0x00000c7c       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_frame   0x00000cc0       0x90 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_frame   0x00000d50       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_frame   0x00000da0       0x5c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_frame   0x00000dfc       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_frame   0x00000e2c       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_frame   0x00000e5c       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_frame   0x00000e8c       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_frame   0x00000ebc       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_frame   0x00000eec       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_frame   0x00000f20       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_frame   0x00000f50       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_frame   0x00000f80       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_frame   0x00000fb0       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_frame   0x00000fe0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_frame   0x00001000       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_frame   0x00001028       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_frame   0x00001058       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_frame   0x00001088       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+ .debug_frame   0x000010a8       0x20 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+ .debug_frame   0x000010c8       0xd8 ../../libtock-c/libtock/build/cortex-m0/libtock.a(sys.o)
+ .debug_frame   0x000011a0       0x28 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(sys.o)
+ .debug_frame   0x000011c8       0x60 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console.o)
+ .debug_frame   0x00001228       0x48 ../../libtock-c/libtock-sync/build/cortex-m0/libtocksync.a(console_syscalls.o)
+ .debug_frame   0x00001270       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+ .debug_frame   0x00001298       0xec ../../libtock-c/libtock/build/cortex-m0/libtock.a(console_syscalls.o)
+
+.debug_loclists
+                0x00000000     0x2817
+ .debug_loclists
+                0x00000000      0x1a9 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_loclists
+                0x000001a9       0xa3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_loclists
+                0x0000024c       0x6a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_loclists
+                0x000002b6       0x4a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_loclists
+                0x00000300       0x75 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_loclists
+                0x00000375      0x4cd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_loclists
+                0x00000842       0x77 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_loclists
+                0x000008b9       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_loclists
+                0x000008d9       0x8d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_loclists
+                0x00000966      0x4ca ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_loclists
+                0x00000e30      0x1d5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_loclists
+                0x00001005      0x227 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_loclists
+                0x0000122c      0x11b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_loclists
+                0x00001347       0xb6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_loclists
+                0x000013fd      0x147 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_loclists
+                0x00001544      0x2af ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_loclists
+                0x000017f3      0x1a3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_loclists
+                0x00001996      0x277 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_loclists
+                0x00001c0d       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_loclists
+                0x00001cad       0xc8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_loclists
+                0x00001d75      0x4a5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_loclists
+                0x0000221a       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_loclists
+                0x00002272       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_loclists
+                0x00002312       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_loclists
+                0x0000238a      0x194 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_loclists
+                0x0000251e       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_loclists
+                0x000025be       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_loclists
+                0x00002616       0x69 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_loclists
+                0x0000267f       0xc4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_loclists
+                0x00002743       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_loclists
+                0x0000279b       0x7c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+
+.debug_rnglists
+                0x00000000      0x45b
+ .debug_rnglists
+                0x00000000       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-puts.o)
+ .debug_rnglists
+                0x00000044       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memcpy-stub.o)
+ .debug_rnglists
+                0x00000057       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memset.o)
+ .debug_rnglists
+                0x0000006a       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-printf.o)
+ .debug_rnglists
+                0x00000083       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putchar.o)
+ .debug_rnglists
+                0x0000009c       0x3b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf.o)
+ .debug_rnglists
+                0x000000d7       0x29 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wsetup.o)
+ .debug_rnglists
+                0x00000100       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-exit.o)
+ .debug_rnglists
+                0x00000113       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memchr-stub.o)
+ .debug_rnglists
+                0x00000126       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_rnglists
+                0x00000176       0x62 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-findfp.o)
+ .debug_rnglists
+                0x000001d8       0x3b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fflush.o)
+ .debug_rnglists
+                0x00000213       0x26 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-wbuf.o)
+ .debug_rnglists
+                0x00000239       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fwalk.o)
+ .debug_rnglists
+                0x0000024c       0x31 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-putc.o)
+ .debug_rnglists
+                0x0000027d       0x2b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-stdio.o)
+ .debug_rnglists
+                0x000002a8       0x25 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-makebuf.o)
+ .debug_rnglists
+                0x000002cd       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mallocr.o)
+ .debug_rnglists
+                0x000002f9       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-readr.o)
+ .debug_rnglists
+                0x0000030c       0x14 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-freer.o)
+ .debug_rnglists
+                0x00000320       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fvwrite.o)
+ .debug_rnglists
+                0x00000358       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-closer.o)
+ .debug_rnglists
+                0x0000036b       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-lseekr.o)
+ .debug_rnglists
+                0x0000037e       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reent.o)
+ .debug_rnglists
+                0x000003aa       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-reallocr.o)
+ .debug_rnglists
+                0x000003bd       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-mlock.o)
+ .debug_rnglists
+                0x000003d6       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-writer.o)
+ .debug_rnglists
+                0x000003e9       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-isattyr.o)
+ .debug_rnglists
+                0x000003fc       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-msizer.o)
+ .debug_rnglists
+                0x0000040f       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-memmove.o)
+ .debug_rnglists
+                0x00000422       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-sbrkr.o)
+ .debug_rnglists
+                0x00000435       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-fstatr.o)
+ .debug_rnglists
+                0x00000448       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/arm/arm-none-eabi/lib/thumb/v6-m/nofp/libc.a(libc_a-errno.o)
+
+.debug_line_str
+                0x00000000       0x85
+ .debug_line_str
+                0x00000000       0x85 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_uqi.o)
+ .debug_line_str
+                0x00000085        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_thumb1_case_shi.o)
+                                 0x85 (size before relaxing)
+ .debug_line_str
+                0x00000085        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_udivsi3.o)
+                                 0x85 (size before relaxing)
+ .debug_line_str
+                0x00000085        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_divsi3.o)
+                                 0x85 (size before relaxing)
+ .debug_line_str
+                0x00000085        0x0 ../../libtock-c/lib/libtock-libc++-15.2.0/arm/lib/gcc/arm-none-eabi/15.2.0/thumb/v6-m/nofp/libgcc.a(_dvmd_tls.o)
+                                 0x85 (size before relaxing)

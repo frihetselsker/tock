@@ -169,3 +169,5 @@ pub unsafe trait NetworkCapabilityCreationCapability {}
 ///
 /// Capabilities can only be created in trusted crates that can use `unsafe`.
 pub unsafe trait SetDebugWriterCapability {}
+
+pub unsafe trait DigestDriverCapability {}

@@ -1,0 +1,9 @@
+hkdf_syscalls.c:17:6:libtock_hkdf_driver_exists	0	static
+hkdf_syscalls.c:21:14:libtock_hkdf_set_done_upcall	32	static
+hkdf_syscalls.c:26:14:libtock_hkdf_set_readonly_allow_ikm_buffer	32	static
+hkdf_syscalls.c:31:14:libtock_hkdf_set_readonly_allow_salt_buffer	32	static
+hkdf_syscalls.c:36:14:libtock_hkdf_set_readonly_allow_info_buffer	32	static
+hkdf_syscalls.c:41:14:libtock_hkdf_set_readwrite_allow_prk_buffer	32	static
+hkdf_syscalls.c:46:14:libtock_hkdf_set_readwrite_allow_okm_buffer	32	static
+hkdf_syscalls.c:51:14:libtock_hkdf_command_start	32	static
+hkdf_syscalls.c:56:14:libtocksync_hkdf_yield_wait_for_done	24	static

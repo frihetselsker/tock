@@ -1,0 +1,1733 @@
+Archive member included to satisfy reference by file (symbol)
+
+../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                              (_start)
+../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                              build/rv32imc/hash.o (tock_status_to_returncode)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+                              ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o) (memset)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                              build/rv32imc/main.o (puts)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+                              build/rv32imc/hash_syscalls.o (memcpy)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+                              build/rv32imc/main.o (printf)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+                              build/rv32imc/main.o (putchar)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o) (_vfprintf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o) (__swsetup_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+                              ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o) (exit)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o) (memchr)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o) (_impure_ptr)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o) (_printf_i)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o) (__stdio_exit_handler)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o) (_fflush_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o) (__swbuf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o) (_fwalk_sglue)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o) (_putc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o) (__sread)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o) (__smakebuf_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o) (_malloc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o) (_read_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o) (_free_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o) (__sfvwrite_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o) (_close_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o) (_lseek_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o) (errno)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o) (_realloc_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o) (__malloc_lock)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o) (_write_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o) (_isatty_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o) (memmove)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o) (_malloc_usable_size_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o) (_sbrk_r)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o) (_fstat_r)
+../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o) (_isatty)
+../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+                              ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o) (_write)
+../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+                              ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o) (libtocksync_console_write)
+../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+                              ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o) (libtocksync_console_yield_wait_for_write)
+../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+                              ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o) (__errno)
+../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                              ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o) (libtock_console_set_read_allow)
+
+Merging object attributes
+
+
+Discarded input sections
+
+ .text          0x00000000        0x0 build/rv32imc/hash.o
+ .text.hash_upcall
+                0x00000000       0x16 build/rv32imc/hash.o
+ .text.libtock_hash_compute
+                0x00000000       0x5e build/rv32imc/hash.o
+ .text          0x00000000        0x0 build/rv32imc/hash_syscalls.o
+ .text.libtock_hash_set_done_upcall
+                0x00000000       0x3a build/rv32imc/hash_syscalls.o
+ .text          0x00000000        0x0 build/rv32imc/hkdf.o
+ .text.hkdf_upcall
+                0x00000000       0x16 build/rv32imc/hkdf.o
+ .text.libtock_hkdf_compute
+                0x00000000       0xc0 build/rv32imc/hkdf.o
+ .text          0x00000000        0x0 build/rv32imc/hkdf_syscalls.o
+ .text.libtock_hkdf_set_done_upcall
+                0x00000000       0x3a build/rv32imc/hkdf_syscalls.o
+ .text          0x00000000        0x0 build/rv32imc/hmac.o
+ .text.hmac_upcall
+                0x00000000       0x16 build/rv32imc/hmac.o
+ .text.libtock_hmac_compute
+                0x00000000       0x82 build/rv32imc/hmac.o
+ .text          0x00000000        0x0 build/rv32imc/hmac_syscalls.o
+ .text.libtock_hmac_set_done_upcall
+                0x00000000       0x3a build/rv32imc/hmac_syscalls.o
+ .text          0x00000000        0x0 build/rv32imc/main.o
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .text._c_start_pic
+                0x00000000       0xa4 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_command_return_u32_to_returncode
+                0x00000000       0x1e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_command_return_u64_to_returncode
+                0x00000000       0x26 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_command_return_u32_u32_to_returncode
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_subscribe_return_to_returncode
+                0x00000000       0x12 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_allow_userspace_r_return_to_returncode
+                0x00000000       0x12 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.yield    0x00000000       0x14 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.yield_for
+                0x00000000       0x24 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.yield_no_wait
+                0x00000000       0x1e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_restart
+                0x00000000        0xa ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.subscribe
+                0x00000000       0x4c ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.allow_userspace_read
+                0x00000000       0x4e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_memory_begins_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_memory_ends_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_flash_begins_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_flash_ends_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_grant_begins_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_number_writeable_flash_regions
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_writeable_flash_region_begins_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_app_writeable_flash_region_ends_at
+                0x00000000       0x22 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .rodata.tock_strrcode.str1.4
+                0x00000000      0x1de ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_strrcode
+                0x00000000       0xca ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .rodata.tock_strrcode
+                0x00000000       0x34 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_strerr
+                0x00000000        0xc ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .rodata.tock_expect.str1.4
+                0x00000000       0x65 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text.tock_expect
+                0x00000000       0x62 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .text._printf_r
+                0x00000000       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .text._putchar_r
+                0x00000000        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .text.__sprint_r
+                0x00000000       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .text.vfprintf
+                0x00000000       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__fp_lock
+                0x00000000        0x8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__fp_unlock
+                0x00000000        0x8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__sfp    0x00000000      0x11c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__sfp_lock_acquire
+                0x00000000        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__sfp_lock_release
+                0x00000000        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__fp_lock_all
+                0x00000000       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__fp_unlock_all
+                0x00000000       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .text.fflush   0x00000000       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .text.__swbuf  0x00000000       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .text.putc     0x00000000       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .text.__seofread
+                0x00000000        0x8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .text.__sfvwrite_r
+                0x00000000      0x494 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .text._reclaim_reent
+                0x00000000      0x1ac ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .text._realloc_r
+                0x00000000       0xd4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .text          0x00000000       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .text._malloc_usable_size_r
+                0x00000000       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .text._unlink  0x00000000        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .text._open    0x00000000       0x14 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .text._getpid  0x00000000        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .text._kill    0x00000000        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .text.libtocksync_console_exists
+                0x00000000        0x8 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .text.libtocksync_console_read
+                0x00000000       0x4e ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .text.libtocksync_console_yield_wait_for_read
+                0x00000000       0x2a ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .text          0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .text          0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_write_done_set_upcall
+                0x00000000       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_read_done_set_upcall
+                0x00000000       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_set_readwrite_allow
+                0x00000000       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_driver_exists
+                0x00000000        0xa ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_command_read
+                0x00000000       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ .text.libtock_console_command_abort_read
+                0x00000000       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x403d0080         0x00070000         xr
+SRAM             0x3fcb0000         0x00020000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x00000800                        STACK_SIZE = 0x800
+                0x00000400                        APP_HEAP_SIZE = 0x400
+                0x00000400                        KERNEL_HEAP_SIZE = 0x400
+START GROUP
+LOAD build/rv32imc/hash.o
+LOAD build/rv32imc/hash_syscalls.o
+LOAD build/rv32imc/hkdf.o
+LOAD build/rv32imc/hkdf_syscalls.o
+LOAD build/rv32imc/hmac.o
+LOAD build/rv32imc/hmac_syscalls.o
+LOAD build/rv32imc/main.o
+LOAD ../../libtock-c/libtock/build/rv32imc/libtock.a
+LOAD ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a
+LOAD ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a
+LOAD ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libm.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libstdc++.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libsupc++.a
+LOAD ../../libtock-c/lib/libtock-libc++-15.2.0/riscv/lib/gcc/riscv64-unknown-elf/15.2.0/rv32im/ilp32/libgcc.a
+END GROUP
+                0x00070000                        PROG_LENGTH = 0x70000
+                0x00020000                        RAM_LENGTH = 0x20000
+
+.crt0_header    0x403d0080       0x28
+                0x403d0080        0x4 LONG 0x2c38 (LOADADDR (.got) - ORIGIN (FLASH))
+                0x403d0084        0x4 LONG 0x800 (_got - ORIGIN (SRAM))
+                0x403d0088        0x4 LONG 0x0 SIZEOF (.got)
+                0x403d008c        0x4 LONG 0x2c38 (LOADADDR (.data) - ORIGIN (FLASH))
+                0x403d0090        0x4 LONG 0x800 (_data - ORIGIN (SRAM))
+                0x403d0094        0x4 LONG 0x5c SIZEOF (.data)
+                0x403d0098        0x4 LONG 0x85c (_bss - ORIGIN (SRAM))
+                0x403d009c        0x4 LONG 0x14c SIZEOF (.bss)
+                0x403d00a0        0x4 LONG 0x2c94 (LOADADDR (.endflash) - ORIGIN (FLASH))
+                0x403d00a4        0x4 LONG 0x800 STACK_SIZE
+
+.wfr.app_state  0x403d00a8        0x0
+ *(.app_state)
+                0x403d00a8                        . = ALIGN (0x4)
+
+.text           0x403d00a8     0x2c10
+                0x403d00a8                        . = ALIGN (0x4)
+                0x403d00a8                        _text = .
+ *(.start)
+ .start         0x403d00a8       0x54 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                0x403d00a8                _start
+ *(.text*)
+ .text.libtock_hash_exists
+                0x403d00fc        0x8 build/rv32imc/hash.o
+                0x403d00fc                libtock_hash_exists
+ .text.libtocksync_hash_compute
+                0x403d0104       0x4c build/rv32imc/hash.o
+                0x403d0104                libtocksync_hash_compute
+ .text.libtock_hash_driver_exists
+                0x403d0150        0xe build/rv32imc/hash_syscalls.o
+                0x403d0150                libtock_hash_driver_exists
+ .text.libtock_hash_set_readonly_allow_input_buffer
+                0x403d015e       0x3a build/rv32imc/hash_syscalls.o
+                0x403d015e                libtock_hash_set_readonly_allow_input_buffer
+ .text.libtock_hash_set_readwrite_allow_output_buffer
+                0x403d0198       0x3a build/rv32imc/hash_syscalls.o
+                0x403d0198                libtock_hash_set_readwrite_allow_output_buffer
+ .text.libtock_hash_command_start
+                0x403d01d2       0x3a build/rv32imc/hash_syscalls.o
+                0x403d01d2                libtock_hash_command_start
+ .text.libtocksync_hash_yield_wait_for_done
+                0x403d020c       0x24 build/rv32imc/hash_syscalls.o
+                0x403d020c                libtocksync_hash_yield_wait_for_done
+ .text.libtock_hkdf_exists
+                0x403d0230        0x8 build/rv32imc/hkdf.o
+                0x403d0230                libtock_hkdf_exists
+ .text.libtocksync_hkdf_compute
+                0x403d0238       0xae build/rv32imc/hkdf.o
+                0x403d0238                libtocksync_hkdf_compute
+ .text.libtock_hkdf_driver_exists
+                0x403d02e6        0xe build/rv32imc/hkdf_syscalls.o
+                0x403d02e6                libtock_hkdf_driver_exists
+ .text.libtock_hkdf_set_readonly_allow_ikm_buffer
+                0x403d02f4       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d02f4                libtock_hkdf_set_readonly_allow_ikm_buffer
+ .text.libtock_hkdf_set_readonly_allow_salt_buffer
+                0x403d032e       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d032e                libtock_hkdf_set_readonly_allow_salt_buffer
+ .text.libtock_hkdf_set_readonly_allow_info_buffer
+                0x403d0368       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d0368                libtock_hkdf_set_readonly_allow_info_buffer
+ .text.libtock_hkdf_set_readwrite_allow_prk_buffer
+                0x403d03a2       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d03a2                libtock_hkdf_set_readwrite_allow_prk_buffer
+ .text.libtock_hkdf_set_readwrite_allow_okm_buffer
+                0x403d03dc       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d03dc                libtock_hkdf_set_readwrite_allow_okm_buffer
+ .text.libtock_hkdf_command_start
+                0x403d0416       0x3a build/rv32imc/hkdf_syscalls.o
+                0x403d0416                libtock_hkdf_command_start
+ .text.libtocksync_hkdf_yield_wait_for_done
+                0x403d0450       0x24 build/rv32imc/hkdf_syscalls.o
+                0x403d0450                libtocksync_hkdf_yield_wait_for_done
+ .text.libtock_hmac_exists
+                0x403d0474        0x8 build/rv32imc/hmac.o
+                0x403d0474                libtock_hmac_exists
+ .text.libtocksync_hmac_compute
+                0x403d047c       0x70 build/rv32imc/hmac.o
+                0x403d047c                libtocksync_hmac_compute
+ .text.libtock_hmac_driver_exists
+                0x403d04ec        0xe build/rv32imc/hmac_syscalls.o
+                0x403d04ec                libtock_hmac_driver_exists
+ .text.libtock_hmac_set_readonly_allow_input_buffer
+                0x403d04fa       0x3a build/rv32imc/hmac_syscalls.o
+                0x403d04fa                libtock_hmac_set_readonly_allow_input_buffer
+ .text.libtock_hmac_set_readonly_allow_key_buffer
+                0x403d0534       0x3a build/rv32imc/hmac_syscalls.o
+                0x403d0534                libtock_hmac_set_readonly_allow_key_buffer
+ .text.libtock_hmac_set_readwrite_allow_output_buffer
+                0x403d056e       0x3a build/rv32imc/hmac_syscalls.o
+                0x403d056e                libtock_hmac_set_readwrite_allow_output_buffer
+ .text.libtock_hmac_command_start
+                0x403d05a8       0x3a build/rv32imc/hmac_syscalls.o
+                0x403d05a8                libtock_hmac_command_start
+ .text.libtocksync_hmac_yield_wait_for_done
+                0x403d05e2       0x24 build/rv32imc/hmac_syscalls.o
+                0x403d05e2                libtocksync_hmac_yield_wait_for_done
+ .text.startup.main
+                0x403d0606      0x3c8 build/rv32imc/main.o
+                0x403d0606                main
+ .text._c_start_nopic
+                0x403d09ce       0x54 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                0x403d09ce                _c_start_nopic
+ .text.tock_status_to_returncode
+                0x403d0a22        0x6 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a22                tock_status_to_returncode
+ .text.tock_command_return_novalue_to_returncode
+                0x403d0a28       0x1e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a28                tock_command_return_novalue_to_returncode
+ .text.tock_allow_rw_return_to_returncode
+                0x403d0a46       0x12 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a46                tock_allow_rw_return_to_returncode
+ .text.tock_allow_ro_return_to_returncode
+                0x403d0a58       0x12 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a58                tock_allow_ro_return_to_returncode
+ .text.yield_wait_for
+                0x403d0a6a       0x14 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a6a                yield_wait_for
+ .text.tock_exit
+                0x403d0a7e        0xa ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a7e                tock_exit
+ .text.command  0x403d0a88       0x1c ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0a88                command
+ .text.allow_readwrite
+                0x403d0aa4       0x4e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0aa4                allow_readwrite
+ .text.allow_readonly
+                0x403d0af2       0x4e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0af2                allow_readonly
+ .text.memop    0x403d0b40       0x38 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0b40                memop
+ .text.driver_exists
+                0x403d0b78       0x26 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                0x403d0b78                driver_exists
+ *fill*         0x403d0b9e        0x2 ff
+ .text          0x403d0ba0       0x1c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+                0x403d0ba0                memset
+ .text._puts_r  0x403d0bbc      0x118 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                0x403d0bbc                _puts_r
+ .text.puts     0x403d0cd4       0x14 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                0x403d0cd4                puts
+ .text          0x403d0ce8       0x24 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+                0x403d0ce8                memcpy
+ .text.printf   0x403d0d0c       0x54 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+                0x403d0d0c                printf
+                0x403d0d0c                iprintf
+ .text.putchar  0x403d0d60       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+                0x403d0d60                putchar
+ .text.__sfputc_r
+                0x403d0d78       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .text.__sfputs_r
+                0x403d0db8       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                0x403d0db8                __sfputs_r
+ .text._vfprintf_r
+                0x403d0e30      0x394 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                0x403d0e30                _vfiprintf_r
+                0x403d0e30                _vfprintf_r
+ .text.__swsetup_r
+                0x403d11c4      0x128 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+                0x403d11c4                __swsetup_r
+ .text.exit     0x403d12ec       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+                0x403d12ec                exit
+ .text.memchr   0x403d1330       0x24 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+                0x403d1330                memchr
+ .text._printf_common
+                0x403d1354      0x1b4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                0x403d1354                _printf_common
+ .text._printf_i
+                0x403d1508      0x394 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                0x403d1508                _printf_i
+ .text.std      0x403d189c       0x8c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.stdio_exit_handler
+                0x403d1928       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.cleanup_stdio
+                0x403d1948       0x7c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.global_stdio_init.part.0
+                0x403d19c4       0x68 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .text.__sinit  0x403d1a2c       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                0x403d1a2c                __sinit
+ .text.__sflush_r
+                0x403d1a58      0x1cc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                0x403d1a58                __sflush_r
+ .text._fflush_r
+                0x403d1c24       0x70 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                0x403d1c24                _fflush_r
+ .text.__swbuf_r
+                0x403d1c94      0x10c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+                0x403d1c94                __swbuf_r
+ .text._fwalk_sglue
+                0x403d1da0       0xa8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+                0x403d1da0                _fwalk_sglue
+ .text._putc_r  0x403d1e48       0x94 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+                0x403d1e48                _putc_r
+ .text.__sread  0x403d1edc       0x54 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                0x403d1edc                __sread
+ .text.__swrite
+                0x403d1f30       0x8c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                0x403d1f30                __swrite
+ .text.__sseek  0x403d1fbc       0x5c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                0x403d1fbc                __sseek
+ .text.__sclose
+                0x403d2018        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                0x403d2018                __sclose
+ .text.__swhatbuf_r
+                0x403d2024       0x90 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                0x403d2024                __swhatbuf_r
+ .text.__smakebuf_r
+                0x403d20b4       0xd8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                0x403d20b4                __smakebuf_r
+ .text.sbrk_aligned
+                0x403d218c       0x94 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .text._malloc_r
+                0x403d2220      0x1d8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                0x403d2220                _malloc_r
+ .text._read_r  0x403d23f8       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+                0x403d23f8                _read_r
+ .text._free_r  0x403d2450      0x104 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+                0x403d2450                _free_r
+ .text._close_r
+                0x403d2554       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+                0x403d2554                _close_r
+ .text._lseek_r
+                0x403d25a4       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+                0x403d25a4                _lseek_r
+ .text.__malloc_lock
+                0x403d25fc        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                0x403d25fc                __malloc_lock
+ .text.__malloc_unlock
+                0x403d2600        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                0x403d2600                __malloc_unlock
+ .text._write_r
+                0x403d2604       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+                0x403d2604                _write_r
+ .text._isatty_r
+                0x403d265c       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+                0x403d265c                _isatty_r
+ .text._sbrk_r  0x403d26ac       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+                0x403d26ac                _sbrk_r
+ .text._fstat_r
+                0x403d26fc       0x54 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+                0x403d26fc                _fstat_r
+ .text._isatty  0x403d2750        0x6 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d2750                _isatty
+ .text._close   0x403d2756        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d2756                _close
+ .text._fstat   0x403d275a        0x8 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d275a                _fstat
+ .text._lseek   0x403d2762        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d2762                _lseek
+ .text._read    0x403d2766        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d2766                _read
+ .text._exit    0x403d276a        0xc ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d276a                _exit
+ .text._sbrk    0x403d2776       0x2e ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x403d2776                _sbrk
+ .text._write   0x403d27a4       0x1a ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+                0x403d27a4                _write
+ .text.libtocksync_console_write
+                0x403d27be       0x4e ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+                0x403d27be                libtocksync_console_write
+ .text.libtocksync_console_yield_wait_for_write
+                0x403d280c       0x2a ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+                0x403d280c                libtocksync_console_yield_wait_for_write
+ *fill*         0x403d2836        0x2 ff
+ .text.__errno  0x403d2838        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+                0x403d2838                __errno
+ .text.libtock_console_set_read_allow
+                0x403d2844       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                0x403d2844                libtock_console_set_read_allow
+ .text.libtock_console_command_write
+                0x403d287a       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                0x403d287a                libtock_console_command_write
+ *(.rodata*)
+ .rodata.main.str1.4
+                0x403d28b0      0x371 build/rv32imc/main.o
+                                0x337 (size before relaxing)
+ *fill*         0x403d2c21        0x3 ff
+ .rodata        0x403d2c24       0x3a build/rv32imc/main.o
+ .rodata._vfprintf_r.str1.4
+                0x403d2c5e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                                 0x13 (size before relaxing)
+ .rodata._printf_i.str1.4
+                0x403d2c5e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                                 0x25 (size before relaxing)
+ *fill*         0x403d2c5e        0x2 ff
+ .rodata._printf_i
+                0x403d2c60       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ *(.srodata*)
+ *(.syscalls)
+                0x403d2cb8                        _etext = .
+ *(.ARM.extab*)
+                0x403d2cb8                        . = ALIGN (0x4)
+
+.rela.dyn       0x403d2cb8        0x0
+ .rela.text._vfprintf_r
+                0x403d2cb8        0x0 build/rv32imc/hash.o
+ .rela.text.exit
+                0x403d2cb8        0x0 build/rv32imc/hash.o
+
+.stack          0x3fcb0000      0x800
+                0x3fcb0000                        _sram_origin = .
+                0x3fcb0000                        . = ALIGN (0x10)
+                0x3fcb0000                        _stack = .
+                0x3fcb0800                        . = (_stack + STACK_SIZE)
+ *fill*         0x3fcb0000      0x800 
+                0x3fcb0800                        . = ALIGN (0x10)
+
+.got            0x3fcb0800        0x0 load address 0x403d2cb8
+                0x3fcb0800                        . = ALIGN (0x4)
+                0x3fcb0800                        _got = .
+ *(.got*)
+ *(.got.plt*)
+                0x3fcb0800                        . = ALIGN (0x4)
+
+.data           0x3fcb0800       0x5c load address 0x403d2cb8
+                0x3fcb0800                        . = ALIGN (0x4)
+                0x3fcb0800                        _data = .
+ *(.data*)
+ .data          0x3fcb0800        0x0 build/rv32imc/hash.o
+ .data          0x3fcb0800        0x0 build/rv32imc/hash_syscalls.o
+ .data          0x3fcb0800        0x0 build/rv32imc/hkdf.o
+ .data          0x3fcb0800        0x0 build/rv32imc/hkdf_syscalls.o
+ .data          0x3fcb0800        0x0 build/rv32imc/hmac.o
+ .data          0x3fcb0800        0x0 build/rv32imc/hmac_syscalls.o
+ .data          0x3fcb0800        0x0 build/rv32imc/main.o
+ .data          0x3fcb0800        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .data          0x3fcb0800        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .data._impure_data
+                0x3fcb0800       0x4c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                0x3fcb0800                _impure_data
+ .data          0x3fcb084c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .data          0x3fcb084c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .data.__sglue  0x3fcb084c        0xc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                0x3fcb084c                __sglue
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .data          0x3fcb0858        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ *(.sdata*)
+ .sdata._impure_ptr
+                0x3fcb0858        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                0x3fcb0858                _impure_ptr
+                0x3fcb085c                        . = ALIGN (0x4)
+
+.bss            0x3fcb085c      0x14c load address 0x403d2d14
+                0x3fcb085c                        . = ALIGN (0x4)
+                0x3fcb085c                        _bss = .
+ *(.bss*)
+ .bss           0x3fcb085c        0x0 build/rv32imc/hash.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/hash_syscalls.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/hkdf.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/hkdf_syscalls.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/hmac.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/hmac_syscalls.o
+ .bss           0x3fcb085c        0x0 build/rv32imc/main.o
+ .bss           0x3fcb085c        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .bss           0x3fcb085c        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .bss.__sf      0x3fcb085c      0x138 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                0x3fcb085c                __sf
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .bss           0x3fcb0994        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+ *(.sbss*)
+ .sbss.__stdio_exit_handler
+                0x3fcb0994        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                0x3fcb0994                __stdio_exit_handler
+ .sbss.__malloc_sbrk_start
+                0x3fcb0998        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                0x3fcb0998                __malloc_sbrk_start
+ .sbss.__malloc_free_list
+                0x3fcb099c        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                0x3fcb099c                __malloc_free_list
+ .sbss.errno    0x3fcb09a0        0x4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+                0x3fcb09a0                errno
+ .sbss.__dso_handle
+                0x3fcb09a4        0x4 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                0x3fcb09a4                __dso_handle
+ *(COMMON)
+                0x3fcb09a8                        . = ALIGN (0x4)
+
+.endflash       0x403d2d14        0x0
+                [!provide]                        PROVIDE (__exidx_start = .)
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+                [!provide]                        PROVIDE (__exidx_end = .)
+                0x00000001                        ASSERT ((_got <= _bss), 
+The GOT section must be before the BSS section for crt0 setup to be correct.)
+                0x00000001                        ASSERT ((_data <= _bss), 
+The data section must be before the BSS section for crt0 setup to be correct.)
+OUTPUT(build/rv32imc/rv32imc.0x403D0080.0x3FCB0000.elf elf32-littleriscv)
+
+.GCC.command.line
+                0x00000000       0xb8
+ .GCC.command.line
+                0x00000000       0xb8 build/rv32imc/hash.o
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/hash_syscalls.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/hkdf.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/hkdf_syscalls.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/hmac.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/hmac_syscalls.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 build/rv32imc/main.o
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+                                 0xb8 (size before relaxing)
+ .GCC.command.line
+                0x000000b8        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                                 0xb8 (size before relaxing)
+
+.comment        0x00000000       0x27
+ .comment       0x00000000       0x27 build/rv32imc/hash.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/hash_syscalls.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/hkdf.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/hkdf_syscalls.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/hmac.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/hmac_syscalls.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 build/rv32imc/main.o
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+                                 0x10 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+                                 0x19 (size before relaxing)
+ .comment       0x00000027        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                                 0x10 (size before relaxing)
+
+.note.GNU-stack
+                0x00000000        0x0
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hash.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hash_syscalls.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hkdf.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hkdf_syscalls.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hmac.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/hmac_syscalls.o
+ .note.GNU-stack
+                0x00000000        0x0 build/rv32imc/main.o
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .note.GNU-stack
+                0x00000000        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.riscv.attributes
+                0x00000000       0x36
+ .riscv.attributes
+                0x00000000       0x36 build/rv32imc/hash.o
+ .riscv.attributes
+                0x00000036       0x36 build/rv32imc/hash_syscalls.o
+ .riscv.attributes
+                0x0000006c       0x36 build/rv32imc/hkdf.o
+ .riscv.attributes
+                0x000000a2       0x36 build/rv32imc/hkdf_syscalls.o
+ .riscv.attributes
+                0x000000d8       0x36 build/rv32imc/hmac.o
+ .riscv.attributes
+                0x0000010e       0x36 build/rv32imc/hmac_syscalls.o
+ .riscv.attributes
+                0x00000144       0x36 build/rv32imc/main.o
+ .riscv.attributes
+                0x0000017a       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .riscv.attributes
+                0x000001b0       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .riscv.attributes
+                0x000001e6       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .riscv.attributes
+                0x0000020e       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .riscv.attributes
+                0x00000238       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .riscv.attributes
+                0x00000260       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .riscv.attributes
+                0x0000028a       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .riscv.attributes
+                0x000002b4       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .riscv.attributes
+                0x000002de       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .riscv.attributes
+                0x00000308       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .riscv.attributes
+                0x00000332       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .riscv.attributes
+                0x0000035c       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .riscv.attributes
+                0x00000386       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .riscv.attributes
+                0x000003b0       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .riscv.attributes
+                0x000003da       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .riscv.attributes
+                0x00000404       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .riscv.attributes
+                0x0000042e       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .riscv.attributes
+                0x00000458       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .riscv.attributes
+                0x00000482       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .riscv.attributes
+                0x000004ac       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .riscv.attributes
+                0x000004d6       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .riscv.attributes
+                0x00000500       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .riscv.attributes
+                0x0000052a       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .riscv.attributes
+                0x00000554       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .riscv.attributes
+                0x0000057e       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .riscv.attributes
+                0x000005a8       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .riscv.attributes
+                0x000005d2       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .riscv.attributes
+                0x000005fc       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .riscv.attributes
+                0x00000626       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .riscv.attributes
+                0x00000650       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .riscv.attributes
+                0x0000067a       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .riscv.attributes
+                0x000006a4       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .riscv.attributes
+                0x000006cc       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .riscv.attributes
+                0x000006f6       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .riscv.attributes
+                0x00000720       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .riscv.attributes
+                0x0000074a       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .riscv.attributes
+                0x00000780       0x36 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .riscv.attributes
+                0x000007b6       0x36 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .riscv.attributes
+                0x000007ec       0x36 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .riscv.attributes
+                0x00000822       0x2a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .riscv.attributes
+                0x0000084c       0x36 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_info     0x00000000    0x17b42
+ .debug_info    0x00000000      0x5c1 build/rv32imc/hash.o
+ .debug_info    0x000005c1      0x8ce build/rv32imc/hash_syscalls.o
+ .debug_info    0x00000e8f      0x7a3 build/rv32imc/hkdf.o
+ .debug_info    0x00001632      0xb14 build/rv32imc/hkdf_syscalls.o
+ .debug_info    0x00002146      0x661 build/rv32imc/hmac.o
+ .debug_info    0x000027a7      0x990 build/rv32imc/hmac_syscalls.o
+ .debug_info    0x00003137      0x915 build/rv32imc/main.o
+ .debug_info    0x00003a4c      0x65c ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_info    0x000040a8     0x15d5 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_info    0x0000567d       0x31 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .debug_info    0x000056ae      0x925 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_info    0x00005fd3       0x31 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .debug_info    0x00006004      0x84c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_info    0x00006850      0x7d0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_info    0x00007020     0x1063 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_info    0x00008083      0x7c2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_info    0x00008845      0x120 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_info    0x00008965      0x10e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_info    0x00008a73      0x71c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .debug_info    0x0000918f      0xdd8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_info    0x00009f67      0xe3c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_info    0x0000ada3      0x9b9 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_info    0x0000b75c      0x87b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_info    0x0000bfd7      0x7da ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_info    0x0000c7b1      0x897 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_info    0x0000d048      0xa8b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_info    0x0000dad3      0xb1e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_info    0x0000e5f1      0x9d2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_info    0x0000efc3      0x7ba ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_info    0x0000f77d      0x847 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_info    0x0000ffc4      0xb0f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_info    0x00010ad3      0x764 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_info    0x00011237      0x7af ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_info    0x000119e6      0x8a8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_info    0x0001228e      0x8d6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_info    0x00012b64      0x72d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_info    0x00013291      0x7c0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_info    0x00013a51      0x764 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_info    0x000141b5       0x31 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .debug_info    0x000141e6      0x7a1 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_info    0x00014987      0x789 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_info    0x00015110      0x988 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_info    0x00015a98      0x6c9 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_info    0x00016161      0x1ef ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_info    0x00016350      0x445 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_info    0x00016795      0x2dd ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_info    0x00016a72      0x702 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .debug_info    0x00017174      0x9ce ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_abbrev   0x00000000     0x5696
+ .debug_abbrev  0x00000000      0x189 build/rv32imc/hash.o
+ .debug_abbrev  0x00000189      0x1a9 build/rv32imc/hash_syscalls.o
+ .debug_abbrev  0x00000332      0x196 build/rv32imc/hkdf.o
+ .debug_abbrev  0x000004c8      0x1a9 build/rv32imc/hkdf_syscalls.o
+ .debug_abbrev  0x00000671      0x189 build/rv32imc/hmac.o
+ .debug_abbrev  0x000007fa      0x1a9 build/rv32imc/hmac_syscalls.o
+ .debug_abbrev  0x000009a3      0x16f build/rv32imc/main.o
+ .debug_abbrev  0x00000b12      0x217 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_abbrev  0x00000d29      0x36e ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_abbrev  0x00001097       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .debug_abbrev  0x000010bf      0x292 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_abbrev  0x00001351       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .debug_abbrev  0x00001379      0x1fc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_abbrev  0x00001575      0x1d6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_abbrev  0x0000174b      0x2f6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_abbrev  0x00001a41      0x1e8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_abbrev  0x00001c29       0xde ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_abbrev  0x00001d07       0xb7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_abbrev  0x00001dbe      0x14f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .debug_abbrev  0x00001f0d      0x278 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_abbrev  0x00002185      0x41a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_abbrev  0x0000259f      0x2bd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_abbrev  0x0000285c      0x233 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_abbrev  0x00002a8f      0x1a1 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_abbrev  0x00002c30      0x262 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_abbrev  0x00002e92      0x227 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_abbrev  0x000030b9      0x28f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_abbrev  0x00003348      0x247 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_abbrev  0x0000358f      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_abbrev  0x00003745      0x23a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_abbrev  0x0000397f      0x21e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_abbrev  0x00003b9d      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_abbrev  0x00003d53      0x1ca ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_abbrev  0x00003f1d      0x1fd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_abbrev  0x0000411a      0x214 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_abbrev  0x0000432e      0x198 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_abbrev  0x000044c6      0x1bb ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_abbrev  0x00004681      0x1b6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_abbrev  0x00004837       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .debug_abbrev  0x0000485f      0x19f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_abbrev  0x000049fe      0x1e0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_abbrev  0x00004bde      0x1c9 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_abbrev  0x00004da7      0x231 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_abbrev  0x00004fd8       0xff ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_abbrev  0x000050d7      0x18f ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_abbrev  0x00005266      0x12d ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_abbrev  0x00005393      0x164 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .debug_abbrev  0x000054f7      0x19f ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_loc      0x00000000     0x3ee3
+ .debug_loc     0x00000000      0x50c build/rv32imc/hash.o
+ .debug_loc     0x0000050c      0x264 build/rv32imc/hash_syscalls.o
+ .debug_loc     0x00000770      0x9f1 build/rv32imc/hkdf.o
+ .debug_loc     0x00001161      0x438 build/rv32imc/hkdf_syscalls.o
+ .debug_loc     0x00001599      0x694 build/rv32imc/hmac.o
+ .debug_loc     0x00001c2d      0x300 build/rv32imc/hmac_syscalls.o
+ .debug_loc     0x00001f2d      0x2ec build/rv32imc/main.o
+ .debug_loc     0x00002219      0x47f ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_loc     0x00002698      0xf13 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_loc     0x000035ab      0x23f ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_loc     0x000037ea       0xc7 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_loc     0x000038b1      0x206 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_loc     0x00003ab7       0xc8 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_loc     0x00003b7f      0x364 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_aranges  0x00000000      0x978
+ .debug_aranges
+                0x00000000       0x38 build/rv32imc/hash.o
+ .debug_aranges
+                0x00000038       0x48 build/rv32imc/hash_syscalls.o
+ .debug_aranges
+                0x00000080       0x38 build/rv32imc/hkdf.o
+ .debug_aranges
+                0x000000b8       0x60 build/rv32imc/hkdf_syscalls.o
+ .debug_aranges
+                0x00000118       0x38 build/rv32imc/hmac.o
+ .debug_aranges
+                0x00000150       0x50 build/rv32imc/hmac_syscalls.o
+ .debug_aranges
+                0x000001a0       0x20 build/rv32imc/main.o
+ .debug_aranges
+                0x000001c0       0x30 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_aranges
+                0x000001f0      0x120 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_aranges
+                0x00000310       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .debug_aranges
+                0x00000330       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_aranges
+                0x00000358       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .debug_aranges
+                0x00000378       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_aranges
+                0x000003a0       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_aranges
+                0x000003c8       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_aranges
+                0x00000408       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_aranges
+                0x00000428       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_aranges
+                0x00000448       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_aranges
+                0x00000468       0x18 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .debug_aranges
+                0x00000480       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_aranges
+                0x000004a8       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_aranges
+                0x00000520       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_aranges
+                0x00000550       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_aranges
+                0x00000578       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_aranges
+                0x00000598       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_aranges
+                0x000005c0       0x40 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_aranges
+                0x00000600       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_aranges
+                0x00000628       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_aranges
+                0x00000650       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_aranges
+                0x00000670       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_aranges
+                0x00000690       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_aranges
+                0x000006b0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_aranges
+                0x000006d0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_aranges
+                0x000006f0       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_aranges
+                0x00000710       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_aranges
+                0x00000730       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_aranges
+                0x00000758       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_aranges
+                0x00000778       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_aranges
+                0x00000798       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .debug_aranges
+                0x000007b8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_aranges
+                0x000007d8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_aranges
+                0x000007f8       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_aranges
+                0x00000818       0x70 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_aranges
+                0x00000888       0x20 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_aranges
+                0x000008a8       0x30 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_aranges
+                0x000008d8       0x28 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_aranges
+                0x00000900       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .debug_aranges
+                0x00000920       0x58 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_ranges   0x00000000      0x510
+ .debug_ranges  0x00000000       0x28 build/rv32imc/hash.o
+ .debug_ranges  0x00000028       0x38 build/rv32imc/hash_syscalls.o
+ .debug_ranges  0x00000060       0x28 build/rv32imc/hkdf.o
+ .debug_ranges  0x00000088       0x50 build/rv32imc/hkdf_syscalls.o
+ .debug_ranges  0x000000d8       0x28 build/rv32imc/hmac.o
+ .debug_ranges  0x00000100       0x40 build/rv32imc/hmac_syscalls.o
+ .debug_ranges  0x00000140       0xd0 build/rv32imc/main.o
+ .debug_ranges  0x00000210      0x100 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_ranges  0x00000310      0x110 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_ranges  0x00000420       0x60 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_ranges  0x00000480       0x10 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_ranges  0x00000490       0x20 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_ranges  0x000004b0       0x18 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_ranges  0x000004c8       0x48 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_line     0x00000000     0x8f7b
+ .debug_line    0x00000000      0x313 build/rv32imc/hash.o
+ .debug_line    0x00000313      0x317 build/rv32imc/hash_syscalls.o
+ .debug_line    0x0000062a      0x435 build/rv32imc/hkdf.o
+ .debug_line    0x00000a5f      0x401 build/rv32imc/hkdf_syscalls.o
+ .debug_line    0x00000e60      0x398 build/rv32imc/hmac.o
+ .debug_line    0x000011f8      0x365 build/rv32imc/hmac_syscalls.o
+ .debug_line    0x0000155d      0x684 build/rv32imc/main.o
+ .debug_line    0x00001be1      0x58c ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_line    0x0000216d      0xfe3 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_line    0x00003150       0x6e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+ .debug_line    0x000031be      0x2e8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_line    0x000034a6       0x7a ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+ .debug_line    0x00003520      0x158 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_line    0x00003678       0xd3 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_line    0x0000374b      0x895 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_line    0x00003fe0      0x2a6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_line    0x00004286       0xc5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_line    0x0000434b       0xac ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_line    0x000043f7       0x60 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+ .debug_line    0x00004457      0x919 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_line    0x00004d70      0x6e8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_line    0x00005458      0x4c0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_line    0x00005918      0x223 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_line    0x00005b3b      0x155 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_line    0x00005c90      0x1c2 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_line    0x00005e52      0x29b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_line    0x000060ed      0x29c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_line    0x00006389      0x521 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_line    0x000068aa       0xfd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_line    0x000069a7      0x2c8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_line    0x00006c6f      0x7c0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_line    0x0000742f       0xf7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_line    0x00007526       0xfd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_line    0x00007623      0x2b8 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_line    0x000078db      0x190 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_line    0x00007a6b       0x96 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_line    0x00007b01       0xfd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_line    0x00007bfe       0xf7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_line    0x00007cf5       0x98 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+ .debug_line    0x00007d8d       0xc4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_line    0x00007e51       0xfd ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_line    0x00007f4e      0x10f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_line    0x0000805d      0x37e ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_line    0x000083db      0x1bf ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_line    0x0000859a      0x335 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_line    0x000088cf      0x259 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_line    0x00008b28       0x7c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .debug_line    0x00008ba4      0x3d7 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_str      0x00000000     0x2233
+ .debug_str     0x00000000     0x2233 build/rv32imc/hash.o
+                                0x63d (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/hash_syscalls.o
+                                0x8cb (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/hkdf.o
+                                0x6f8 (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/hkdf_syscalls.o
+                                0x94a (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/hmac.o
+                                0x67e (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/hmac_syscalls.o
+                                0x8f6 (size before relaxing)
+ .debug_str     0x00002233        0x0 build/rv32imc/main.o
+                                0x48f (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+                                0x2fb (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+                                0xaed (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+                                 0xbc (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                                0x4bb (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+                                 0xc0 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+                                0x4b0 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+                                0x48b (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                                0x7db (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+                                0x4a3 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+                                0x16d (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+                                0x150 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                                0x472 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                                0x74b (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                                0x675 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                                0x4f9 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+                                0x4aa (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+                                0x483 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+                                0x4af (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                                0x4d7 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                                0x604 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                                0x551 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+                                0x46e (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+                                0x4f2 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+                                0x515 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+                                0x468 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+                                0x476 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+                                0x492 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+                                0x4e5 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                                0x490 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+                                0x46f (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+                                0x471 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+                                 0xc2 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+                                0x4ba (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+                                0x47c (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+                                0x5ba (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+                                0x529 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+                                0x316 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+                                0x4cd (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+                                0x501 (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+                                0x46d (size before relaxing)
+ .debug_str     0x00002233        0x0 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+                                0x8d8 (size before relaxing)
+
+.debug_frame    0x00000000     0x14b8
+ .debug_frame   0x00000000       0x98 build/rv32imc/hash.o
+ .debug_frame   0x00000098       0xac build/rv32imc/hash_syscalls.o
+ .debug_frame   0x00000144       0xe8 build/rv32imc/hkdf.o
+ .debug_frame   0x0000022c      0x100 build/rv32imc/hkdf_syscalls.o
+ .debug_frame   0x0000032c       0xbc build/rv32imc/hmac.o
+ .debug_frame   0x000003e8       0xc8 build/rv32imc/hmac_syscalls.o
+ .debug_frame   0x000004b0       0x54 build/rv32imc/main.o
+ .debug_frame   0x00000504       0x58 ../../libtock-c/libtock/build/rv32imc/libtock.a(crt0.o)
+ .debug_frame   0x0000055c      0x2f8 ../../libtock-c/libtock/build/rv32imc/libtock.a(tock.o)
+ .debug_frame   0x00000854       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_frame   0x000008a4       0x48 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_frame   0x000008ec       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_frame   0x0000091c       0xcc ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_frame   0x000009e8       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_frame   0x00000a20       0x28 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_frame   0x00000a48       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_frame   0x00000a68       0x8c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_frame   0x00000af4      0x124 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_frame   0x00000c18       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_frame   0x00000c90       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_frame   0x00000ce0       0x48 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_frame   0x00000d28       0x4c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_frame   0x00000d74       0xa4 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_frame   0x00000e18       0x60 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_frame   0x00000e78       0x70 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_frame   0x00000ee8       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_frame   0x00000f1c       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_frame   0x00000f54       0x78 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_frame   0x00000fcc       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_frame   0x00001000       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_frame   0x00001034       0x50 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_frame   0x00001084       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_frame   0x000010c8       0x30 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_frame   0x000010f8       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_frame   0x0000112c       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_frame   0x00001160       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_frame   0x00001180       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_frame   0x000011b4       0x34 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_frame   0x000011e8       0xe0 ../../libtock-c/libtock/build/rv32imc/libtock.a(sys.o)
+ .debug_frame   0x000012c8       0x2c ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(sys.o)
+ .debug_frame   0x000012f4       0x70 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console.o)
+ .debug_frame   0x00001364       0x50 ../../libtock-c/libtock-sync/build/rv32imc/libtocksync.a(console_syscalls.o)
+ .debug_frame   0x000013b4       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+ .debug_frame   0x000013d4       0xe4 ../../libtock-c/libtock/build/rv32imc/libtock.a(console_syscalls.o)
+
+.debug_line_str
+                0x00000000      0xb7e
+ .debug_line_str
+                0x00000000      0xb7e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memset.o)
+                                 0xa9 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+                                0x1c0 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memcpy-asm.o)
+                                 0xad (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+                                0x1bb (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+                                0x1b4 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+                                0x262 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+                                0x1c3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+                                0x175 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+                                0x126 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-impure.o)
+                                0x16e (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+                                0x25c (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+                                0x1cc (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+                                0x1c3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+                                0x1c0 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+                                0x1b0 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+                                0x1b6 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+                                0x1b0 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+                                0x238 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+                                0x225 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+                                0x1b1 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+                                0x1c2 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+                                0x1d0 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+                                0x1b3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+                                0x1b3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+                                0x1b1 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+                                0x1d1 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+                                0x1b3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+                                0x1b3 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+                                0x1b5 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memmove-asm.o)
+                                 0xae (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+                                0x1c4 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+                                0x1b1 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+                                0x225 (size before relaxing)
+ .debug_line_str
+                0x00000b7e        0x0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
+                                0x174 (size before relaxing)
+
+.debug_loclists
+                0x00000000     0x2825
+ .debug_loclists
+                0x00000000      0x1cf ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_loclists
+                0x000001cf       0x92 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_loclists
+                0x00000261       0x75 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_loclists
+                0x000002d6      0x596 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_loclists
+                0x0000086c       0x77 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_loclists
+                0x000008e3       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_loclists
+                0x00000903       0x8d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_loclists
+                0x00000990      0x525 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_loclists
+                0x00000eb5      0x1d9 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_loclists
+                0x0000108e      0x224 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_loclists
+                0x000012b2      0x124 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_loclists
+                0x000013d6       0xc5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_loclists
+                0x0000149b      0x18d ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_loclists
+                0x00001628      0x2c6 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_loclists
+                0x000018ee      0x194 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_loclists
+                0x00001a82      0x21f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_loclists
+                0x00001ca1       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_loclists
+                0x00001d41       0xd5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_loclists
+                0x00001e16      0x4c7 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_loclists
+                0x000022dd       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_loclists
+                0x00002335       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_loclists
+                0x000023d5       0xa5 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_loclists
+                0x0000247a      0x150 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_loclists
+                0x000025ca       0xa0 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_loclists
+                0x0000266a       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_loclists
+                0x000026c2       0x8f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_loclists
+                0x00002751       0x58 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_loclists
+                0x000027a9       0x7c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+
+.debug_rnglists
+                0x00000000      0x47b
+ .debug_rnglists
+                0x00000000       0x44 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-puts.o)
+ .debug_rnglists
+                0x00000044       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-printf.o)
+ .debug_rnglists
+                0x0000005d       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putchar.o)
+ .debug_rnglists
+                0x00000076       0x38 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf.o)
+ .debug_rnglists
+                0x000000ae       0x26 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wsetup.o)
+ .debug_rnglists
+                0x000000d4       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-exit.o)
+ .debug_rnglists
+                0x000000e7       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-memchr.o)
+ .debug_rnglists
+                0x000000fa       0x67 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-nano-vfprintf_i.o)
+ .debug_rnglists
+                0x00000161       0x92 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-findfp.o)
+ .debug_rnglists
+                0x000001f3       0x3b ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fflush.o)
+ .debug_rnglists
+                0x0000022e       0x26 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-wbuf.o)
+ .debug_rnglists
+                0x00000254       0x14 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fwalk.o)
+ .debug_rnglists
+                0x00000268       0x32 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-putc.o)
+ .debug_rnglists
+                0x0000029a       0x2c ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-stdio.o)
+ .debug_rnglists
+                0x000002c6       0x27 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-makebuf.o)
+ .debug_rnglists
+                0x000002ed       0x2f ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mallocr.o)
+ .debug_rnglists
+                0x0000031c       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-readr.o)
+ .debug_rnglists
+                0x0000032f       0x20 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-freer.o)
+ .debug_rnglists
+                0x0000034f       0x39 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fvwrite.o)
+ .debug_rnglists
+                0x00000388       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-closer.o)
+ .debug_rnglists
+                0x0000039b       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-lseekr.o)
+ .debug_rnglists
+                0x000003ae       0x2e ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reent.o)
+ .debug_rnglists
+                0x000003dc       0x14 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-reallocr.o)
+ .debug_rnglists
+                0x000003f0       0x19 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-mlock.o)
+ .debug_rnglists
+                0x00000409       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-writer.o)
+ .debug_rnglists
+                0x0000041c       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-isattyr.o)
+ .debug_rnglists
+                0x0000042f       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-msizer.o)
+ .debug_rnglists
+                0x00000442       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-sbrkr.o)
+ .debug_rnglists
+                0x00000455       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-fstatr.o)
+ .debug_rnglists
+                0x00000468       0x13 ../../libtock-c/lib/libtock-newlib-4.6.0.20260123/riscv/riscv64-unknown-elf/lib/rv32im/ilp32/libc.a(libc_a-errno.o)
