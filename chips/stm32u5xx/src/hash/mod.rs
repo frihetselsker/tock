@@ -4,3 +4,4 @@
 
 pub mod hash;
 pub mod regs;
+pub mod utils;

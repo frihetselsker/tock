@@ -12,7 +12,11 @@
 
 use core::cell::Cell;
 
-use super::regs::{CR, HashRegisters, IMR, SR, STR};
+use crate::hash::regs::STR;
+use crate::hash::utils::ClientCallback::{OpDone, UpdateDone};
+use crate::hash::utils::{ClientCallback, FIFO_SIZE, Leftover};
+
+use super::regs::{CR, HashRegisters, IMR, SR};
 use kernel::ErrorCode;
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
 use kernel::hil::crypto::digest::{Digest, DigestClient, Md5, Sha1, Sha224, Sha256};
@@ -20,58 +24,20 @@ use kernel::utilities::StaticRef;
 use kernel::utilities::cells::OptionalCell;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
 
-#[derive(Clone, Copy)]
-enum Client {
-    Md5(&'static dyn DigestClient<Md5>),
-    Sha1(&'static dyn DigestClient<Sha1>),
-    Sha224(&'static dyn DigestClient<Sha224>),
-    Sha256(&'static dyn DigestClient<Sha256>),
-}
-
-impl Client {
-    fn read_input(self, input: &mut [u8]) -> Result<usize, ErrorCode> {
-        let count = match self {
-            Self::Md5(client) => client.read_input(input),
-            Self::Sha1(client) => client.read_input(input),
-            Self::Sha224(client) => client.read_input(input),
-            Self::Sha256(client) => client.read_input(input),
-        }?;
-        if count == 0 || count > input.len() {
-            Err(ErrorCode::SIZE)
-        } else {
-            Ok(count)
-        }
-    }
-
-    fn done(self, result: Result<(), ErrorCode>) {
-        match self {
-            Self::Md5(client) => client.digest_done(result),
-            Self::Sha1(client) => client.digest_done(result),
-            Self::Sha224(client) => client.digest_done(result),
-            Self::Sha256(client) => client.digest_done(result),
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum State {
-    Idle,
-    Feeding,
-    Finishing,
-}
+use super::utils::{Client, State};
 
 /// One HASH peripheral implementing MD5, SHA-1, SHA-224, and SHA-256.
 pub struct Hash {
     regs: StaticRef<HashRegisters>,
+    state: Cell<State>,
+    remaining: Cell<usize>,
+    leftover: Leftover,
     md5: OptionalCell<&'static dyn DigestClient<Md5>>,
     sha1: OptionalCell<&'static dyn DigestClient<Sha1>>,
     sha224: OptionalCell<&'static dyn DigestClient<Sha224>>,
     sha256: OptionalCell<&'static dyn DigestClient<Sha256>>,
     active: OptionalCell<Client>,
-    state: Cell<State>,
-    remaining: Cell<usize>,
-    partial: Cell<[u8; 4]>,
-    partial_len: Cell<usize>,
+    cancel: Cell<bool>,
     deferred_call: DeferredCall,
 }
 
@@ -80,21 +46,78 @@ impl Hash {
     pub fn new(regs: StaticRef<HashRegisters>) -> Self {
         Self {
             regs,
+            state: Cell::new(State::Idle {
+                is_intermediate: false,
+            }),
+            remaining: Cell::new(0),
+            leftover: Leftover::new(),
             md5: OptionalCell::empty(),
             sha1: OptionalCell::empty(),
             sha224: OptionalCell::empty(),
             sha256: OptionalCell::empty(),
             active: OptionalCell::empty(),
-            state: Cell::new(State::Idle),
-            remaining: Cell::new(0),
-            partial: Cell::new([0; 4]),
-            partial_len: Cell::new(0),
+            cancel: Cell::new(false),
             deferred_call: DeferredCall::new(),
         }
     }
 
-    fn start(&self, len: usize, client: Option<Client>) -> Result<(), ErrorCode> {
-        if self.state.get() != State::Idle {
+    pub(crate) fn handle_interrupt(&self) {
+        self.regs.imr.set(0);
+        match self.state.get() {
+            State::Finishing { is_started: true } if self.regs.sr.is_set(SR::DCIS) => {
+                if let Some(client) = self.active.get() {
+                    if self.cancel.take() {
+                        return self.finish(OpDone, Err(ErrorCode::CANCEL));
+                    }
+                    let result = match client {
+                        Client::Md5(client) => client.write_output(&self.output::<16>()),
+                        Client::Sha1(client) => client.write_output(&self.output::<20>()),
+                        Client::Sha224(client) => client.write_output(&self.output::<28>()),
+                        Client::Sha256(client) => client.write_output(&self.output::<32>()),
+                    };
+                    self.finish(OpDone, result);
+                }
+            }
+            State::Finishing { is_started: false } if self.regs.sr.is_set(SR::DINIS) => {
+                if self.cancel.take() {
+                    return self.finish(OpDone, Err(ErrorCode::CANCEL));
+                }
+                let leftover_bytes = self.leftover.len();
+                let regs = self.regs;
+                regs.din.set(self.leftover.to_le());
+                regs.str.modify(STR::NBLW.val((leftover_bytes * 8) as u32));
+                self.state.set(State::Finishing { is_started: true });
+                regs.imr.modify(IMR::DCIE::SET);
+                regs.str.modify(STR::DCAL::SET);
+            }
+            State::Feeding => {
+                if let Some(client) = self.active.get() {
+                    let result = (|| {
+                        if self.cancel.take() {
+                            return Err(ErrorCode::CANCEL);
+                        }
+                        let remaining = self.remaining.get();
+                        let bytes_loaded = self.feed(remaining, client)?;
+                        let remaining_updated =
+                            remaining.checked_sub(bytes_loaded).ok_or(ErrorCode::FAIL)?;
+                        self.remaining.set(remaining_updated);
+                        Ok(())
+                    })();
+                    if result.is_err() || self.remaining.get() == 0 {
+                        self.finish(UpdateDone, result);
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+
+    fn start(&self, client: Option<Client>) -> Result<(), ErrorCode> {
+        if self.state.get()
+            != (State::Idle {
+                is_intermediate: false,
+            })
+        {
             return Err(ErrorCode::BUSY);
         }
         let client = client.ok_or(ErrorCode::RESERVE)?;
@@ -104,78 +127,113 @@ impl Hash {
             Client::Sha224(_) => CR::ALGO::SHA2_224,
             Client::Sha256(_) => CR::ALGO::SHA2_256,
         };
-        self.regs.imr.set(0);
-        self.regs
-            .cr
-            .write(algorithm + CR::DATATYPE::_8bitData + CR::INIT::SET);
-        self.regs.sr.modify(SR::DCIS::CLEAR);
-        self.regs.str.write(STR::NBLW.val(((len % 4) * 8) as u32));
-        self.remaining.set(len);
-        self.partial.set([0; 4]);
-        self.partial_len.set(0);
+        self.regs.cr.write(
+            algorithm + CR::DATATYPE::_8bitData + CR::INIT::SET + CR::MDMAT::SET + CR::MODE::CLEAR,
+        );
+        self.regs.sr.modify(SR::DCIS::CLEAR + SR::DINIS::CLEAR);
         self.active.set(client);
-        self.state.set(State::Feeding);
-        self.deferred_call.set();
         Ok(())
     }
 
-    fn feed(&self) {
-        if self.state.get() != State::Feeding {
-            return;
-        }
-        let Some(client) = self.active.get() else {
-            return;
-        };
-        let remaining = self.remaining.get();
-        if remaining != 0 {
-            let words = (self.regs.sr.read(SR::NBWE) as usize).min(16);
-            if words == 0 {
-                self.regs.imr.write(IMR::DINIE::SET);
-                return;
-            }
-            let mut input = [0; 64];
-            let available = words * 4 - self.partial_len.get();
-            let requested = remaining.min(available);
-            let count = match client.read_input(&mut input[..requested]) {
-                Ok(count) => count,
-                Err(error) => {
-                    self.finish(Err(error));
-                    return;
-                }
-            };
-            let mut partial = self.partial.get();
-            let mut partial_len = self.partial_len.get();
-            for byte in &input[..count] {
-                partial[partial_len] = *byte;
-                partial_len += 1;
-                if partial_len == 4 {
-                    self.regs.din.set(u32::from_le_bytes(partial));
-                    partial = [0; 4];
-                    partial_len = 0;
-                }
-            }
-            self.partial.set(partial);
-            self.partial_len.set(partial_len);
-            self.remaining.set(remaining - count);
+    fn prepare_update(&self, len: usize) -> Result<(), ErrorCode> {
+        if self.active.is_none() {
+            return Err(ErrorCode::INVAL);
         }
 
-        if self.remaining.get() == 0 {
-            let partial_len = self.partial_len.get();
-            if partial_len != 0 {
-                if self.regs.sr.read(SR::NBWE) == 0 {
-                    self.regs.imr.write(IMR::DINIE::SET);
-                    return;
-                }
-                self.regs.din.set(u32::from_le_bytes(self.partial.get()));
-            }
-            self.state.set(State::Finishing);
-            self.regs.imr.write(IMR::DCIE::SET);
-            self.regs.str.modify(STR::DCAL::SET);
-        } else if self.regs.sr.read(SR::NBWE) == 0 {
-            self.regs.imr.write(IMR::DINIE::SET);
-        } else {
-            self.deferred_call.set();
+        match self.state.get() {
+            State::Idle { .. } => {}
+            State::Feeding if self.remaining.get() != 0 => return Err(ErrorCode::BUSY),
+            _ => return Err(ErrorCode::INVAL),
         }
+
+        self.remaining.set(len);
+        self.state.set(State::Feeding);
+        self.deferred_call.set();
+
+        Ok(())
+    }
+
+    fn feed(&self, remaining: usize, client: Client) -> Result<usize, ErrorCode> {
+        let mut input = [0u8; FIFO_SIZE];
+        let fifo_space =
+            ((self.regs.sr.read(SR::NBWE) * 4) as usize).saturating_sub(self.leftover.len());
+        if fifo_space == 0 {
+            self.regs.imr.write(IMR::DINIE::SET);
+            return Ok(0);
+        }
+        let space_limit = fifo_space.min(FIFO_SIZE).min(remaining);
+        let count = match client.read_input(&mut input[..space_limit]) {
+            Ok(count) => count,
+            Err(error) => {
+                return Err(error);
+            }
+        };
+        self.write_data_cpu(&input[..count])?;
+        Ok(count)
+    }
+
+    fn write_data_cpu(&self, buffer: &[u8]) -> Result<(), ErrorCode> {
+        let regs = self.regs;
+
+        // Load leftover if it is not empty
+        let buffer = if !self.leftover.is_full() && !self.leftover.is_empty() {
+            let bytes_to_load = 4 - self.leftover.len();
+            for i in 0..bytes_to_load {
+                self.leftover.add(buffer[i])?;
+            }
+            regs.din.set(self.leftover.to_le());
+            &buffer[bytes_to_load..]
+        } else {
+            buffer
+        };
+
+        let (words_to_load, leftover_to_load) = buffer.as_chunks::<4>();
+
+        // Write 32-bit words
+        for data in words_to_load {
+            let d = u32::from_le_bytes(*data);
+            regs.din.set(d);
+        }
+
+        // Accumulate leftover bytes
+        for data in leftover_to_load {
+            self.leftover.add(*data)?;
+        }
+
+        Ok(())
+    }
+
+    fn run(&self) -> Result<(), ErrorCode> {
+        if self.active.is_none() {
+            return Err(ErrorCode::INVAL);
+        }
+
+        match self.state.get() {
+            State::Idle { is_intermediate } => {
+                if !is_intermediate {
+                    return Err(ErrorCode::INVAL);
+                }
+            }
+            _ => return Err(ErrorCode::BUSY),
+        }
+
+        let regs = self.regs;
+        let leftover_bytes = self.leftover.len();
+
+        if !self.leftover.is_empty() {
+            if !regs.sr.is_set(SR::BUSY) {
+                regs.din.set(self.leftover.to_le());
+            } else {
+                regs.imr.write(IMR::DINIE::SET);
+                self.state.set(State::Finishing { is_started: false });
+                return Ok(());
+            }
+        }
+
+        regs.str.modify(STR::NBLW.val((leftover_bytes * 8) as u32));
+        self.state.set(State::Finishing { is_started: true });
+        regs.str.modify(STR::DCAL::SET);
+        Ok(())
     }
 
     fn output<const LEN: usize>(&self) -> [u8; LEN] {
@@ -191,43 +249,57 @@ impl Hash {
         output
     }
 
-    fn finish(&self, result: Result<(), ErrorCode>) {
-        self.regs.imr.set(0);
-        self.regs.cr.modify(CR::INIT::SET);
-        self.regs.sr.modify(SR::DCIS::CLEAR);
-        self.partial.set([0; 4]);
-        self.partial_len.set(0);
-        self.remaining.set(0);
-        self.state.set(State::Idle);
-        if let Some(client) = self.active.take() {
-            client.done(result);
-        }
-    }
+    fn finish(&self, callback: ClientCallback, result: Result<(), ErrorCode>) {
+        let reset_driver = || {
+            self.regs.cr.modify(CR::INIT::SET);
+            self.regs.sr.modify(SR::DCIS::CLEAR);
+            self.leftover.reset();
+            self.remaining.set(0);
+            self.state.set(State::Idle {
+                is_intermediate: false,
+            });
+        };
 
-    pub(crate) fn handle_interrupt(&self) {
-        self.regs.imr.set(0);
-        match self.state.get() {
-            State::Finishing if self.regs.sr.is_set(SR::DCIS) => {
-                if let Some(client) = self.active.get() {
-                    let result = match client {
-                        Client::Md5(client) => client.write_digest(&self.output::<16>()),
-                        Client::Sha1(client) => client.write_digest(&self.output::<20>()),
-                        Client::Sha224(client) => client.write_digest(&self.output::<28>()),
-                        Client::Sha256(client) => client.write_digest(&self.output::<32>()),
-                    };
-                    self.finish(result);
+        match callback {
+            OpDone => {
+                reset_driver();
+                if let Some(client) = self.active.take() {
+                    client.digest_done(result);
                 }
             }
-            State::Finishing => self.regs.imr.write(IMR::DCIE::SET),
-            State::Feeding => self.feed(),
-            State::Idle => (),
+            UpdateDone if result.is_err() => {
+                reset_driver();
+                if let Some(client) = self.active.take() {
+                    client.update_done(result);
+                }
+            }
+            UpdateDone => {
+                if let Some(client) = self.active.get() {
+                    client.update_done(result);
+                }
+            }
         }
     }
 }
 
 impl DeferredCallClient for Hash {
     fn handle_deferred_call(&'static self) {
-        self.feed();
+        if let Some(client) = self.active.get() {
+            let result = (|| {
+                if self.cancel.take() {
+                    return Err(ErrorCode::CANCEL);
+                }
+                let remaining = self.remaining.get();
+                let bytes_loaded = self.feed(remaining, client)?;
+                let remaining_updated =
+                    remaining.checked_sub(bytes_loaded).ok_or(ErrorCode::FAIL)?;
+                self.remaining.set(remaining_updated);
+                Ok(())
+            })();
+            if result.is_err() || self.remaining.get() == 0 {
+                self.finish(UpdateDone, result);
+            }
+        }
     }
 
     fn register(&'static self) {
@@ -236,8 +308,25 @@ impl DeferredCallClient for Hash {
 }
 
 impl Digest<Md5> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
-        self.start(len, self.md5.get().map(Client::Md5))
+    fn begin(&self) -> Result<(), ErrorCode> {
+        self.start(self.md5.get().map(Client::Md5))
+    }
+
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        self.prepare_update(len)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        self.run()
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
+        if let State::Idle { .. } = self.state.get() {
+            Err(ErrorCode::INVAL)
+        } else {
+            self.cancel.set(true);
+            Ok(())
+        }
     }
 
     fn set_client(&self, client: &'static dyn DigestClient<Md5>) {
@@ -246,8 +335,25 @@ impl Digest<Md5> for Hash {
 }
 
 impl Digest<Sha1> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
-        self.start(len, self.sha1.get().map(Client::Sha1))
+    fn begin(&self) -> Result<(), ErrorCode> {
+        self.start(self.sha1.get().map(Client::Sha1))
+    }
+
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        self.prepare_update(len)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        self.run()
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
+        if let State::Idle { .. } = self.state.get() {
+            Err(ErrorCode::INVAL)
+        } else {
+            self.cancel.set(true);
+            Ok(())
+        }
     }
 
     fn set_client(&self, client: &'static dyn DigestClient<Sha1>) {
@@ -256,8 +362,25 @@ impl Digest<Sha1> for Hash {
 }
 
 impl Digest<Sha224> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
-        self.start(len, self.sha224.get().map(Client::Sha224))
+    fn begin(&self) -> Result<(), ErrorCode> {
+        self.start(self.sha224.get().map(Client::Sha224))
+    }
+
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        self.prepare_update(len)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        self.run()
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
+        if let State::Idle { .. } = self.state.get() {
+            Err(ErrorCode::INVAL)
+        } else {
+            self.cancel.set(true);
+            Ok(())
+        }
     }
 
     fn set_client(&self, client: &'static dyn DigestClient<Sha224>) {
@@ -266,8 +389,25 @@ impl Digest<Sha224> for Hash {
 }
 
 impl Digest<Sha256> for Hash {
-    fn digest(&self, len: usize) -> Result<(), ErrorCode> {
-        self.start(len, self.sha256.get().map(Client::Sha256))
+    fn begin(&self) -> Result<(), ErrorCode> {
+        self.start(self.sha256.get().map(Client::Sha256))
+    }
+
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        self.prepare_update(len)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        self.run()
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
+        if let State::Idle { .. } = self.state.get() {
+            Err(ErrorCode::INVAL)
+        } else {
+            self.cancel.set(true);
+            Ok(())
+        }
     }
 
     fn set_client(&self, client: &'static dyn DigestClient<Sha256>) {
