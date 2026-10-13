@@ -26,7 +26,10 @@ use core::mem::MaybeUninit;
 use kernel::ErrorCode;
 use kernel::capabilities::MemoryAllocationCapability;
 use kernel::component::Component;
-use kernel::hil::crypto::digest::{Digest, Md5, Sha1, Sha224, Sha256, Sha384, Sha512};
+use kernel::hil::crypto::digest::{
+    Digest, Md5, Sha1, Sha3_224, Sha3_256, Sha3_384, Sha3_512, Sha224, Sha256, Sha384, Sha512,
+    Sha512_224, Sha512_256, Sm3,
+};
 
 /// Allocate a digest capsule, naming only configured driver types in algorithm
 /// order (md5, sha1, sha224, sha256, sha384, sha512), each followed by a comma.
@@ -61,7 +64,14 @@ pub struct DigestComponent<
     Sha224Driver: Digest<Sha224> + 'static = UnavailableDigest,
     Sha256Driver: Digest<Sha256> + 'static = UnavailableDigest,
     Sha384Driver: Digest<Sha384> + 'static = UnavailableDigest,
+    Sha512_224Driver: Digest<Sha512_224> + 'static = UnavailableDigest,
+    Sha512_256Driver: Digest<Sha512_256> + 'static = UnavailableDigest,
     Sha512Driver: Digest<Sha512> + 'static = UnavailableDigest,
+    Sha3_224Driver: Digest<Sha3_224> + 'static = UnavailableDigest,
+    Sha3_256Driver: Digest<Sha3_256> + 'static = UnavailableDigest,
+    Sha3_384Driver: Digest<Sha3_384> + 'static = UnavailableDigest,
+    Sha3_512Driver: Digest<Sha3_512> + 'static = UnavailableDigest,
+    Sm3Driver: Digest<Sm3> + 'static = UnavailableDigest,
 > {
     board_kernel: &'static kernel::Kernel,
     driver_num: usize,
@@ -71,7 +81,14 @@ pub struct DigestComponent<
     sha224: Option<&'static DriverMutex<Sha224Driver>>,
     sha256: Option<&'static DriverMutex<Sha256Driver>>,
     sha384: Option<&'static DriverMutex<Sha384Driver>>,
+    sha512_224: Option<&'static DriverMutex<Sha512_224Driver>>,
+    sha512_256: Option<&'static DriverMutex<Sha512_256Driver>>,
     sha512: Option<&'static DriverMutex<Sha512Driver>>,
+    sha3_224: Option<&'static DriverMutex<Sha3_224Driver>>,
+    sha3_256: Option<&'static DriverMutex<Sha3_256Driver>>,
+    sha3_384: Option<&'static DriverMutex<Sha3_384Driver>>,
+    sha3_512: Option<&'static DriverMutex<Sha3_512Driver>>,
+    sm3: Option<&'static DriverMutex<Sm3Driver>>,
 }
 
 impl<Cap: MemoryAllocationCapability> DigestComponent<Cap> {
@@ -87,6 +104,13 @@ impl<Cap: MemoryAllocationCapability> DigestComponent<Cap> {
             sha256: None,
             sha384: None,
             sha512: None,
+            sha512_224: None,
+            sha512_256: None,
+            sha3_224: None,
+            sha3_256: None,
+            sha3_384: None,
+            sha3_512: None,
+            sm3: None,
         }
     }
 }
@@ -98,7 +122,14 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 >
     DigestComponent<
         Cap,
@@ -107,7 +138,14 @@ impl<
         Sha224Driver,
         Sha256Driver,
         Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
         Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
     >
 {
     /// Configure the MD5 mutex, retaining all other algorithm slots.
@@ -121,7 +159,14 @@ impl<
         Sha224Driver,
         Sha256Driver,
         Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
         Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
     > {
         DigestComponent {
             board_kernel: self.board_kernel,
@@ -133,10 +178,17 @@ impl<
             sha256: self.sha256,
             sha384: self.sha384,
             sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
         }
     }
 
-    /// Configure the SHA-1 mutex, retaining all other algorithm slots.
+    /// Configure the SHA1 mutex, retaining all other algorithm slots.
     pub fn with_sha1<Driver: Digest<Sha1> + 'static>(
         self,
         mutex: &'static DriverMutex<Driver>,
@@ -147,7 +199,14 @@ impl<
         Sha224Driver,
         Sha256Driver,
         Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
         Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
     > {
         DigestComponent {
             board_kernel: self.board_kernel,
@@ -159,15 +218,36 @@ impl<
             sha256: self.sha256,
             sha384: self.sha384,
             sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
         }
     }
 
-    /// Configure the SHA-224 mutex, retaining all other algorithm slots.
+    /// Configure the SHA224 mutex, retaining all other algorithm slots.
     pub fn with_sha224<Driver: Digest<Sha224> + 'static>(
         self,
         mutex: &'static DriverMutex<Driver>,
-    ) -> DigestComponent<Cap, Md5Driver, Sha1Driver, Driver, Sha256Driver, Sha384Driver, Sha512Driver>
-    {
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
         DigestComponent {
             board_kernel: self.board_kernel,
             driver_num: self.driver_num,
@@ -178,15 +258,36 @@ impl<
             sha256: self.sha256,
             sha384: self.sha384,
             sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
         }
     }
 
-    /// Configure the SHA-256 mutex, retaining all other algorithm slots.
+    /// Configure the SHA256 mutex, retaining all other algorithm slots.
     pub fn with_sha256<Driver: Digest<Sha256> + 'static>(
         self,
         mutex: &'static DriverMutex<Driver>,
-    ) -> DigestComponent<Cap, Md5Driver, Sha1Driver, Sha224Driver, Driver, Sha384Driver, Sha512Driver>
-    {
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
         DigestComponent {
             board_kernel: self.board_kernel,
             driver_num: self.driver_num,
@@ -197,15 +298,36 @@ impl<
             sha256: Some(mutex),
             sha384: self.sha384,
             sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
         }
     }
 
-    /// Configure the SHA-384 mutex, retaining all other algorithm slots.
+    /// Configure the SHA384 mutex, retaining all other algorithm slots.
     pub fn with_sha384<Driver: Digest<Sha384> + 'static>(
         self,
         mutex: &'static DriverMutex<Driver>,
-    ) -> DigestComponent<Cap, Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Driver, Sha512Driver>
-    {
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
         DigestComponent {
             board_kernel: self.board_kernel,
             driver_num: self.driver_num,
@@ -216,15 +338,116 @@ impl<
             sha256: self.sha256,
             sha384: Some(mutex),
             sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
         }
     }
 
-    /// Configure the SHA-512 mutex, retaining all other algorithm slots.
+    /// Configure the SHA512/224 mutex, retaining all other algorithm slots.
+    pub fn with_sha512_224<Driver: Digest<Sha512_224> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: Some(mutex),
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA512/256 mutex, retaining all other algorithm slots.
+    pub fn with_sha512_256<Driver: Digest<Sha512_256> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: Some(mutex),
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA512 mutex, retaining all other algorithm slots.
     pub fn with_sha512<Driver: Digest<Sha512> + 'static>(
         self,
         mutex: &'static DriverMutex<Driver>,
-    ) -> DigestComponent<Cap, Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Driver>
-    {
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
         DigestComponent {
             board_kernel: self.board_kernel,
             driver_num: self.driver_num,
@@ -235,6 +458,213 @@ impl<
             sha256: self.sha256,
             sha384: self.sha384,
             sha512: Some(mutex),
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA3-224 mutex, retaining all other algorithm slots.
+    pub fn with_sha3_224<Driver: Digest<Sha3_224> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: Some(mutex),
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA3-256 mutex, retaining all other algorithm slots.
+    pub fn with_sha3_256<Driver: Digest<Sha3_256> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: Some(mutex),
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA3-384 mutex, retaining all other algorithm slots.
+    pub fn with_sha3_384<Driver: Digest<Sha3_384> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: Some(mutex),
+            sha3_512: self.sha3_512,
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SHA3-512 mutex, retaining all other algorithm slots.
+    pub fn with_sha3_512<Driver: Digest<Sha3_512> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Driver,
+        Sm3Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: Some(mutex),
+            sm3: self.sm3,
+        }
+    }
+
+    /// Configure the SM3 mutex, retaining all other algorithm slots.
+    pub fn with_sm3<Driver: Digest<Sm3> + 'static>(
+        self,
+        mutex: &'static DriverMutex<Driver>,
+    ) -> DigestComponent<
+        Cap,
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Driver,
+    > {
+        DigestComponent {
+            board_kernel: self.board_kernel,
+            driver_num: self.driver_num,
+            mem_cap: self.mem_cap,
+            md5: self.md5,
+            sha1: self.sha1,
+            sha224: self.sha224,
+            sha256: self.sha256,
+            sha384: self.sha384,
+            sha512: self.sha512,
+            sha512_224: self.sha512_224,
+            sha512_256: self.sha512_256,
+            sha3_224: self.sha3_224,
+            sha3_256: self.sha3_256,
+            sha3_384: self.sha3_384,
+            sha3_512: self.sha3_512,
+            sm3: Some(mutex),
         }
     }
 }
@@ -246,7 +676,14 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 > Component
     for DigestComponent<
         Cap,
@@ -255,11 +692,32 @@ impl<
         Sha224Driver,
         Sha256Driver,
         Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
         Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
     >
 {
     type StaticInput = &'static mut MaybeUninit<
-        DigestDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>,
+        DigestDriver<
+            Md5Driver,
+            Sha1Driver,
+            Sha224Driver,
+            Sha256Driver,
+            Sha384Driver,
+            Sha512_224Driver,
+            Sha512_256Driver,
+            Sha512Driver,
+            Sha3_224Driver,
+            Sha3_256Driver,
+            Sha3_384Driver,
+            Sha3_512Driver,
+            Sm3Driver,
+        >,
     >;
     type Output = Result<
         &'static DigestDriver<
@@ -268,7 +726,14 @@ impl<
             Sha224Driver,
             Sha256Driver,
             Sha384Driver,
+            Sha512_224Driver,
+            Sha512_256Driver,
             Sha512Driver,
+            Sha3_224Driver,
+            Sha3_256Driver,
+            Sha3_384Driver,
+            Sha3_512Driver,
+            Sm3Driver,
         >,
         ErrorCode,
     >;
@@ -284,7 +749,14 @@ impl<
             self.sha224,
             self.sha256,
             self.sha384,
+            self.sha512_224,
+            self.sha512_256,
             self.sha512,
+            self.sha3_224,
+            self.sha3_256,
+            self.sha3_384,
+            self.sha3_512,
+            self.sm3,
         ));
         driver.register()?;
         Ok(driver)

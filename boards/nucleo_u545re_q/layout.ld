@@ -11,12 +11,12 @@
 
 MEMORY
 {
-  rom (rx)  : ORIGIN = 0x0C000000, LENGTH = 0x00040000 /* 256 KB Kernel */
-  prog (rx) : ORIGIN = 0x0C040000, LENGTH = 0x00040000 /* 256 KB Apps */
+  rom (rx)  : ORIGIN = 0x08000000, LENGTH = 0x00040000 /* 256 KB Kernel */
+  prog (rx) : ORIGIN = 0x08040000, LENGTH = 0x00040000 /* 256 KB Apps */
   ram (rwx) : ORIGIN = 0x30000000, LENGTH = 0x00028000 /* 160 KB */
 }
 
-/* 
+/*
  * Tock's generic linker script (tock_kernel_layout.ld) usually defines
  * _estack at the START of RAM for overflow protection.
  *

@@ -23,15 +23,37 @@ use capsules_core::driver_mutex::{
 use kernel::errorcode::into_statuscode;
 use kernel::grant::{AllowRoCount, AllowRwCount, Grant, UpcallCount};
 use kernel::hil::crypto::digest::{
-    Digest, DigestAlgorithm, DigestClient, Md5, Sha1, Sha224, Sha256, Sha384, Sha512,
+    Digest, DigestAlgorithm, DigestClient, Md5, Sha1, Sha3_224, Sha3_256, Sha3_384, Sha3_512,
+    Sha224, Sha256, Sha384, Sha512, Sha512_224, Sha512_256, Sm3,
 };
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
 use kernel::utilities::cells::{MapCell, OptionalCell};
 use kernel::{ErrorCode, ProcessId};
 
-/// Syscall driver number for the multi-algorithm digest interface.
-pub const DRIVER_NUM: usize = capsules_core::driver::NUM::Digest as usize;
+/// Syscall driver number.
+pub const DRIVER_NUM: usize = capsules_core::driver::NUM::Sha as usize;
+
+/// Upcalls for hashing operations completing.
+mod upcall {
+    pub const UPDATE_DONE: usize = 0;
+    pub const OP_DONE: usize = 1;
+    pub const COUNT: u8 = 2;
+}
+
+/// Ids for read-only allow buffers
+mod ro_allow {
+    pub const INPUT: usize = 0;
+    /// The number of allow buffers the kernel stores for this grant
+    pub const COUNT: u8 = 1;
+}
+
+/// Ids for read-write allow buffers
+mod rw_allow {
+    pub const OUTPUT: usize = 0;
+    /// The number of allow buffers the kernel stores for this grant
+    pub const COUNT: u8 = 1;
+}
 
 /// Algorithm identifiers used by command 1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -42,7 +64,14 @@ pub enum Algorithm {
     Sha224 = 2,
     Sha256 = 3,
     Sha384 = 4,
-    Sha512 = 5,
+    Sha512_224 = 5,
+    Sha512_256 = 6,
+    Sha512 = 7,
+    Sha3_224 = 8,
+    Sha3_256 = 9,
+    Sha3_384 = 10,
+    Sha3_512 = 11,
+    Sm3 = 12,
 }
 
 impl TryFrom<usize> for Algorithm {
@@ -55,7 +84,14 @@ impl TryFrom<usize> for Algorithm {
             2 => Ok(Self::Sha224),
             3 => Ok(Self::Sha256),
             4 => Ok(Self::Sha384),
-            5 => Ok(Self::Sha512),
+            5 => Ok(Self::Sha512_224),
+            6 => Ok(Self::Sha512_256),
+            7 => Ok(Self::Sha512),
+            8 => Ok(Self::Sha3_224),
+            9 => Ok(Self::Sha3_256),
+            10 => Ok(Self::Sha3_384),
+            11 => Ok(Self::Sha3_512),
+            12 => Ok(Self::Sm3),
             _ => Err(ErrorCode::NOSUPPORT),
         }
     }
@@ -70,7 +106,14 @@ impl Algorithm {
             Self::Sha224 => Sha224::DIGEST_LEN,
             Self::Sha256 => Sha256::DIGEST_LEN,
             Self::Sha384 => Sha384::DIGEST_LEN,
+            Self::Sha512_224 => Sha512_224::DIGEST_LEN,
+            Self::Sha512_256 => Sha512_256::DIGEST_LEN,
             Self::Sha512 => Sha512::DIGEST_LEN,
+            Self::Sha3_224 => Sha3_224::DIGEST_LEN,
+            Self::Sha3_256 => Sha3_256::DIGEST_LEN,
+            Self::Sha3_384 => Sha3_384::DIGEST_LEN,
+            Self::Sha3_512 => Sha3_512::DIGEST_LEN,
+            Self::Sm3 => Sm3::DIGEST_LEN,
         }
     }
 }
@@ -79,7 +122,19 @@ impl Algorithm {
 pub enum UnavailableDigest {}
 
 impl<AlgorithmType: DigestAlgorithm> Digest<AlgorithmType> for UnavailableDigest {
-    fn digest(&self, _len: usize) -> Result<(), ErrorCode> {
+    fn begin(&self) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn update(&self, _len: usize) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
         Err(ErrorCode::NOSUPPORT)
     }
 
@@ -87,7 +142,12 @@ impl<AlgorithmType: DigestAlgorithm> Digest<AlgorithmType> for UnavailableDigest
 }
 
 /// One input allow, one output allow, and one completion upcall per process.
-pub type DigestGrant = Grant<(), UpcallCount<1>, AllowRoCount<1>, AllowRwCount<1>>;
+pub type DigestGrant = Grant<
+    (),
+    UpcallCount<{ upcall::COUNT }>,
+    AllowRoCount<{ ro_allow::COUNT }>,
+    AllowRwCount<{ rw_allow::COUNT }>,
+>;
 
 struct Slot<Driver: 'static> {
     mutex: Option<&'static DriverMutex<Driver>>,
@@ -121,30 +181,108 @@ impl<Driver> Slot<Driver> {
 struct Request {
     processid: ProcessId,
     algorithm: Algorithm,
-    input_len: usize,
-    offset: usize,
-    written: bool,
+    chunk_len: usize,
+    chunk_offset: usize,
+    digest_written: bool,
 }
 
 enum ActiveDriver<
-    Md5Driver: 'static,
-    Sha1Driver: 'static,
-    Sha224Driver: 'static,
-    Sha256Driver: 'static,
-    Sha384Driver: 'static,
-    Sha512Driver: 'static,
+    Md5Driver: Digest<Md5> + 'static,
+    Sha1Driver: Digest<Sha1> + 'static,
+    Sha224Driver: Digest<Sha224> + 'static,
+    Sha256Driver: Digest<Sha256> + 'static,
+    Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
+    Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 > {
     Md5(DriverMutexRef<Md5Driver>),
     Sha1(DriverMutexRef<Sha1Driver>),
     Sha224(DriverMutexRef<Sha224Driver>),
     Sha256(DriverMutexRef<Sha256Driver>),
     Sha384(DriverMutexRef<Sha384Driver>),
+    Sha512_224(DriverMutexRef<Sha512_224Driver>),
+    Sha512_256(DriverMutexRef<Sha512_256Driver>),
     Sha512(DriverMutexRef<Sha512Driver>),
+    Sha3_224(DriverMutexRef<Sha3_224Driver>),
+    Sha3_256(DriverMutexRef<Sha3_256Driver>),
+    Sha3_384(DriverMutexRef<Sha3_384Driver>),
+    Sha3_512(DriverMutexRef<Sha3_512Driver>),
+    Sm3(DriverMutexRef<Sm3Driver>),
 }
 
-impl<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
-    ActiveDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
+impl<
+    Md5Driver: Digest<Md5>,
+    Sha1Driver: Digest<Sha1>,
+    Sha224Driver: Digest<Sha224>,
+    Sha256Driver: Digest<Sha256>,
+    Sha384Driver: Digest<Sha384>,
+    Sha512_224Driver: Digest<Sha512_224>,
+    Sha512_256Driver: Digest<Sha512_256>,
+    Sha512Driver: Digest<Sha512>,
+    Sha3_224Driver: Digest<Sha3_224>,
+    Sha3_256Driver: Digest<Sha3_256>,
+    Sha3_384Driver: Digest<Sha3_384>,
+    Sha3_512Driver: Digest<Sha3_512>,
+    Sm3Driver: Digest<Sm3>,
+>
+    ActiveDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
 {
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        match self {
+            ActiveDriver::Md5(driver) => driver.update(len),
+            ActiveDriver::Sha1(driver) => driver.update(len),
+            ActiveDriver::Sha224(driver) => driver.update(len),
+            ActiveDriver::Sha256(driver) => driver.update(len),
+            ActiveDriver::Sha384(driver) => driver.update(len),
+            ActiveDriver::Sha512_224(driver) => driver.update(len),
+            ActiveDriver::Sha512_256(driver) => driver.update(len),
+            ActiveDriver::Sha512(driver) => driver.update(len),
+            ActiveDriver::Sha3_224(driver) => driver.update(len),
+            ActiveDriver::Sha3_256(driver) => driver.update(len),
+            ActiveDriver::Sha3_384(driver) => driver.update(len),
+            ActiveDriver::Sha3_512(driver) => driver.update(len),
+            ActiveDriver::Sm3(driver) => driver.update(len),
+        }
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        match self {
+            ActiveDriver::Md5(driver) => driver.finalize(),
+            ActiveDriver::Sha1(driver) => driver.finalize(),
+            ActiveDriver::Sha224(driver) => driver.finalize(),
+            ActiveDriver::Sha256(driver) => driver.finalize(),
+            ActiveDriver::Sha384(driver) => driver.finalize(),
+            ActiveDriver::Sha512_224(driver) => driver.finalize(),
+            ActiveDriver::Sha512_256(driver) => driver.finalize(),
+            ActiveDriver::Sha512(driver) => driver.finalize(),
+            ActiveDriver::Sha3_224(driver) => driver.finalize(),
+            ActiveDriver::Sha3_256(driver) => driver.finalize(),
+            ActiveDriver::Sha3_384(driver) => driver.finalize(),
+            ActiveDriver::Sha3_512(driver) => driver.finalize(),
+            ActiveDriver::Sm3(driver) => driver.finalize(),
+        }
+    }
+
     fn release(self) {
         match self {
             Self::Md5(guard) => drop(guard),
@@ -153,6 +291,13 @@ impl<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driv
             Self::Sha256(guard) => drop(guard),
             Self::Sha384(guard) => drop(guard),
             Self::Sha512(guard) => drop(guard),
+            Self::Sha512_224(guard) => drop(guard),
+            Self::Sha512_256(guard) => drop(guard),
+            Self::Sha3_224(guard) => drop(guard),
+            Self::Sha3_256(guard) => drop(guard),
+            Self::Sha3_384(guard) => drop(guard),
+            Self::Sha3_512(guard) => drop(guard),
+            Self::Sm3(guard) => drop(guard),
         }
     }
 }
@@ -160,13 +305,12 @@ impl<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driv
 fn begin<AlgorithmType: DigestAlgorithm, Driver: Digest<AlgorithmType> + 'static>(
     resource: DriverMutexAny,
     client: &'static dyn DigestClient<AlgorithmType>,
-    len: usize,
 ) -> Result<DriverMutexRef<Driver>, ErrorCode> {
     let driver = resource
         .downcast::<Driver>()
         .map_err(|_| ErrorCode::INVAL)?;
     driver.set_client(client);
-    driver.digest(len)?;
+    driver.begin()?;
     Ok(driver)
 }
 
@@ -181,7 +325,14 @@ pub struct DigestDriver<
     Sha224Driver: Digest<Sha224> + 'static = UnavailableDigest,
     Sha256Driver: Digest<Sha256> + 'static = UnavailableDigest,
     Sha384Driver: Digest<Sha384> + 'static = UnavailableDigest,
+    Sha512_224Driver: Digest<Sha512_224> + 'static = UnavailableDigest,
+    Sha512_256Driver: Digest<Sha512_256> + 'static = UnavailableDigest,
     Sha512Driver: Digest<Sha512> + 'static = UnavailableDigest,
+    Sha3_224Driver: Digest<Sha3_224> + 'static = UnavailableDigest,
+    Sha3_256Driver: Digest<Sha3_256> + 'static = UnavailableDigest,
+    Sha3_384Driver: Digest<Sha3_384> + 'static = UnavailableDigest,
+    Sha3_512Driver: Digest<Sha3_512> + 'static = UnavailableDigest,
+    Sm3Driver: Digest<Sm3> + 'static = UnavailableDigest,
 > {
     apps: DigestGrant,
     md5: Slot<Md5Driver>,
@@ -190,9 +341,30 @@ pub struct DigestDriver<
     sha256: Slot<Sha256Driver>,
     sha384: Slot<Sha384Driver>,
     sha512: Slot<Sha512Driver>,
+    sha512_224: Slot<Sha512_224Driver>,
+    sha512_256: Slot<Sha512_256Driver>,
+    sha3_224: Slot<Sha3_224Driver>,
+    sha3_256: Slot<Sha3_256Driver>,
+    sha3_384: Slot<Sha3_384Driver>,
+    sha3_512: Slot<Sha3_512Driver>,
+    sm3: Slot<Sm3Driver>,
     request: Cell<Option<Request>>,
     active: MapCell<
-        ActiveDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>,
+        ActiveDriver<
+            Md5Driver,
+            Sha1Driver,
+            Sha224Driver,
+            Sha256Driver,
+            Sha384Driver,
+            Sha512_224Driver,
+            Sha512_256Driver,
+            Sha512Driver,
+            Sha3_224Driver,
+            Sha3_256Driver,
+            Sha3_384Driver,
+            Sha3_512Driver,
+            Sm3Driver,
+        >,
     >,
 }
 
@@ -202,8 +374,30 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
-> DigestDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
+>
+    DigestDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
 {
     /// Create the capsule with optional per-algorithm mutexes.
     ///
@@ -215,7 +409,14 @@ impl<
         sha224: Option<&'static DriverMutex<Sha224Driver>>,
         sha256: Option<&'static DriverMutex<Sha256Driver>>,
         sha384: Option<&'static DriverMutex<Sha384Driver>>,
+        sha512_224: Option<&'static DriverMutex<Sha512_224Driver>>,
+        sha512_256: Option<&'static DriverMutex<Sha512_256Driver>>,
         sha512: Option<&'static DriverMutex<Sha512Driver>>,
+        sha3_224: Option<&'static DriverMutex<Sha3_224Driver>>,
+        sha3_256: Option<&'static DriverMutex<Sha3_256Driver>>,
+        sha3_384: Option<&'static DriverMutex<Sha3_384Driver>>,
+        sha3_512: Option<&'static DriverMutex<Sha3_512Driver>>,
+        sm3: Option<&'static DriverMutex<Sm3Driver>>,
     ) -> Self {
         Self {
             apps,
@@ -224,7 +425,14 @@ impl<
             sha224: Slot::new(sha224),
             sha256: Slot::new(sha256),
             sha384: Slot::new(sha384),
+            sha512_224: Slot::new(sha512_224),
+            sha512_256: Slot::new(sha512_256),
             sha512: Slot::new(sha512),
+            sha3_224: Slot::new(sha3_224),
+            sha3_256: Slot::new(sha3_256),
+            sha3_384: Slot::new(sha3_384),
+            sha3_512: Slot::new(sha3_512),
+            sm3: Slot::new(sm3),
             request: Cell::new(None),
             active: MapCell::empty(),
         }
@@ -251,7 +459,14 @@ impl<
             Algorithm::Sha224 => self.sha224.mutex.is_some(),
             Algorithm::Sha256 => self.sha256.mutex.is_some(),
             Algorithm::Sha384 => self.sha384.mutex.is_some(),
+            Algorithm::Sha512_224 => self.sha512_224.mutex.is_some(),
+            Algorithm::Sha512_256 => self.sha512_256.mutex.is_some(),
             Algorithm::Sha512 => self.sha512.mutex.is_some(),
+            Algorithm::Sha3_224 => self.sha3_224.mutex.is_some(),
+            Algorithm::Sha3_256 => self.sha3_256.mutex.is_some(),
+            Algorithm::Sha3_384 => self.sha3_384.mutex.is_some(),
+            Algorithm::Sha3_512 => self.sha3_512.mutex.is_some(),
+            Algorithm::Sm3 => self.sm3.mutex.is_some(),
         };
         if !supported {
             return Err(ErrorCode::NOSUPPORT);
@@ -259,28 +474,24 @@ impl<
         if self.request.get().is_some() {
             return Err(ErrorCode::BUSY);
         }
-        let input_len = self
-            .apps
+        self.apps
             .enter(processid, |_, buffers| {
                 let output = buffers
-                    .get_readwrite_processbuffer(0)
+                    .get_readwrite_processbuffer(rw_allow::OUTPUT)
                     .map_err(|_| ErrorCode::RESERVE)?;
                 if output.len() < algorithm.digest_len() {
                     return Err(ErrorCode::SIZE);
                 }
-                let input = buffers
-                    .get_readonly_processbuffer(0)
-                    .map_err(|_| ErrorCode::RESERVE)?;
-                Ok(input.len())
+                Ok(())
             })
             .map_err(ErrorCode::from)??;
 
         self.request.set(Some(Request {
             processid,
             algorithm,
-            input_len,
-            offset: 0,
-            written: false,
+            chunk_len: 0,
+            chunk_offset: 0,
+            digest_written: false,
         }));
         let result = match algorithm {
             Algorithm::Md5 => self.md5.request(),
@@ -288,7 +499,14 @@ impl<
             Algorithm::Sha224 => self.sha224.request(),
             Algorithm::Sha256 => self.sha256.request(),
             Algorithm::Sha384 => self.sha384.request(),
+            Algorithm::Sha512_224 => self.sha512_224.request(),
+            Algorithm::Sha512_256 => self.sha512_256.request(),
             Algorithm::Sha512 => self.sha512.request(),
+            Algorithm::Sha3_224 => self.sha3_224.request(),
+            Algorithm::Sha3_256 => self.sha3_256.request(),
+            Algorithm::Sha3_384 => self.sha3_384.request(),
+            Algorithm::Sha3_512 => self.sha3_512.request(),
+            Algorithm::Sm3 => self.sm3.request(),
         };
         if result.is_err() {
             self.request.set(None);
@@ -296,35 +514,72 @@ impl<
         result
     }
 
+    fn update(&self, processid: ProcessId, len: usize) -> Result<(), ErrorCode> {
+        let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.chunk_len != request.chunk_offset || request.processid != processid {
+            return Err(ErrorCode::BUSY);
+        }
+        let chunk_len = self
+            .apps
+            .enter(processid, |_, buffers| {
+                let input = buffers
+                    .get_readonly_processbuffer(ro_allow::INPUT)
+                    .map_err(|_| ErrorCode::RESERVE)?;
+                Ok::<usize, ErrorCode>(input.len())
+            })
+            .map_err(ErrorCode::from)??;
+
+        request.chunk_len = chunk_len;
+        request.chunk_offset = 0;
+        self.request.set(Some(request));
+
+        self.active
+            .map_or(Err(ErrorCode::OFF), |driver| driver.update(len))?;
+
+        Ok(())
+    }
+
+    fn finalize(&self, processid: ProcessId) -> Result<(), ErrorCode> {
+        let request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.chunk_len != request.chunk_offset || request.processid != processid {
+            return Err(ErrorCode::BUSY);
+        }
+
+        self.active
+            .map_or(Err(ErrorCode::OFF), |driver| driver.finalize())?;
+
+        Ok(())
+    }
+
     fn read(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
         let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
-        let count = input.len().min(request.input_len - request.offset);
+        let count = input.len().min(request.chunk_len - request.chunk_offset);
         if count == 0 {
             return Ok(0);
         }
         self.apps
             .enter(request.processid, |_, buffers| {
                 buffers
-                    .get_readonly_processbuffer(0)
+                    .get_readonly_processbuffer(ro_allow::INPUT)
                     .map_err(|_| ErrorCode::RESERVE)?
                     .enter(|source| {
-                        if source.len() < request.input_len {
+                        if source.len() < request.chunk_len {
                             return Err(ErrorCode::SIZE);
                         }
-                        source[request.offset..request.offset + count]
+                        source[request.chunk_offset..request.chunk_offset + count]
                             .copy_to_slice_or_err(&mut input[..count])
                     })
                     .map_err(|_| ErrorCode::RESERVE)?
             })
             .map_err(ErrorCode::from)??;
-        request.offset += count;
+        request.chunk_offset += count;
         self.request.set(Some(request));
         Ok(count)
     }
 
     fn write(&self, digest: &[u8]) -> Result<(), ErrorCode> {
         let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
-        if request.written || request.offset != request.input_len {
+        if request.digest_written || request.chunk_offset != request.chunk_len {
             return Err(ErrorCode::FAIL);
         }
         if digest.len() != request.algorithm.digest_len() {
@@ -333,7 +588,7 @@ impl<
         self.apps
             .enter(request.processid, |_, buffers| {
                 buffers
-                    .get_readwrite_processbuffer(0)
+                    .get_readwrite_processbuffer(rw_allow::OUTPUT)
                     .map_err(|_| ErrorCode::RESERVE)?
                     .mut_enter(|output| {
                         if output.len() < digest.len() {
@@ -344,27 +599,41 @@ impl<
                     .map_err(|_| ErrorCode::RESERVE)?
             })
             .map_err(ErrorCode::from)??;
-        request.written = true;
+        request.digest_written = true;
         self.request.set(Some(request));
         Ok(())
     }
 
-    fn finish(&self, result: Result<(), ErrorCode>) {
+    fn finish_update(&self, result: Result<(), ErrorCode>) {
         let request = self.request.take();
-        self.active.take().map(ActiveDriver::release);
         if let Some(request) = request {
-            let result = result.and(if request.written {
+            let result = result.and(if request.chunk_len == request.chunk_offset {
                 Ok(())
             } else {
                 Err(ErrorCode::FAIL)
             });
-            let length = if result.is_ok() {
-                request.algorithm.digest_len()
-            } else {
-                0
-            };
             let _ = self.apps.enter(request.processid, |_, buffers| {
-                let _ = buffers.schedule_upcall(0, (into_statuscode(result), length, 0));
+                let _ =
+                    buffers.schedule_upcall(upcall::UPDATE_DONE, (into_statuscode(result), 0, 0));
+            });
+        }
+    }
+    fn finish_op(&self, result: Result<(), ErrorCode>) {
+        let request = self.request.take();
+        self.active.take().map(ActiveDriver::release);
+        if let Some(request) = request {
+            let result = result.and(if request.digest_written {
+                Ok(())
+            } else {
+                Err(ErrorCode::FAIL)
+            });
+            // let length = if result.is_ok() {
+            //     request.algorithm.digest_len()
+            // } else {
+            //     0
+            // };
+            let _ = self.apps.enter(request.processid, |_, buffers| {
+                let _ = buffers.schedule_upcall(upcall::OP_DONE, (into_statuscode(result), 0, 0));
             });
         }
     }
@@ -376,22 +645,48 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 > SyscallDriver
-    for DigestDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
+    for DigestDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
 {
     fn command(
         &self,
         command_num: usize,
-        algorithm: usize,
-        _unused: usize,
+        data1: usize,
+        _data2: usize,
         processid: ProcessId,
     ) -> CommandReturn {
         match command_num {
             0 => CommandReturn::success(),
-            1 => Algorithm::try_from(algorithm)
+            // 1 begin (algo)
+            // 2 update by sending a new chunk (len)
+            // 3 finalize and receive the output
+            1 => Algorithm::try_from(data1)
                 .and_then(|algorithm| self.start(processid, algorithm))
                 .into(),
+            2 => self.update(processid, data1).into(),
+            3 => self.finalize(processid).into(),
             _ => CommandReturn::failure(ErrorCode::NOSUPPORT),
         }
     }
@@ -407,9 +702,30 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 > DriverMutexClient
-    for DigestDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
+    for DigestDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
 {
     fn ready(&'static self, resource: DriverMutexAny) {
         let Some(request) = self.request.get() else {
@@ -421,30 +737,49 @@ impl<
             .map_err(ErrorCode::from);
         if let Err(error) = result {
             drop(resource);
-            self.finish(Err(error));
+            self.finish_op(Err(error));
             return;
         }
         let result = match request.algorithm {
-            Algorithm::Md5 => {
-                begin::<Md5, Md5Driver>(resource, self, request.input_len).map(ActiveDriver::Md5)
+            Algorithm::Md5 => begin::<Md5, Md5Driver>(resource, self).map(ActiveDriver::Md5),
+            Algorithm::Sha1 => begin::<Sha1, Sha1Driver>(resource, self).map(ActiveDriver::Sha1),
+            Algorithm::Sha224 => {
+                begin::<Sha224, Sha224Driver>(resource, self).map(ActiveDriver::Sha224)
             }
-            Algorithm::Sha1 => {
-                begin::<Sha1, Sha1Driver>(resource, self, request.input_len).map(ActiveDriver::Sha1)
+            Algorithm::Sha256 => {
+                begin::<Sha256, Sha256Driver>(resource, self).map(ActiveDriver::Sha256)
             }
-            Algorithm::Sha224 => begin::<Sha224, Sha224Driver>(resource, self, request.input_len)
-                .map(ActiveDriver::Sha224),
-            Algorithm::Sha256 => begin::<Sha256, Sha256Driver>(resource, self, request.input_len)
-                .map(ActiveDriver::Sha256),
-            Algorithm::Sha384 => begin::<Sha384, Sha384Driver>(resource, self, request.input_len)
-                .map(ActiveDriver::Sha384),
-            Algorithm::Sha512 => begin::<Sha512, Sha512Driver>(resource, self, request.input_len)
-                .map(ActiveDriver::Sha512),
+            Algorithm::Sha384 => {
+                begin::<Sha384, Sha384Driver>(resource, self).map(ActiveDriver::Sha384)
+            }
+            Algorithm::Sha512 => {
+                begin::<Sha512, Sha512Driver>(resource, self).map(ActiveDriver::Sha512)
+            }
+            Algorithm::Sha512_224 => {
+                begin::<Sha512_224, Sha512_224Driver>(resource, self).map(ActiveDriver::Sha512_224)
+            }
+            Algorithm::Sha512_256 => {
+                begin::<Sha512_256, Sha512_256Driver>(resource, self).map(ActiveDriver::Sha512_256)
+            }
+            Algorithm::Sha3_224 => {
+                begin::<Sha3_224, Sha3_224Driver>(resource, self).map(ActiveDriver::Sha3_224)
+            }
+            Algorithm::Sha3_256 => {
+                begin::<Sha3_256, Sha3_256Driver>(resource, self).map(ActiveDriver::Sha3_256)
+            }
+            Algorithm::Sha3_384 => {
+                begin::<Sha3_384, Sha3_384Driver>(resource, self).map(ActiveDriver::Sha3_384)
+            }
+            Algorithm::Sha3_512 => {
+                begin::<Sha3_512, Sha3_512Driver>(resource, self).map(ActiveDriver::Sha3_512)
+            }
+            Algorithm::Sm3 => begin::<Sm3, Sm3Driver>(resource, self).map(ActiveDriver::Sm3),
         };
         match result {
             Ok(driver) => {
                 self.active.replace(driver);
             }
-            Err(error) => self.finish(Err(error)),
+            Err(error) => self.finish_op(Err(error)),
         }
     }
 }
@@ -456,19 +791,47 @@ impl<
     Sha224Driver: Digest<Sha224> + 'static,
     Sha256Driver: Digest<Sha256> + 'static,
     Sha384Driver: Digest<Sha384> + 'static,
+    Sha512_224Driver: Digest<Sha512_224> + 'static,
+    Sha512_256Driver: Digest<Sha512_256> + 'static,
     Sha512Driver: Digest<Sha512> + 'static,
+    Sha3_224Driver: Digest<Sha3_224> + 'static,
+    Sha3_256Driver: Digest<Sha3_256> + 'static,
+    Sha3_384Driver: Digest<Sha3_384> + 'static,
+    Sha3_512Driver: Digest<Sha3_512> + 'static,
+    Sm3Driver: Digest<Sm3> + 'static,
 > DigestClient<AlgorithmType>
-    for DigestDriver<Md5Driver, Sha1Driver, Sha224Driver, Sha256Driver, Sha384Driver, Sha512Driver>
+    for DigestDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
 {
     fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
         self.read(input)
     }
 
-    fn write_digest(&self, digest: &AlgorithmType::Output) -> Result<(), ErrorCode> {
+    fn update_done(&self, result: Result<(), ErrorCode>) {
+        self.finish_update(result);
+    }
+
+    fn write_output(
+        &self,
+        digest: &<AlgorithmType as DigestAlgorithm>::Output,
+    ) -> Result<(), ErrorCode> {
         self.write(digest.as_ref())
     }
 
     fn digest_done(&self, result: Result<(), ErrorCode>) {
-        self.finish(result);
+        self.finish_op(result);
     }
 }
