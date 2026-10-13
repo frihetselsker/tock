@@ -1,0 +1,892 @@
+//! Userspace message digests using mutex-protected digest peripherals.
+//!
+//! Read-only allow 0 contains the entire input; read-write allow 0 receives the
+//! digest. Command 0 checks driver presence. Command 1 starts a digest, with
+//! argument 0 selecting [`Algorithm`] and argument 1 unused. Subscribe 0 reports
+//! `(status, digest_length, 0)`, with status 0 on success and an ErrorCode on
+//! failure; digest_length is zero on failure. A synchronous command error does
+//! not produce an upcall.
+//!
+//! One request may be outstanding across all processes, including time waiting
+//! for a peripheral mutex. Other requests return BUSY. Unknown or unconfigured
+//! algorithms return NOSUPPORT. A short output buffer returns SIZE. Empty input
+//! is supported. Applications must keep both allows and their contents unchanged
+//! until completion; input is read incrementally, not snapshotted. Buffer access
+//! is checked again at every callback, and process exit releases the mutex when
+//! the peripheral finishes.
+
+use core::cell::Cell;
+
+use capsules_core::driver_mutex::{
+    DriverMutex, DriverMutexAny, DriverMutexClient, DriverMutexHandle, DriverMutexRef,
+};
+use kernel::errorcode::into_statuscode;
+use kernel::grant::{AllowRoCount, AllowRwCount, Grant, UpcallCount};
+use kernel::hil::crypto::digest::{
+    DigestAlgorithm, Md5, Sha1, Sha3_224, Sha3_256, Sha3_384, Sha3_512, Sha224, Sha256, Sha384,
+    Sha512, Sha512_224, Sha512_256, Sm3,
+};
+use kernel::hil::crypto::hmac::{Hmac, HmacClient};
+use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
+use kernel::syscall::{CommandReturn, SyscallDriver};
+use kernel::utilities::cells::{MapCell, OptionalCell};
+use kernel::{ErrorCode, ProcessId};
+
+/// Syscall driver number.
+pub const DRIVER_NUM: usize = capsules_core::driver::NUM::Hmac as usize;
+
+/// Upcalls for hashing operations completing.
+mod upcall {
+    pub const UPDATE_DONE: usize = 0;
+    pub const OP_DONE: usize = 1;
+    pub const COUNT: u8 = 2;
+}
+
+/// Ids for read-only allow buffers
+mod ro_allow {
+    pub const INPUT: usize = 0;
+    pub const KEY: usize = 1;
+    /// The number of allow buffers the kernel stores for this grant
+    pub const COUNT: u8 = 2;
+}
+
+/// Ids for read-write allow buffers
+mod rw_allow {
+    pub const OUTPUT: usize = 0;
+    /// The number of allow buffers the kernel stores for this grant
+    pub const COUNT: u8 = 1;
+}
+
+/// Algorithm identifiers used by command 1.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum Algorithm {
+    Md5 = 0,
+    Sha1 = 1,
+    Sha224 = 2,
+    Sha256 = 3,
+    Sha384 = 4,
+    Sha512_224 = 5,
+    Sha512_256 = 6,
+    Sha512 = 7,
+    Sha3_224 = 8,
+    Sha3_256 = 9,
+    Sha3_384 = 10,
+    Sha3_512 = 11,
+    Sm3 = 12,
+}
+
+impl TryFrom<usize> for Algorithm {
+    type Error = ErrorCode;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Md5),
+            1 => Ok(Self::Sha1),
+            2 => Ok(Self::Sha224),
+            3 => Ok(Self::Sha256),
+            4 => Ok(Self::Sha384),
+            5 => Ok(Self::Sha512_224),
+            6 => Ok(Self::Sha512_256),
+            7 => Ok(Self::Sha512),
+            8 => Ok(Self::Sha3_224),
+            9 => Ok(Self::Sha3_256),
+            10 => Ok(Self::Sha3_384),
+            11 => Ok(Self::Sha3_512),
+            12 => Ok(Self::Sm3),
+            _ => Err(ErrorCode::NOSUPPORT),
+        }
+    }
+}
+
+impl Algorithm {
+    /// Output length in bytes.
+    pub fn digest_len(self) -> usize {
+        match self {
+            Self::Md5 => Md5::DIGEST_LEN,
+            Self::Sha1 => Sha1::DIGEST_LEN,
+            Self::Sha224 => Sha224::DIGEST_LEN,
+            Self::Sha256 => Sha256::DIGEST_LEN,
+            Self::Sha384 => Sha384::DIGEST_LEN,
+            Self::Sha512_224 => Sha512_224::DIGEST_LEN,
+            Self::Sha512_256 => Sha512_256::DIGEST_LEN,
+            Self::Sha512 => Sha512::DIGEST_LEN,
+            Self::Sha3_224 => Sha3_224::DIGEST_LEN,
+            Self::Sha3_256 => Sha3_256::DIGEST_LEN,
+            Self::Sha3_384 => Sha3_384::DIGEST_LEN,
+            Self::Sha3_512 => Sha3_512::DIGEST_LEN,
+            Self::Sm3 => Sm3::DIGEST_LEN,
+        }
+    }
+}
+
+/// Default type for an algorithm that has no peripheral configured.
+pub enum UnavailableHmac {}
+
+impl<AlgorithmType: DigestAlgorithm> Hmac<AlgorithmType> for UnavailableHmac {
+    fn begin(&self, _key_len: usize) -> Result<(), ErrorCode> {
+        todo!()
+    }
+
+    fn update(&self, _len: usize) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn cancel(&self) -> Result<(), ErrorCode> {
+        Err(ErrorCode::NOSUPPORT)
+    }
+
+    fn set_client(&self, _client: &'static dyn HmacClient<AlgorithmType>) {}
+}
+
+/// One input allow, one output allow, and one completion upcall per process.
+pub type HmacGrant = Grant<
+    (),
+    UpcallCount<{ upcall::COUNT }>,
+    AllowRoCount<{ ro_allow::COUNT }>,
+    AllowRwCount<{ rw_allow::COUNT }>,
+>;
+
+struct Slot<Driver: 'static> {
+    mutex: Option<&'static DriverMutex<Driver>>,
+    handle: OptionalCell<DriverMutexHandle>,
+}
+
+impl<Driver> Slot<Driver> {
+    fn new(mutex: Option<&'static DriverMutex<Driver>>) -> Self {
+        Self {
+            mutex,
+            handle: OptionalCell::empty(),
+        }
+    }
+
+    fn register(&self, client: &'static dyn DriverMutexClient) -> Result<(), ErrorCode> {
+        if let Some(mutex) = self.mutex {
+            self.handle
+                .set(mutex.add_client(client).ok_or(ErrorCode::NOMEM)?);
+        }
+        Ok(())
+    }
+
+    fn request(&self) -> Result<(), ErrorCode> {
+        self.mutex
+            .ok_or(ErrorCode::NOSUPPORT)?
+            .request(self.handle.get().ok_or(ErrorCode::RESERVE)?)
+    }
+}
+
+#[derive(Clone, Copy)]
+struct Request {
+    processid: ProcessId,
+    algorithm: Algorithm,
+    chunk_len: usize,
+    chunk_offset: usize,
+    key_len: usize,
+    key_offset: usize,
+    digest_written: bool,
+}
+
+enum ActiveDriver<
+    Md5Driver: Hmac<Md5> + 'static,
+    Sha1Driver: Hmac<Sha1> + 'static,
+    Sha224Driver: Hmac<Sha224> + 'static,
+    Sha256Driver: Hmac<Sha256> + 'static,
+    Sha384Driver: Hmac<Sha384> + 'static,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static,
+    Sha512Driver: Hmac<Sha512> + 'static,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static,
+    Sm3Driver: Hmac<Sm3> + 'static,
+> {
+    Md5(DriverMutexRef<Md5Driver>),
+    Sha1(DriverMutexRef<Sha1Driver>),
+    Sha224(DriverMutexRef<Sha224Driver>),
+    Sha256(DriverMutexRef<Sha256Driver>),
+    Sha384(DriverMutexRef<Sha384Driver>),
+    Sha512_224(DriverMutexRef<Sha512_224Driver>),
+    Sha512_256(DriverMutexRef<Sha512_256Driver>),
+    Sha512(DriverMutexRef<Sha512Driver>),
+    Sha3_224(DriverMutexRef<Sha3_224Driver>),
+    Sha3_256(DriverMutexRef<Sha3_256Driver>),
+    Sha3_384(DriverMutexRef<Sha3_384Driver>),
+    Sha3_512(DriverMutexRef<Sha3_512Driver>),
+    Sm3(DriverMutexRef<Sm3Driver>),
+}
+
+impl<
+    Md5Driver: Hmac<Md5>,
+    Sha1Driver: Hmac<Sha1>,
+    Sha224Driver: Hmac<Sha224>,
+    Sha256Driver: Hmac<Sha256>,
+    Sha384Driver: Hmac<Sha384>,
+    Sha512_224Driver: Hmac<Sha512_224>,
+    Sha512_256Driver: Hmac<Sha512_256>,
+    Sha512Driver: Hmac<Sha512>,
+    Sha3_224Driver: Hmac<Sha3_224>,
+    Sha3_256Driver: Hmac<Sha3_256>,
+    Sha3_384Driver: Hmac<Sha3_384>,
+    Sha3_512Driver: Hmac<Sha3_512>,
+    Sm3Driver: Hmac<Sm3>,
+>
+    ActiveDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
+{
+    fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        match self {
+            ActiveDriver::Md5(driver) => driver.update(len),
+            ActiveDriver::Sha1(driver) => driver.update(len),
+            ActiveDriver::Sha224(driver) => driver.update(len),
+            ActiveDriver::Sha256(driver) => driver.update(len),
+            ActiveDriver::Sha384(driver) => driver.update(len),
+            ActiveDriver::Sha512_224(driver) => driver.update(len),
+            ActiveDriver::Sha512_256(driver) => driver.update(len),
+            ActiveDriver::Sha512(driver) => driver.update(len),
+            ActiveDriver::Sha3_224(driver) => driver.update(len),
+            ActiveDriver::Sha3_256(driver) => driver.update(len),
+            ActiveDriver::Sha3_384(driver) => driver.update(len),
+            ActiveDriver::Sha3_512(driver) => driver.update(len),
+            ActiveDriver::Sm3(driver) => driver.update(len),
+        }
+    }
+
+    fn finalize(&self) -> Result<(), ErrorCode> {
+        match self {
+            ActiveDriver::Md5(driver) => driver.finalize(),
+            ActiveDriver::Sha1(driver) => driver.finalize(),
+            ActiveDriver::Sha224(driver) => driver.finalize(),
+            ActiveDriver::Sha256(driver) => driver.finalize(),
+            ActiveDriver::Sha384(driver) => driver.finalize(),
+            ActiveDriver::Sha512_224(driver) => driver.finalize(),
+            ActiveDriver::Sha512_256(driver) => driver.finalize(),
+            ActiveDriver::Sha512(driver) => driver.finalize(),
+            ActiveDriver::Sha3_224(driver) => driver.finalize(),
+            ActiveDriver::Sha3_256(driver) => driver.finalize(),
+            ActiveDriver::Sha3_384(driver) => driver.finalize(),
+            ActiveDriver::Sha3_512(driver) => driver.finalize(),
+            ActiveDriver::Sm3(driver) => driver.finalize(),
+        }
+    }
+
+    fn release(self) {
+        match self {
+            Self::Md5(guard) => drop(guard),
+            Self::Sha1(guard) => drop(guard),
+            Self::Sha224(guard) => drop(guard),
+            Self::Sha256(guard) => drop(guard),
+            Self::Sha384(guard) => drop(guard),
+            Self::Sha512(guard) => drop(guard),
+            Self::Sha512_224(guard) => drop(guard),
+            Self::Sha512_256(guard) => drop(guard),
+            Self::Sha3_224(guard) => drop(guard),
+            Self::Sha3_256(guard) => drop(guard),
+            Self::Sha3_384(guard) => drop(guard),
+            Self::Sha3_512(guard) => drop(guard),
+            Self::Sm3(guard) => drop(guard),
+        }
+    }
+}
+
+fn begin<AlgorithmType: DigestAlgorithm, Driver: Hmac<AlgorithmType> + 'static>(
+    resource: DriverMutexAny,
+    key_len: usize,
+    client: &'static dyn HmacClient<AlgorithmType>,
+) -> Result<DriverMutexRef<Driver>, ErrorCode> {
+    let driver = resource
+        .downcast::<Driver>()
+        .map_err(|_| ErrorCode::INVAL)?;
+    driver.set_client(client);
+    driver.begin(key_len)?;
+    Ok(driver)
+}
+
+/// One digest syscall interface spanning independent or shared peripherals.
+///
+/// Multiple algorithm slots may refer to the same mutex. Boards must not
+/// wrap a shared peripheral in different mutex instances. The active guard
+/// is retained until completion, even if the requesting process exits.
+pub struct HmacDriver<
+    Md5Driver: Hmac<Md5> + 'static = UnavailableHmac,
+    Sha1Driver: Hmac<Sha1> + 'static = UnavailableHmac,
+    Sha224Driver: Hmac<Sha224> + 'static = UnavailableHmac,
+    Sha256Driver: Hmac<Sha256> + 'static = UnavailableHmac,
+    Sha384Driver: Hmac<Sha384> + 'static = UnavailableHmac,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static = UnavailableHmac,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static = UnavailableHmac,
+    Sha512Driver: Hmac<Sha512> + 'static = UnavailableHmac,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static = UnavailableHmac,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static = UnavailableHmac,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static = UnavailableHmac,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static = UnavailableHmac,
+    Sm3Driver: Hmac<Sm3> + 'static = UnavailableHmac,
+> {
+    apps: HmacGrant,
+    md5: Slot<Md5Driver>,
+    sha1: Slot<Sha1Driver>,
+    sha224: Slot<Sha224Driver>,
+    sha256: Slot<Sha256Driver>,
+    sha384: Slot<Sha384Driver>,
+    sha512: Slot<Sha512Driver>,
+    sha512_224: Slot<Sha512_224Driver>,
+    sha512_256: Slot<Sha512_256Driver>,
+    sha3_224: Slot<Sha3_224Driver>,
+    sha3_256: Slot<Sha3_256Driver>,
+    sha3_384: Slot<Sha3_384Driver>,
+    sha3_512: Slot<Sha3_512Driver>,
+    sm3: Slot<Sm3Driver>,
+    request: Cell<Option<Request>>,
+    active: MapCell<
+        ActiveDriver<
+            Md5Driver,
+            Sha1Driver,
+            Sha224Driver,
+            Sha256Driver,
+            Sha384Driver,
+            Sha512_224Driver,
+            Sha512_256Driver,
+            Sha512Driver,
+            Sha3_224Driver,
+            Sha3_256Driver,
+            Sha3_384Driver,
+            Sha3_512Driver,
+            Sm3Driver,
+        >,
+    >,
+}
+
+impl<
+    Md5Driver: Hmac<Md5> + 'static,
+    Sha1Driver: Hmac<Sha1> + 'static,
+    Sha224Driver: Hmac<Sha224> + 'static,
+    Sha256Driver: Hmac<Sha256> + 'static,
+    Sha384Driver: Hmac<Sha384> + 'static,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static,
+    Sha512Driver: Hmac<Sha512> + 'static,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static,
+    Sm3Driver: Hmac<Sm3> + 'static,
+>
+    HmacDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
+{
+    /// Create the capsule with optional per-algorithm mutexes.
+    ///
+    /// Call [`Self::register`] after placing the capsule in static memory.
+    pub fn new(
+        apps: HmacGrant,
+        md5: Option<&'static DriverMutex<Md5Driver>>,
+        sha1: Option<&'static DriverMutex<Sha1Driver>>,
+        sha224: Option<&'static DriverMutex<Sha224Driver>>,
+        sha256: Option<&'static DriverMutex<Sha256Driver>>,
+        sha384: Option<&'static DriverMutex<Sha384Driver>>,
+        sha512_224: Option<&'static DriverMutex<Sha512_224Driver>>,
+        sha512_256: Option<&'static DriverMutex<Sha512_256Driver>>,
+        sha512: Option<&'static DriverMutex<Sha512Driver>>,
+        sha3_224: Option<&'static DriverMutex<Sha3_224Driver>>,
+        sha3_256: Option<&'static DriverMutex<Sha3_256Driver>>,
+        sha3_384: Option<&'static DriverMutex<Sha3_384Driver>>,
+        sha3_512: Option<&'static DriverMutex<Sha3_512Driver>>,
+        sm3: Option<&'static DriverMutex<Sm3Driver>>,
+    ) -> Self {
+        Self {
+            apps,
+            md5: Slot::new(md5),
+            sha1: Slot::new(sha1),
+            sha224: Slot::new(sha224),
+            sha256: Slot::new(sha256),
+            sha384: Slot::new(sha384),
+            sha512_224: Slot::new(sha512_224),
+            sha512_256: Slot::new(sha512_256),
+            sha512: Slot::new(sha512),
+            sha3_224: Slot::new(sha3_224),
+            sha3_256: Slot::new(sha3_256),
+            sha3_384: Slot::new(sha3_384),
+            sha3_512: Slot::new(sha3_512),
+            sm3: Slot::new(sm3),
+            request: Cell::new(None),
+            active: MapCell::empty(),
+        }
+    }
+
+    /// Register once with every configured mutex, sharing a handle when
+    /// several algorithms use the same mutex. Returns NOMEM if a mutex
+    /// has no client capacity; earlier registrations remain installed.
+    pub fn register(&'static self) -> Result<(), ErrorCode> {
+        let client: &'static dyn DriverMutexClient = self;
+        self.md5.register(client)?;
+        self.sha1.register(client)?;
+        self.sha224.register(client)?;
+        self.sha256.register(client)?;
+        self.sha384.register(client)?;
+        self.sha512.register(client)?;
+        self.sha512_224.register(client)?;
+        self.sha512_256.register(client)?;
+        self.sha3_224.register(client)?;
+        self.sha3_256.register(client)?;
+        self.sha3_384.register(client)?;
+        self.sha3_512.register(client)?;
+        self.sm3.register(client)?;
+        Ok(())
+    }
+
+    fn start(
+        &self,
+        processid: ProcessId,
+        key_len: usize,
+        algorithm: Algorithm,
+    ) -> Result<(), ErrorCode> {
+        let supported = match algorithm {
+            Algorithm::Md5 => self.md5.mutex.is_some(),
+            Algorithm::Sha1 => self.sha1.mutex.is_some(),
+            Algorithm::Sha224 => self.sha224.mutex.is_some(),
+            Algorithm::Sha256 => self.sha256.mutex.is_some(),
+            Algorithm::Sha384 => self.sha384.mutex.is_some(),
+            Algorithm::Sha512_224 => self.sha512_224.mutex.is_some(),
+            Algorithm::Sha512_256 => self.sha512_256.mutex.is_some(),
+            Algorithm::Sha512 => self.sha512.mutex.is_some(),
+            Algorithm::Sha3_224 => self.sha3_224.mutex.is_some(),
+            Algorithm::Sha3_256 => self.sha3_256.mutex.is_some(),
+            Algorithm::Sha3_384 => self.sha3_384.mutex.is_some(),
+            Algorithm::Sha3_512 => self.sha3_512.mutex.is_some(),
+            Algorithm::Sm3 => self.sm3.mutex.is_some(),
+        };
+        if !supported {
+            return Err(ErrorCode::NOSUPPORT);
+        }
+        if self.request.get().is_some() {
+            return Err(ErrorCode::BUSY);
+        }
+        self.apps
+            .enter(processid, |_, buffers| {
+                let output = buffers
+                    .get_readwrite_processbuffer(rw_allow::OUTPUT)
+                    .map_err(|_| ErrorCode::RESERVE)?;
+                if output.len() < algorithm.digest_len() {
+                    return Err(ErrorCode::SIZE);
+                }
+                Ok(())
+            })
+            .map_err(ErrorCode::from)??;
+
+        self.request.set(Some(Request {
+            processid,
+            algorithm,
+            chunk_len: 0,
+            chunk_offset: 0,
+            key_len: key_len,
+            key_offset: 0,
+            digest_written: false,
+        }));
+        let result = match algorithm {
+            Algorithm::Md5 => self.md5.request(),
+            Algorithm::Sha1 => self.sha1.request(),
+            Algorithm::Sha224 => self.sha224.request(),
+            Algorithm::Sha256 => self.sha256.request(),
+            Algorithm::Sha384 => self.sha384.request(),
+            Algorithm::Sha512_224 => self.sha512_224.request(),
+            Algorithm::Sha512_256 => self.sha512_256.request(),
+            Algorithm::Sha512 => self.sha512.request(),
+            Algorithm::Sha3_224 => self.sha3_224.request(),
+            Algorithm::Sha3_256 => self.sha3_256.request(),
+            Algorithm::Sha3_384 => self.sha3_384.request(),
+            Algorithm::Sha3_512 => self.sha3_512.request(),
+            Algorithm::Sm3 => self.sm3.request(),
+        };
+        if result.is_err() {
+            self.request.set(None);
+        }
+        result
+    }
+
+    fn update(&self, processid: ProcessId, len: usize) -> Result<(), ErrorCode> {
+        let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.chunk_len != request.chunk_offset || request.processid != processid {
+            return Err(ErrorCode::BUSY);
+        }
+        let chunk_len = self
+            .apps
+            .enter(processid, |_, buffers| {
+                let input = buffers
+                    .get_readonly_processbuffer(ro_allow::INPUT)
+                    .map_err(|_| ErrorCode::RESERVE)?;
+                Ok::<usize, ErrorCode>(input.len())
+            })
+            .map_err(ErrorCode::from)??;
+
+        request.chunk_len = chunk_len;
+        request.chunk_offset = 0;
+        self.request.set(Some(request));
+
+        self.active
+            .map_or(Err(ErrorCode::OFF), |driver| driver.update(len))?;
+
+        Ok(())
+    }
+
+    fn finalize(&self, processid: ProcessId) -> Result<(), ErrorCode> {
+        let request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.chunk_len != request.chunk_offset || request.processid != processid {
+            return Err(ErrorCode::BUSY);
+        }
+
+        self.active
+            .map_or(Err(ErrorCode::OFF), |driver| driver.finalize())?;
+
+        Ok(())
+    }
+
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
+        let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.key_len != request.key_offset {
+            return Err(ErrorCode::FAIL);
+        }
+        let count = input.len().min(request.chunk_len - request.chunk_offset);
+        if count == 0 {
+            return Ok(0);
+        }
+        self.apps
+            .enter(request.processid, |_, buffers| {
+                buffers
+                    .get_readonly_processbuffer(ro_allow::INPUT)
+                    .map_err(|_| ErrorCode::RESERVE)?
+                    .enter(|source| {
+                        if source.len() < request.chunk_len {
+                            return Err(ErrorCode::SIZE);
+                        }
+                        source[request.chunk_offset..request.chunk_offset + count]
+                            .copy_to_slice_or_err(&mut input[..count])
+                    })
+                    .map_err(|_| ErrorCode::RESERVE)?
+            })
+            .map_err(ErrorCode::from)??;
+        request.chunk_offset += count;
+        self.request.set(Some(request));
+        Ok(count)
+    }
+
+    fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
+        let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
+        let count = key.len().min(request.key_len - request.key_offset);
+        if count == 0 {
+            return Ok(0);
+        }
+        self.apps
+            .enter(request.processid, |_, buffers| {
+                buffers
+                    .get_readonly_processbuffer(ro_allow::KEY)
+                    .map_err(|_| ErrorCode::RESERVE)?
+                    .enter(|source| {
+                        if source.len() < request.key_len {
+                            return Err(ErrorCode::SIZE);
+                        }
+                        source[request.key_offset..request.key_offset + count]
+                            .copy_to_slice_or_err(&mut key[..count])
+                    })
+                    .map_err(|_| ErrorCode::RESERVE)?
+            })
+            .map_err(ErrorCode::from)??;
+        request.key_offset += count;
+        self.request.set(Some(request));
+        Ok(count)
+    }
+
+    fn write(&self, digest: &[u8]) -> Result<(), ErrorCode> {
+        let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
+        if request.digest_written || request.chunk_offset != request.chunk_len {
+            return Err(ErrorCode::FAIL);
+        }
+        if digest.len() != request.algorithm.digest_len() {
+            return Err(ErrorCode::SIZE);
+        }
+        self.apps
+            .enter(request.processid, |_, buffers| {
+                buffers
+                    .get_readwrite_processbuffer(rw_allow::OUTPUT)
+                    .map_err(|_| ErrorCode::RESERVE)?
+                    .mut_enter(|output| {
+                        if output.len() < digest.len() {
+                            return Err(ErrorCode::SIZE);
+                        }
+                        output[..digest.len()].copy_from_slice_or_err(digest)
+                    })
+                    .map_err(|_| ErrorCode::RESERVE)?
+            })
+            .map_err(ErrorCode::from)??;
+        request.digest_written = true;
+        self.request.set(Some(request));
+        Ok(())
+    }
+
+    fn finish_update(&self, result: Result<(), ErrorCode>) {
+        let request = self.request.take();
+        if let Some(request) = request {
+            let result = result.and(if request.chunk_len == request.chunk_offset {
+                Ok(())
+            } else {
+                Err(ErrorCode::FAIL)
+            });
+            let _ = self.apps.enter(request.processid, |_, buffers| {
+                let _ =
+                    buffers.schedule_upcall(upcall::UPDATE_DONE, (into_statuscode(result), 0, 0));
+            });
+        }
+    }
+    fn finish_op(&self, result: Result<(), ErrorCode>) {
+        let request = self.request.take();
+        self.active.take().map(ActiveDriver::release);
+        if let Some(request) = request {
+            let result = result.and(if request.digest_written {
+                Ok(())
+            } else {
+                Err(ErrorCode::FAIL)
+            });
+            let _ = self.apps.enter(request.processid, |_, buffers| {
+                let _ = buffers.schedule_upcall(upcall::OP_DONE, (into_statuscode(result), 0, 0));
+            });
+        }
+    }
+}
+
+impl<
+    Md5Driver: Hmac<Md5> + 'static,
+    Sha1Driver: Hmac<Sha1> + 'static,
+    Sha224Driver: Hmac<Sha224> + 'static,
+    Sha256Driver: Hmac<Sha256> + 'static,
+    Sha384Driver: Hmac<Sha384> + 'static,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static,
+    Sha512Driver: Hmac<Sha512> + 'static,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static,
+    Sm3Driver: Hmac<Sm3> + 'static,
+> SyscallDriver
+    for HmacDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
+{
+    fn command(
+        &self,
+        command_num: usize,
+        data1: usize,
+        data2: usize,
+        processid: ProcessId,
+    ) -> CommandReturn {
+        match command_num {
+            0 => CommandReturn::success(),
+            // 1 begin (algo, key)
+            // 2 update by sending a new chunk (len)
+            // 3 finalize and receive the output
+            1 => Algorithm::try_from(data1)
+                .and_then(|algorithm| self.start(processid, data2, algorithm))
+                .into(),
+            2 => self.update(processid, data1).into(),
+            3 => self.finalize(processid).into(),
+            _ => CommandReturn::failure(ErrorCode::NOSUPPORT),
+        }
+    }
+
+    fn allocate_grant(&self, processid: ProcessId) -> Result<(), kernel::process::Error> {
+        self.apps.enter(processid, |_, _| {})
+    }
+}
+
+impl<
+    Md5Driver: Hmac<Md5> + 'static,
+    Sha1Driver: Hmac<Sha1> + 'static,
+    Sha224Driver: Hmac<Sha224> + 'static,
+    Sha256Driver: Hmac<Sha256> + 'static,
+    Sha384Driver: Hmac<Sha384> + 'static,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static,
+    Sha512Driver: Hmac<Sha512> + 'static,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static,
+    Sm3Driver: Hmac<Sm3> + 'static,
+> DriverMutexClient
+    for HmacDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
+{
+    fn ready(&'static self, resource: DriverMutexAny) {
+        let Some(request) = self.request.get() else {
+            return;
+        };
+        let result = self
+            .apps
+            .enter(request.processid, |_, _| ())
+            .map_err(ErrorCode::from);
+        if let Err(error) = result {
+            drop(resource);
+            self.finish_op(Err(error));
+            return;
+        }
+        let result = match request.algorithm {
+            Algorithm::Md5 => {
+                begin::<Md5, Md5Driver>(resource, request.key_len, self).map(ActiveDriver::Md5)
+            }
+            Algorithm::Sha1 => {
+                begin::<Sha1, Sha1Driver>(resource, request.key_len, self).map(ActiveDriver::Sha1)
+            }
+            Algorithm::Sha224 => begin::<Sha224, Sha224Driver>(resource, request.key_len, self)
+                .map(ActiveDriver::Sha224),
+            Algorithm::Sha256 => begin::<Sha256, Sha256Driver>(resource, request.key_len, self)
+                .map(ActiveDriver::Sha256),
+            Algorithm::Sha384 => begin::<Sha384, Sha384Driver>(resource, request.key_len, self)
+                .map(ActiveDriver::Sha384),
+            Algorithm::Sha512 => begin::<Sha512, Sha512Driver>(resource, request.key_len, self)
+                .map(ActiveDriver::Sha512),
+            Algorithm::Sha512_224 => {
+                begin::<Sha512_224, Sha512_224Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha512_224)
+            }
+            Algorithm::Sha512_256 => {
+                begin::<Sha512_256, Sha512_256Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha512_256)
+            }
+            Algorithm::Sha3_224 => {
+                begin::<Sha3_224, Sha3_224Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha3_224)
+            }
+            Algorithm::Sha3_256 => {
+                begin::<Sha3_256, Sha3_256Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha3_256)
+            }
+            Algorithm::Sha3_384 => {
+                begin::<Sha3_384, Sha3_384Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha3_384)
+            }
+            Algorithm::Sha3_512 => {
+                begin::<Sha3_512, Sha3_512Driver>(resource, request.key_len, self)
+                    .map(ActiveDriver::Sha3_512)
+            }
+            Algorithm::Sm3 => {
+                begin::<Sm3, Sm3Driver>(resource, request.key_len, self).map(ActiveDriver::Sm3)
+            }
+        };
+        match result {
+            Ok(driver) => {
+                self.active.replace(driver);
+            }
+            Err(error) => self.finish_op(Err(error)),
+        }
+    }
+}
+
+impl<
+    AlgorithmType: DigestAlgorithm,
+    Md5Driver: Hmac<Md5> + 'static,
+    Sha1Driver: Hmac<Sha1> + 'static,
+    Sha224Driver: Hmac<Sha224> + 'static,
+    Sha256Driver: Hmac<Sha256> + 'static,
+    Sha384Driver: Hmac<Sha384> + 'static,
+    Sha512_224Driver: Hmac<Sha512_224> + 'static,
+    Sha512_256Driver: Hmac<Sha512_256> + 'static,
+    Sha512Driver: Hmac<Sha512> + 'static,
+    Sha3_224Driver: Hmac<Sha3_224> + 'static,
+    Sha3_256Driver: Hmac<Sha3_256> + 'static,
+    Sha3_384Driver: Hmac<Sha3_384> + 'static,
+    Sha3_512Driver: Hmac<Sha3_512> + 'static,
+    Sm3Driver: Hmac<Sm3> + 'static,
+> HmacClient<AlgorithmType>
+    for HmacDriver<
+        Md5Driver,
+        Sha1Driver,
+        Sha224Driver,
+        Sha256Driver,
+        Sha384Driver,
+        Sha512_224Driver,
+        Sha512_256Driver,
+        Sha512Driver,
+        Sha3_224Driver,
+        Sha3_256Driver,
+        Sha3_384Driver,
+        Sha3_512Driver,
+        Sm3Driver,
+    >
+{
+    fn read_input(&self, input: &mut [u8]) -> Result<usize, ErrorCode> {
+        self.read_input(input)
+    }
+
+    fn read_key(&self, key: &mut [u8]) -> Result<usize, ErrorCode> {
+        self.read_key(key)
+    }
+
+    fn update_done(&self, result: Result<(), ErrorCode>) {
+        self.finish_update(result);
+    }
+
+    fn write_output(
+        &self,
+        digest: &<AlgorithmType as DigestAlgorithm>::Output,
+    ) -> Result<(), ErrorCode> {
+        self.write(digest.as_ref())
+    }
+
+    fn authentication_done(&self, result: Result<(), ErrorCode>) {
+        self.finish_op(result);
+    }
+}

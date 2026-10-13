@@ -7,7 +7,7 @@ use kernel::{
 
 pub(crate) const FIFO_SIZE: usize = 17 * 4;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum State {
     Idle { is_intermediate: bool },
     Feeding,
@@ -93,7 +93,9 @@ impl Leftover {
 
     pub(crate) fn to_le(&self) -> u32 {
         self.partial_len.take();
-        u32::from_be_bytes(self.partial.take()).to_le()
+        let mut value = self.partial.take();
+        value.reverse();
+        u32::from_le_bytes(value).to_be()
     }
 
     pub(crate) fn is_full(&self) -> bool {

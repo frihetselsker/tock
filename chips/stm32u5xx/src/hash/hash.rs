@@ -12,19 +12,17 @@
 
 use core::cell::Cell;
 
-use crate::hash::regs::STR;
-use crate::hash::utils::ClientCallback::{OpDone, UpdateDone};
-use crate::hash::utils::{ClientCallback, FIFO_SIZE, Leftover};
+use crate::hash::utils::FIFO_SIZE;
 
-use super::regs::{CR, HashRegisters, IMR, SR};
-use kernel::ErrorCode;
+use super::utils::{Client, ClientCallback, Leftover, State};
+
+use super::regs::{CR, HashRegisters, IMR, SR, STR};
 use kernel::deferred_call::{DeferredCall, DeferredCallClient};
 use kernel::hil::crypto::digest::{Digest, DigestClient, Md5, Sha1, Sha224, Sha256};
 use kernel::utilities::StaticRef;
 use kernel::utilities::cells::OptionalCell;
 use kernel::utilities::registers::interfaces::{ReadWriteable, Readable, Writeable};
-
-use super::utils::{Client, State};
+use kernel::{ErrorCode, debug};
 
 /// One HASH peripheral implementing MD5, SHA-1, SHA-224, and SHA-256.
 pub struct Hash {
@@ -67,7 +65,7 @@ impl Hash {
             State::Finishing { is_started: true } if self.regs.sr.is_set(SR::DCIS) => {
                 if let Some(client) = self.active.get() {
                     if self.cancel.take() {
-                        return self.finish(OpDone, Err(ErrorCode::CANCEL));
+                        return self.finish(ClientCallback::OpDone, Err(ErrorCode::CANCEL));
                     }
                     let result = match client {
                         Client::Md5(client) => client.write_output(&self.output::<16>()),
@@ -75,17 +73,17 @@ impl Hash {
                         Client::Sha224(client) => client.write_output(&self.output::<28>()),
                         Client::Sha256(client) => client.write_output(&self.output::<32>()),
                     };
-                    self.finish(OpDone, result);
+                    self.finish(ClientCallback::OpDone, result);
                 }
             }
             State::Finishing { is_started: false } if self.regs.sr.is_set(SR::DINIS) => {
                 if self.cancel.take() {
-                    return self.finish(OpDone, Err(ErrorCode::CANCEL));
+                    return self.finish(ClientCallback::OpDone, Err(ErrorCode::CANCEL));
                 }
                 let leftover_bytes = self.leftover.len();
                 let regs = self.regs;
                 regs.din.set(self.leftover.to_le());
-                regs.str.modify(STR::NBLW.val((leftover_bytes * 8) as u32));
+                regs.str.modify(STR::NBLW.val((leftover_bytes << 3) as u32));
                 self.state.set(State::Finishing { is_started: true });
                 regs.imr.modify(IMR::DCIE::SET);
                 regs.str.modify(STR::DCAL::SET);
@@ -104,7 +102,7 @@ impl Hash {
                         Ok(())
                     })();
                     if result.is_err() || self.remaining.get() == 0 {
-                        self.finish(UpdateDone, result);
+                        self.finish(ClientCallback::UpdateDone, result);
                     }
                 }
             }
@@ -147,8 +145,11 @@ impl Hash {
         }
 
         self.remaining.set(len);
+        debug!("Set remaining in prepare_update: {}", len);
         self.state.set(State::Feeding);
         self.deferred_call.set();
+
+        debug!("State::Feeding");
 
         Ok(())
     }
@@ -157,6 +158,7 @@ impl Hash {
         let mut input = [0u8; FIFO_SIZE];
         let fifo_space =
             ((self.regs.sr.read(SR::NBWE) * 4) as usize).saturating_sub(self.leftover.len());
+        debug!("Fifo space: {}", fifo_space);
         if fifo_space == 0 {
             self.regs.imr.write(IMR::DINIE::SET);
             return Ok(0);
@@ -168,6 +170,7 @@ impl Hash {
                 return Err(error);
             }
         };
+        debug!("REad into input: {}", count);
         self.write_data_cpu(&input[..count])?;
         Ok(count)
     }
@@ -176,8 +179,9 @@ impl Hash {
         let regs = self.regs;
 
         // Load leftover if it is not empty
-        let buffer = if !self.leftover.is_full() && !self.leftover.is_empty() {
+        let buffer = if !self.leftover.is_empty() {
             let bytes_to_load = 4 - self.leftover.len();
+            debug!("Need to add {} bytes to leftover", bytes_to_load);
             for i in 0..bytes_to_load {
                 self.leftover.add(buffer[i])?;
             }
@@ -192,11 +196,13 @@ impl Hash {
         // Write 32-bit words
         for data in words_to_load {
             let d = u32::from_le_bytes(*data);
+            debug!("Writing 0x{:02x}", d);
             regs.din.set(d);
         }
 
         // Accumulate leftover bytes
         for data in leftover_to_load {
+            debug!("Accumulating 0x{:02x}", data);
             self.leftover.add(*data)?;
         }
 
@@ -207,6 +213,10 @@ impl Hash {
         if self.active.is_none() {
             return Err(ErrorCode::INVAL);
         }
+
+        debug!("Entered run");
+
+        debug!("State: {:?}", self.state.get());
 
         match self.state.get() {
             State::Idle { is_intermediate } => {
@@ -220,17 +230,22 @@ impl Hash {
         let regs = self.regs;
         let leftover_bytes = self.leftover.len();
 
+        debug!("Before run: leftover len {}", leftover_bytes * 8);
+
         if !self.leftover.is_empty() {
             if !regs.sr.is_set(SR::BUSY) {
-                regs.din.set(self.leftover.to_le());
+                let value = self.leftover.to_le();
+                debug!("We are writing: 0x{:02x}", value);
+                regs.din.set(value);
             } else {
-                regs.imr.write(IMR::DINIE::SET);
+                regs.imr.modify(IMR::DINIE::SET);
                 self.state.set(State::Finishing { is_started: false });
                 return Ok(());
             }
         }
 
         regs.str.modify(STR::NBLW.val((leftover_bytes * 8) as u32));
+        regs.imr.modify(IMR::DCIE::SET);
         self.state.set(State::Finishing { is_started: true });
         regs.str.modify(STR::DCAL::SET);
         Ok(())
@@ -246,6 +261,7 @@ impl Hash {
         {
             bytes.copy_from_slice(&register.get().to_be_bytes());
         }
+        debug!("Output: {:02x?}", output);
         output
     }
 
@@ -261,19 +277,19 @@ impl Hash {
         };
 
         match callback {
-            OpDone => {
+            ClientCallback::OpDone => {
                 reset_driver();
                 if let Some(client) = self.active.take() {
                     client.digest_done(result);
                 }
             }
-            UpdateDone if result.is_err() => {
+            ClientCallback::UpdateDone if result.is_err() => {
                 reset_driver();
                 if let Some(client) = self.active.take() {
                     client.update_done(result);
                 }
             }
-            UpdateDone => {
+            ClientCallback::UpdateDone => {
                 if let Some(client) = self.active.get() {
                     client.update_done(result);
                 }
@@ -285,19 +301,25 @@ impl Hash {
 impl DeferredCallClient for Hash {
     fn handle_deferred_call(&'static self) {
         if let Some(client) = self.active.get() {
+            debug!("Entered deferred call");
             let result = (|| {
                 if self.cancel.take() {
                     return Err(ErrorCode::CANCEL);
                 }
                 let remaining = self.remaining.get();
+                debug!("Remaining: {} bytes", remaining);
                 let bytes_loaded = self.feed(remaining, client)?;
+                debug!("Bytes loaded: {}", bytes_loaded);
                 let remaining_updated =
                     remaining.checked_sub(bytes_loaded).ok_or(ErrorCode::FAIL)?;
                 self.remaining.set(remaining_updated);
                 Ok(())
             })();
             if result.is_err() || self.remaining.get() == 0 {
-                self.finish(UpdateDone, result);
+                self.state.set(State::Idle {
+                    is_intermediate: true,
+                });
+                self.finish(ClientCallback::UpdateDone, result);
             }
         }
     }
@@ -394,6 +416,7 @@ impl Digest<Sha256> for Hash {
     }
 
     fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        debug!("Reached prepare update");
         self.prepare_update(len)
     }
 

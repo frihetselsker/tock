@@ -29,7 +29,7 @@ use kernel::hil::crypto::digest::{
 use kernel::processbuffer::{ReadableProcessBuffer, WriteableProcessBuffer};
 use kernel::syscall::{CommandReturn, SyscallDriver};
 use kernel::utilities::cells::{MapCell, OptionalCell};
-use kernel::{ErrorCode, ProcessId};
+use kernel::{ErrorCode, ProcessId, debug};
 
 /// Syscall driver number.
 pub const DRIVER_NUM: usize = capsules_core::driver::NUM::Sha as usize;
@@ -248,6 +248,7 @@ impl<
     >
 {
     fn update(&self, len: usize) -> Result<(), ErrorCode> {
+        debug!("[CAP] Update");
         match self {
             ActiveDriver::Md5(driver) => driver.update(len),
             ActiveDriver::Sha1(driver) => driver.update(len),
@@ -310,6 +311,7 @@ fn begin<AlgorithmType: DigestAlgorithm, Driver: Digest<AlgorithmType> + 'static
         .downcast::<Driver>()
         .map_err(|_| ErrorCode::INVAL)?;
     driver.set_client(client);
+    debug!("[CAP] Begin");
     driver.begin()?;
     Ok(driver)
 }
@@ -449,6 +451,13 @@ impl<
         self.sha256.register(client)?;
         self.sha384.register(client)?;
         self.sha512.register(client)?;
+        self.sha512_224.register(client)?;
+        self.sha512_256.register(client)?;
+        self.sha3_224.register(client)?;
+        self.sha3_256.register(client)?;
+        self.sha3_384.register(client)?;
+        self.sha3_512.register(client)?;
+        self.sm3.register(client)?;
         Ok(())
     }
 
@@ -474,6 +483,7 @@ impl<
         if self.request.get().is_some() {
             return Err(ErrorCode::BUSY);
         }
+        debug!("[CAP] Start the operation");
         self.apps
             .enter(processid, |_, buffers| {
                 let output = buffers
@@ -493,6 +503,7 @@ impl<
             chunk_offset: 0,
             digest_written: false,
         }));
+        debug!("[CAP] Requesting the driver");
         let result = match algorithm {
             Algorithm::Md5 => self.md5.request(),
             Algorithm::Sha1 => self.sha1.request(),
@@ -515,6 +526,7 @@ impl<
     }
 
     fn update(&self, processid: ProcessId, len: usize) -> Result<(), ErrorCode> {
+        debug!("[CAP] Entered update");
         let mut request = self.request.get().ok_or(ErrorCode::OFF)?;
         if request.chunk_len != request.chunk_offset || request.processid != processid {
             return Err(ErrorCode::BUSY);
@@ -525,10 +537,13 @@ impl<
                 let input = buffers
                     .get_readonly_processbuffer(ro_allow::INPUT)
                     .map_err(|_| ErrorCode::RESERVE)?;
+                if input.len() != len {
+                    return Err(ErrorCode::SIZE);
+                }
                 Ok::<usize, ErrorCode>(input.len())
             })
             .map_err(ErrorCode::from)??;
-
+        debug!("LEn of new chunk {}", chunk_len);
         request.chunk_len = chunk_len;
         request.chunk_offset = 0;
         self.request.set(Some(request));
@@ -540,10 +555,13 @@ impl<
     }
 
     fn finalize(&self, processid: ProcessId) -> Result<(), ErrorCode> {
+        debug!("[CAP] Entered finalize");
         let request = self.request.get().ok_or(ErrorCode::OFF)?;
         if request.chunk_len != request.chunk_offset || request.processid != processid {
             return Err(ErrorCode::BUSY);
         }
+
+        debug!("[CAP] Finalize");
 
         self.active
             .map_or(Err(ErrorCode::OFF), |driver| driver.finalize())?;
@@ -557,6 +575,10 @@ impl<
         if count == 0 {
             return Ok(0);
         }
+        debug!(
+            "[CAP] Read : size = {}, offset = {}",
+            request.chunk_len, request.chunk_offset
+        );
         self.apps
             .enter(request.processid, |_, buffers| {
                 buffers
@@ -566,6 +588,10 @@ impl<
                         if source.len() < request.chunk_len {
                             return Err(ErrorCode::SIZE);
                         }
+                        debug!(
+                            "[CAP] Copying from app: size = {}, offset = {}",
+                            request.chunk_len, request.chunk_offset
+                        );
                         source[request.chunk_offset..request.chunk_offset + count]
                             .copy_to_slice_or_err(&mut input[..count])
                     })
@@ -583,6 +609,7 @@ impl<
             return Err(ErrorCode::FAIL);
         }
         if digest.len() != request.algorithm.digest_len() {
+            debug!("[CAP] DIgest output is not equal to the needed size");
             return Err(ErrorCode::SIZE);
         }
         self.apps
@@ -592,6 +619,7 @@ impl<
                     .map_err(|_| ErrorCode::RESERVE)?
                     .mut_enter(|output| {
                         if output.len() < digest.len() {
+                            debug!("[CAP] output buffer is less than digest");
                             return Err(ErrorCode::SIZE);
                         }
                         output[..digest.len()].copy_from_slice_or_err(digest)
@@ -605,7 +633,7 @@ impl<
     }
 
     fn finish_update(&self, result: Result<(), ErrorCode>) {
-        let request = self.request.take();
+        let request = self.request.get();
         if let Some(request) = request {
             let result = result.and(if request.chunk_len == request.chunk_offset {
                 Ok(())
